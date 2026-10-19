@@ -50,6 +50,16 @@ export const apiService = {
     return res.json();
   },
 
+  async updateOrderPayment(orderId, paymentDetails) {
+    const res = await fetch(`${API_BASE}/orders/${orderId}/payment`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(paymentDetails),
+    });
+    if (!res.ok) throw new Error('Failed to update payment status');
+    return res.json();
+  },
+
   async getStats() {
     const res = await fetch(`${API_BASE}/orders/stats`);
     if (!res.ok) throw new Error('Failed to load stats');

@@ -12,10 +12,12 @@ import {
   Bell,
   User,
   Phone,
-  CheckCircle2,
   UserCheck,
+  CreditCard,
+  Banknote,
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatters';
+import PaymentModal from './PaymentModal';
 
 export default function CartDrawer({
   isOpen,
@@ -49,6 +51,8 @@ export default function CartDrawer({
   const [cookingNotes, setCookingNotes] = useState('');
   const [validationError, setValidationError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({ name: false, phone: false });
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [pendingOrderData, setPendingOrderData] = useState(null);
 
   if (!isOpen) return null;
 
@@ -124,7 +128,8 @@ export default function CartDrawer({
       })),
     };
 
-    onPlaceOrder(orderData);
+    setPendingOrderData(orderData);
+    setIsPaymentModalOpen(true);
   };
 
   return (
@@ -456,17 +461,34 @@ export default function CartDrawer({
               </div>
             </div>
 
+            {/* Payment Options Available at next step */}
+            <div className="bg-gradient-to-r from-blue-50/90 via-amber-50/70 to-emerald-50/80 border border-amber-300/80 rounded-xl p-2.5 flex items-center justify-between text-[11px] shadow-2xs">
+              <div className="flex items-center gap-1.5 font-bold text-stone-800">
+                <CreditCard className="w-4 h-4 text-blue-700" />
+                <span>Payment Options:</span>
+              </div>
+              <div className="flex items-center gap-1 text-[10px] font-black">
+                <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
+                  ⚡ Online (Razorpay)
+                </span>
+                <span className="text-stone-400 font-bold">/</span>
+                <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded border border-amber-300">
+                  💵 Cash
+                </span>
+              </div>
+            </div>
+
             <button
               onClick={handleSubmit}
               disabled={isPlacingOrder}
               className="w-full bg-gradient-to-r from-red-700 via-red-800 to-amber-700 hover:from-red-800 hover:to-amber-800 text-white font-brand font-black py-3.5 sm:py-4 rounded-2xl shadow-xl shadow-red-900/30 flex items-center justify-center gap-2.5 transition-all active:scale-98 disabled:opacity-50 text-sm sm:text-base border-2 border-amber-400 cursor-pointer"
             >
               {isPlacingOrder ? (
-                <span className="animate-pulse">Sending to Kitchen...</span>
+                <span className="animate-pulse">Confirming Order...</span>
               ) : (
                 <>
                   <Bell className="w-5 h-5 text-amber-300 animate-bounce" />
-                  <span className="tracking-wide uppercase">PLACE ORDER &amp; RING BELL 🔔</span>
+                  <span className="tracking-wide uppercase">CONFIRM ORDER &amp; CHOOSE PAYMENT ➔</span>
                 </>
               )}
             </button>
@@ -487,6 +509,18 @@ export default function CartDrawer({
           </div>
         )}
       </div>
+
+      {/* Payment Selection Modal (Razorpay Online vs Cash on Delivery) */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        orderData={pendingOrderData}
+        onConfirmOrder={(finalOrderPayload) => {
+          setIsPaymentModalOpen(false);
+          onPlaceOrder(finalOrderPayload);
+        }}
+        isPlacingOrder={isPlacingOrder}
+      />
     </div>
   );
 }

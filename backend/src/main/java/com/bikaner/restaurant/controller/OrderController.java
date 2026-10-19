@@ -52,6 +52,17 @@ public class OrderController {
             order.setTotalAmount(0.0);
         }
 
+        if (order.getPaymentMethod() == null || order.getPaymentMethod().trim().isEmpty()) {
+            order.setPaymentMethod("CASH");
+        }
+        if (order.getPaymentStatus() == null || order.getPaymentStatus().trim().isEmpty()) {
+            if ("ONLINE".equalsIgnoreCase(order.getPaymentMethod()) && order.getPaymentId() != null) {
+                order.setPaymentStatus("PAID");
+            } else {
+                order.setPaymentStatus("PENDING");
+            }
+        }
+
         Order savedOrder;
         synchronized (this) {
             savedOrder = orderRepository.save(order);
@@ -108,6 +119,32 @@ public class OrderController {
             Order updated = orderRepository.save(order);
 
             // Asynchronous broadcast of status change
+            CompletableFuture.runAsync(() -> {
+                notificationService.notifyStatusChange(updated);
+            });
+
+            return ResponseEntity.ok(updated);
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}/payment")
+    public ResponseEntity<Order> updatePaymentStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> paymentDetails
+    ) {
+        return orderRepository.findById(id).map(order -> {
+            if (paymentDetails.containsKey("paymentMethod")) {
+                order.setPaymentMethod(paymentDetails.get("paymentMethod"));
+            }
+            if (paymentDetails.containsKey("paymentStatus")) {
+                order.setPaymentStatus(paymentDetails.get("paymentStatus"));
+            }
+            if (paymentDetails.containsKey("paymentId")) {
+                order.setPaymentId(paymentDetails.get("paymentId"));
+            }
+            order.setUpdatedAt(LocalDateTime.now());
+            Order updated = orderRepository.save(order);
+
             CompletableFuture.runAsync(() -> {
                 notificationService.notifyStatusChange(updated);
             });

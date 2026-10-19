@@ -20,6 +20,8 @@ import {
   LayoutDashboard,
   TableProperties,
   ArrowLeft,
+  CreditCard,
+  Banknote,
 } from 'lucide-react';
 import { formatPrice, formatTime, getTimeAgo } from '../utils/formatters';
 import { bellPlayer } from '../utils/sound';
@@ -401,6 +403,22 @@ export default function AdminDashboard({
                     <span className="text-xl font-black text-stone-900 font-sans">
                       {formatPrice(order.totalAmount)}
                     </span>
+                  </div>
+
+                  {/* Payment Mode & Status */}
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-stone-200/60">
+                    <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">Payment:</span>
+                    {order.paymentMethod === 'ONLINE' || order.paymentStatus === 'PAID' ? (
+                      <span className="inline-flex items-center gap-1 font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-xl border border-emerald-300 text-[11px]">
+                        <CreditCard className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>PAID ONLINE (Razorpay)</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 font-black text-amber-900 bg-amber-100 px-2.5 py-1 rounded-xl border border-amber-300 text-[11px]">
+                        <Banknote className="w-3.5 h-3.5 text-amber-700" />
+                        <span>CASH (Collect ₹{order.totalAmount})</span>
+                      </span>
+                    )}
                   </div>
 
                   {/* Action Buttons */}

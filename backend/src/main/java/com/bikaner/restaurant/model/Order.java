@@ -30,6 +30,15 @@ public class Order {
     @Column(length = 500)
     private String notes;
 
+    @Column(length = 50)
+    private String paymentMethod = "CASH"; // "CASH" or "ONLINE"
+
+    @Column(length = 50)
+    private String paymentStatus = "PENDING"; // "PENDING" or "PAID"
+
+    @Column(length = 100)
+    private String paymentId; // Razorpay transaction ID
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<OrderItem> items = new ArrayList<>();
 
@@ -49,6 +58,12 @@ public class Order {
         this.updatedAt = LocalDateTime.now();
         if (this.status == null) {
             this.status = OrderStatus.PENDING;
+        }
+        if (this.paymentMethod == null || this.paymentMethod.trim().isEmpty()) {
+            this.paymentMethod = "CASH";
+        }
+        if (this.paymentStatus == null || this.paymentStatus.trim().isEmpty()) {
+            this.paymentStatus = "ONLINE".equalsIgnoreCase(this.paymentMethod) && this.paymentId != null ? "PAID" : "PENDING";
         }
     }
 
@@ -104,4 +119,13 @@ public class Order {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+
+    public String getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
+
+    public String getPaymentId() { return paymentId; }
+    public void setPaymentId(String paymentId) { this.paymentId = paymentId; }
 }

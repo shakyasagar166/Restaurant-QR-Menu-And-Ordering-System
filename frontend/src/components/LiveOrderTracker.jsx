@@ -52,13 +52,28 @@ export default function LiveOrderTracker({ activeOrder, onClose }) {
       <div className="mb-4">
         <div className="flex justify-between items-center text-xs mb-1">
           <span className="font-mono text-stone-300 font-bold">Ticket #{activeOrder.id}</span>
-          <span className="font-serif-luxury font-black text-amber-400 text-sm">
+          <span className="font-brand font-black text-amber-400 text-sm">
             {formatPrice(activeOrder.totalAmount)}
           </span>
         </div>
         <p className="text-[11px] text-stone-400 truncate">
           {activeOrder.items?.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
         </p>
+
+        {/* Payment Method Badge */}
+        <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
+          <span className="text-stone-400">Payment:</span>
+          {activeOrder.paymentMethod === 'ONLINE' || activeOrder.paymentStatus === 'PAID' ? (
+            <span className="inline-flex items-center gap-1 font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded-lg border border-emerald-500/40">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span>Paid via Razorpay {activeOrder.paymentId ? `(#${activeOrder.paymentId.slice(-6)})` : ''}</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded-lg border border-amber-500/40">
+              <span>💵 Cash on Delivery / Counter</span>
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Progress Step Nodes */}
