@@ -234,6 +234,10 @@ export default function App() {
     });
   };
 
+  const handleDeleteDish = (itemId) => {
+    setCart((prev) => prev.filter((i) => i.id !== itemId));
+  };
+
   const handleClearCart = () => {
     setCart([]);
   };
@@ -340,6 +344,7 @@ export default function App() {
                 cart={cart}
                 onAddToCart={handleAddToCart}
                 onRemoveFromCart={handleRemoveFromCart}
+                onDeleteDish={handleDeleteDish}
                 onBackToCategories={() => {
                   setSelectedCategory(null);
                   setSearchQuery('');
@@ -448,6 +453,7 @@ export default function App() {
         cart={cart}
         onAddToCart={handleAddToCart}
         onRemoveFromCart={handleRemoveFromCart}
+        onDeleteDish={handleDeleteDish}
         onClearCart={handleClearCart}
         tableNumber={tableNumber}
         setTableNumber={setTableNumber}

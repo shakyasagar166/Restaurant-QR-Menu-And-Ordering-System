@@ -10,6 +10,7 @@ export default function CategoryDetail({
   cart,
   onAddToCart,
   onRemoveFromCart,
+  onDeleteDish,
   onBackToCategories,
   onSelectCategory,
   searchQuery,
@@ -131,6 +132,7 @@ export default function CategoryDetail({
               cartItem={cart.find((c) => c.id === item.id)}
               onAddToCart={onAddToCart}
               onRemoveFromCart={onRemoveFromCart}
+              onDeleteDish={onDeleteDish}
             />
           ))}
         </div>

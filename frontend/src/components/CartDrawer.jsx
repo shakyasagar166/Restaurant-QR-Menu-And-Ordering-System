@@ -8,6 +8,7 @@ export default function CartDrawer({
   cart,
   onAddToCart,
   onRemoveFromCart,
+  onDeleteDish,
   onClearCart,
   tableNumber,
   setTableNumber,
@@ -163,18 +164,20 @@ export default function CartDrawer({
                 <span>Selected Items ({cart.length})</span>
                 <button
                   onClick={onClearCart}
-                  className="text-red-700 hover:text-red-800 text-[11px] font-bold normal-case flex items-center gap-1"
+                  className="text-red-700 hover:text-red-900 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-xl text-[11px] font-bold normal-case flex items-center gap-1.5 transition border border-red-200/60"
+                  title="Saari dishes tray se hatayein"
                 >
-                  <Trash2 className="w-3 h-3" />
-                  <span>Clear All</span>
+                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                  <span>Clear All (सब हटाएं)</span>
                 </button>
               </div>
 
               {cart.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between py-2.5 border-b border-stone-100 text-sm gap-2"
+                  className="bg-stone-50/80 hover:bg-amber-50/30 rounded-2xl p-3 border border-stone-200/80 flex items-center justify-between gap-2.5 transition group"
                 >
+                  {/* Left: Dish Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block shrink-0"></span>
@@ -182,33 +185,53 @@ export default function CartDrawer({
                         {item.name}
                       </h5>
                     </div>
-                    <span className="text-[11px] text-stone-500">
-                      {formatPrice(item.price)} each
-                    </span>
+                    <div className="flex items-center gap-2 text-[11px] text-stone-500">
+                      <span>{formatPrice(item.price)} each</span>
+                      <span className="text-stone-300">•</span>
+                      <span className="font-black text-red-900">
+                        {formatPrice(item.price * item.quantity)}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Quantity controls */}
-                  <div className="flex items-center bg-stone-100 rounded-xl overflow-hidden border border-stone-200">
+                  {/* Quantity Stepper */}
+                  <div className="flex items-center bg-white rounded-xl overflow-hidden border border-amber-300/80 shadow-2xs">
                     <button
                       onClick={() => onRemoveFromCart(item.id)}
-                      className="p-1 hover:bg-stone-200 text-stone-700 transition active:scale-90"
+                      className={`p-1.5 transition active:scale-90 flex items-center justify-center ${
+                        item.quantity === 1
+                          ? 'bg-red-50 hover:bg-red-100 text-red-600'
+                          : 'hover:bg-stone-100 text-stone-700'
+                      }`}
+                      title={item.quantity === 1 ? 'Dish ko tray se hataayein (Remove)' : 'Quantity kam karein (-1)'}
                     >
-                      <Minus className="w-3.5 h-3.5" />
+                      {item.quantity === 1 ? (
+                        <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                      ) : (
+                        <Minus className="w-3.5 h-3.5" />
+                      )}
                     </button>
-                    <span className="px-2 text-xs font-black text-stone-900 select-none">
+                    <span className="px-2 text-xs font-black text-stone-900 select-none min-w-[20px] text-center">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() => onAddToCart(item)}
-                      className="p-1 hover:bg-stone-200 text-stone-700 transition active:scale-90"
+                      className="p-1.5 hover:bg-stone-100 text-stone-700 transition active:scale-90"
+                      title="Quantity badhayein (+1)"
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
-                  <div className="w-16 text-right font-black text-stone-900 text-xs sm:text-sm">
-                    {formatPrice(item.price * item.quantity)}
-                  </div>
+                  {/* Dedicated 1-Click Remove (Delete) Button */}
+                  <button
+                    onClick={() => (onDeleteDish ? onDeleteDish(item.id) : onRemoveFromCart(item.id))}
+                    className="w-8 h-8 rounded-xl bg-red-100/80 hover:bg-red-600 text-red-700 hover:text-white flex items-center justify-center transition shrink-0 border border-red-200/80 shadow-2xs"
+                    title="Is dish ko tray se poori tarah hataayein (Remove item)"
+                    aria-label="Remove dish"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               ))}
             </div>
