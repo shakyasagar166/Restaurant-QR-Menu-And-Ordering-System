@@ -14,6 +14,7 @@ import {
   Key,
   Volume2,
   VolumeX,
+  ArrowLeft,
 } from 'lucide-react';
 import { apiService } from '../api/apiService';
 import { formatPrice } from '../utils/formatters';
@@ -545,31 +546,38 @@ export default function AiChatBot({
 
       {/* Expanded AI Chat Modal / Window */}
       {isOpen && (
-        <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:right-6 sm:w-[430px] h-[600px] max-h-[85vh] z-50 bg-white rounded-3xl shadow-2xl border-2 border-amber-400/80 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
+        <div className="fixed inset-x-2 bottom-2 sm:inset-x-auto sm:bottom-4 sm:right-6 sm:w-[420px] h-[86vh] sm:h-[600px] max-h-[88vh] z-50 bg-white rounded-3xl shadow-2xl border-2 border-amber-400/80 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
           {/* Header */}
-          <div className="bg-gradient-to-r from-stone-950 via-red-950 to-stone-950 text-white p-4 border-b border-amber-400/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 text-stone-950 flex items-center justify-center font-bold shadow-md">
-                    <Bot className="w-6 h-6 text-stone-950" />
+          <div className="bg-gradient-to-r from-stone-950 via-red-950 to-stone-950 text-white p-3 sm:p-4 border-b border-amber-400/30">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 sm:gap-2.5 truncate">
+                <button
+                  onClick={handleCloseChat}
+                  className="flex items-center gap-1 bg-white/15 hover:bg-white/25 text-amber-300 hover:text-white px-2 py-1 rounded-xl text-xs font-bold transition active:scale-95 border border-white/10 shrink-0"
+                  title="Menu par wapas jayein"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
+                  <span className="text-[11px]">← Back</span>
+                </button>
+                <div className="relative shrink-0">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 text-stone-950 flex items-center justify-center font-bold shadow-md">
+                    <Bot className="w-4 h-4 sm:w-6 sm:h-6 text-stone-950" />
                   </div>
                   {isSpeaking && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-ping" />
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping" />
                   )}
                 </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <h4 className="font-brand font-black text-sm text-white">
-                      Bikaner AI Concierge
+                <div className="truncate">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <h4 className="font-brand font-black text-xs sm:text-sm text-white truncate">
+                      Bikaner AI
                     </h4>
-                    <span className="text-[9px] bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-black px-1.5 py-0.2 rounded-md flex items-center gap-0.5">
-                      <Zap className="w-2.5 h-2.5" />
-                      Groq AI
+                    <span className="text-[8px] sm:text-[9px] bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-black px-1.5 py-0.2 rounded-md shrink-0">
+                      ⚡ Groq
                     </span>
                   </div>
-                  <p className="text-[10px] text-amber-200">
-                    {tableNumber || 'Table T-1'} • Aman International Mall Rooftop
+                  <p className="text-[9px] sm:text-[10px] text-amber-200 truncate">
+                    {tableNumber || 'Table T-1'} • Rooftop Concierge
                   </p>
                 </div>
               </div>

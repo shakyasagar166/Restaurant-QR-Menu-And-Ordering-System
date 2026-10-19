@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Phone, Eye, EyeOff, ShieldCheck, Crown, X, ArrowRight, AlertCircle, KeyRound } from 'lucide-react';
+import { Lock, Phone, Eye, EyeOff, ShieldCheck, Crown, X, ArrowRight, AlertCircle, KeyRound, ArrowLeft } from 'lucide-react';
 import { apiService } from '../api/apiService';
 
 export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
@@ -58,6 +58,14 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
       <div className="relative bg-white rounded-3xl max-w-md w-full shadow-2xl border-2 border-amber-400/60 z-10 overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header Ribbon */}
         <div className="bg-gradient-to-r from-stone-950 via-red-950 to-stone-950 text-white p-6 text-center relative border-b border-amber-500/30">
+          <button
+            onClick={onClose}
+            className="absolute top-4 left-4 flex items-center gap-1 bg-white/10 hover:bg-white/20 text-amber-300 hover:text-white px-2.5 py-1 rounded-xl text-xs font-bold transition active:scale-95 border border-white/10"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
+            <span>← Back</span>
+          </button>
+
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-stone-300 hover:text-white flex items-center justify-center transition"

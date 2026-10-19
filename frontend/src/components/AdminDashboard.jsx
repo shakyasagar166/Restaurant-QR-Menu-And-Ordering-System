@@ -18,7 +18,8 @@ import {
   LogOut,
   Crown,
   LayoutDashboard,
-  TableProperties
+  TableProperties,
+  ArrowLeft,
 } from 'lucide-react';
 import { formatPrice, formatTime, getTimeAgo } from '../utils/formatters';
 import { bellPlayer } from '../utils/sound';
@@ -33,6 +34,7 @@ export default function AdminDashboard({
   openQrModal,
   adminUser,
   onLogout,
+  onBackToMenu,
 }) {
   const [activeFilter, setActiveFilter] = useState('ALL');
   const [showTableBreakdown, setShowTableBreakdown] = useState(false);
@@ -49,7 +51,18 @@ export default function AdminDashboard({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 w-full max-w-full overflow-hidden">
+      {/* Top Prominent Back Button to Customer Menu */}
+      <div className="mb-4">
+        <button
+          onClick={onBackToMenu}
+          className="inline-flex items-center gap-2 bg-gradient-to-r from-red-800 to-red-950 hover:from-red-900 hover:to-black text-white font-brand font-black text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-md border border-amber-400 active:scale-95 transition"
+        >
+          <ArrowLeft className="w-4 h-4 text-amber-300" />
+          <span>← Back to Customer Menu (कस्टमर मेनू पर वापस जाएं)</span>
+        </button>
+      </div>
+
       {/* Top Manager Identity & Session Bar */}
       <div className="bg-white rounded-3xl p-4 sm:p-5 border-2 border-amber-300 shadow-sm mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -449,6 +462,17 @@ export default function AdminDashboard({
           })}
         </div>
       )}
+
+      {/* Bottom Back Button */}
+      <div className="mt-8 mb-4 text-center">
+        <button
+          onClick={onBackToMenu}
+          className="inline-flex items-center gap-2 bg-gradient-to-r from-stone-900 to-red-950 hover:from-black hover:to-red-900 text-white font-brand font-black text-xs sm:text-sm px-6 py-3 rounded-2xl shadow-lg border-2 border-amber-400 active:scale-95 transition"
+        >
+          <ArrowLeft className="w-4 h-4 text-amber-300" />
+          <span>← Back to Customer Dining Menu (मेनू पर वापस जाएं)</span>
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Clock, ChefHat, UtensilsCrossed, X, Sparkles } from 'lucide-react';
+import { CheckCircle2, Clock, ChefHat, UtensilsCrossed, X, Sparkles, ArrowLeft } from 'lucide-react';
 import { formatPrice } from '../utils/formatters';
 
 export default function LiveOrderTracker({ activeOrder, onClose }) {
@@ -25,17 +25,25 @@ export default function LiveOrderTracker({ activeOrder, onClose }) {
   const currentIndex = getStepIndex(activeOrder.status);
 
   return (
-    <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-96 z-40 bg-gradient-to-br from-stone-950 via-stone-900 to-red-950 text-white rounded-3xl shadow-2xl border-2 border-amber-500/40 p-5 animate-in slide-in-from-bottom duration-300">
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-          <span className="text-xs font-black uppercase tracking-wider text-amber-300">
-            Live Order Tracking • {activeOrder.tableNumber}
+    <div className="fixed bottom-3 right-3 left-3 sm:left-auto sm:right-6 sm:w-96 z-40 bg-gradient-to-br from-stone-950 via-stone-900 to-red-950 text-white rounded-3xl shadow-2xl border-2 border-amber-500/40 p-4 sm:p-5 animate-in slide-in-from-bottom duration-300">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 gap-2">
+        <div className="flex items-center gap-2 truncate">
+          <button
+            onClick={onClose}
+            className="flex items-center gap-1 bg-white/10 hover:bg-white/20 text-amber-300 hover:text-white px-2 py-1 rounded-xl text-xs font-bold transition active:scale-95 shrink-0"
+            title="Menu par wapas jayein"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
+            <span>← Back</span>
+          </button>
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
+          <span className="text-xs font-black uppercase tracking-wider text-amber-300 truncate">
+            Order Status • {activeOrder.tableNumber}
           </span>
         </div>
         <button
           onClick={onClose}
-          className="text-stone-400 hover:text-white p-1 rounded-xl hover:bg-white/10 transition"
+          className="text-stone-400 hover:text-white p-1 rounded-xl hover:bg-white/10 transition shrink-0"
         >
           <X className="w-4 h-4" />
         </button>

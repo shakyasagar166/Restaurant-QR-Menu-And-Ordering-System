@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Trash2, Plus, Minus, Send, UtensilsCrossed, AlertCircle, Sparkles } from 'lucide-react';
+import { X, Trash2, Plus, Minus, Send, UtensilsCrossed, AlertCircle, Sparkles, ArrowLeft, Bell } from 'lucide-react';
 import { formatPrice } from '../utils/formatters';
 
 export default function CartDrawer({
@@ -70,14 +70,19 @@ export default function CartDrawer({
       {/* Luxury Drawer Panel */}
       <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-300">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-amber-200/80 flex items-center justify-between bg-gradient-to-r from-red-950 via-stone-900 to-amber-950 text-white">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-400/30">
-              <UtensilsCrossed className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="font-serif-luxury font-black text-base text-white tracking-wide">
-                Your Table Order
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-amber-200/80 flex items-center justify-between bg-gradient-to-r from-red-950 via-stone-900 to-amber-950 text-white">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onClose}
+              className="flex items-center gap-1 bg-white/15 hover:bg-white/25 text-amber-300 hover:text-white px-2.5 py-1 rounded-xl text-xs font-bold transition active:scale-95 border border-white/10"
+              title="Menu par wapas jayein"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
+              <span>← Back (वापस)</span>
+            </button>
+            <div className="border-l border-white/20 pl-2">
+              <h3 className="font-brand font-black text-sm sm:text-base text-white tracking-wide">
+                Your Table Tray
               </h3>
               <span className="text-[10px] text-amber-300 font-bold block">
                 {tableNumber} • Rooftop Restaurant
@@ -295,6 +300,15 @@ export default function CartDrawer({
                   <span className="tracking-wide uppercase">PLACE ORDER &amp; RING BELL 🔔</span>
                 </>
               )}
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full text-center text-xs font-bold text-stone-600 hover:text-stone-900 py-1.5 flex items-center justify-center gap-1.5 transition"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-stone-500" />
+              <span>← Continue Adding Dishes (और डिश जोड़ें)</span>
             </button>
 
             <p className="text-[11px] text-center text-stone-500 flex items-center justify-center gap-1.5">

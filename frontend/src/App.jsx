@@ -82,6 +82,27 @@ export default function App() {
     }
   }, []);
 
+  // Mobile phone hardware & browser Back Button integration
+  useEffect(() => {
+    const handlePopState = () => {
+      if (isCartOpen) {
+        setIsCartOpen(false);
+      } else if (isQrModalOpen) {
+        setIsQrModalOpen(false);
+      } else if (isAdminLoginModalOpen) {
+        setIsAdminLoginModalOpen(false);
+      } else if (selectedCategory || searchQuery) {
+        setSelectedCategory(null);
+        setSearchQuery('');
+      } else if (activeTab === 'admin') {
+        setActiveTab('menu');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isCartOpen, isQrModalOpen, isAdminLoginModalOpen, selectedCategory, searchQuery, activeTab]);
+
   // Persist cart
   useEffect(() => {
     localStorage.setItem('bikaner_cart', JSON.stringify(cart));
@@ -189,14 +210,39 @@ export default function App() {
         setIsAdminLoginModalOpen(true);
         return;
       }
+      try {
+        window.history.pushState({ screen: 'admin' }, '');
+      } catch (e) {}
       setActiveTab('admin');
     } else {
       setActiveTab('menu');
     }
   };
 
+  const handleSelectCategory = (cat) => {
+    try {
+      window.history.pushState({ screen: 'category', cat }, '');
+    } catch (e) {}
+    setSelectedCategory(cat);
+  };
+
+  const handleBackToCategories = () => {
+    setSelectedCategory(null);
+    setSearchQuery('');
+  };
+
+  const handleOpenCart = () => {
+    try {
+      window.history.pushState({ screen: 'cart' }, '');
+    } catch (e) {}
+    setIsCartOpen(true);
+  };
+
   const handleAdminLoginSuccess = (userData) => {
     setAdminUser(userData);
+    try {
+      window.history.pushState({ screen: 'admin' }, '');
+    } catch (e) {}
     setActiveTab('admin');
   };
 
@@ -345,11 +391,8 @@ export default function App() {
                 onAddToCart={handleAddToCart}
                 onRemoveFromCart={handleRemoveFromCart}
                 onDeleteDish={handleDeleteDish}
-                onBackToCategories={() => {
-                  setSelectedCategory(null);
-                  setSearchQuery('');
-                }}
-                onSelectCategory={setSelectedCategory}
+                onBackToCategories={handleBackToCategories}
+                onSelectCategory={handleSelectCategory}
                 searchQuery={searchQuery}
               />
             ) : (
@@ -358,7 +401,7 @@ export default function App() {
                 <CategoryCards
                   categories={categories}
                   menuItems={menuItems}
-                  onSelectCategory={(cat) => setSelectedCategory(cat)}
+                  onSelectCategory={handleSelectCategory}
                 />
 
                 {/* Big Brand Signature Pillars */}
@@ -378,57 +421,60 @@ export default function App() {
             openQrModal={() => setIsQrModalOpen(true)}
             adminUser={adminUser}
             onLogout={handleAdminLogout}
+            onBackToMenu={() => setActiveTab('menu')}
           />
         )}
       </main>
 
       {/* BIG UNMISSABLE "PLACE ORDER" FLOATING BAR */}
       {activeTab === 'menu' && cartCount > 0 && !isCartOpen && (
-        <div className="fixed bottom-3 sm:bottom-5 left-3 right-3 sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-2xl z-40 animate-in slide-in-from-bottom duration-300">
-          <div className="bg-gradient-to-r from-stone-950 via-red-950 to-stone-950 text-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-[0_10px_40px_rgba(0,0,0,0.7)] border-2 border-amber-400 flex items-center justify-between gap-2.5 sm:gap-4 backdrop-blur-md">
+        <div className="fixed bottom-2.5 sm:bottom-5 left-2 right-2 sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-2xl z-40 animate-in slide-in-from-bottom duration-300">
+          <div className="bg-gradient-to-r from-stone-950 via-red-950 to-stone-950 text-white rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 shadow-[0_10px_40px_rgba(0,0,0,0.7)] border-2 border-amber-400 flex items-center justify-between gap-2 sm:gap-4 backdrop-blur-md">
             
             {/* Left: Table Tag & Total Amount */}
             <div 
-              onClick={() => setIsCartOpen(true)}
-              className="flex items-center gap-2.5 sm:gap-4 cursor-pointer min-w-0 group"
+              onClick={handleOpenCart}
+              className="flex items-center gap-2 sm:gap-4 cursor-pointer min-w-0 group"
             >
-              <div className="relative">
-                <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 text-stone-950 font-black flex items-center justify-center shadow-md font-brand shrink-0">
-                  <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-stone-950" />
+              <div className="relative shrink-0">
+                <div className="w-10 h-10 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 text-stone-950 font-black flex items-center justify-center shadow-md font-brand shrink-0">
+                  <ShoppingBag className="w-4 h-4 sm:w-6 sm:h-6 text-stone-950" />
                 </div>
-                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] sm:text-xs font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-stone-900 shadow-sm animate-bounce">
+                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[10px] sm:text-xs font-black w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full flex items-center justify-center border-2 border-stone-900 shadow-sm animate-bounce">
                   {cartCount}
                 </span>
               </div>
               
               <div className="truncate">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 truncate">
                   <span className="text-[10px] sm:text-xs text-amber-300 font-extrabold uppercase tracking-wider font-brand">
-                    Table [{tableNumber}]
+                    {tableNumber}
                   </span>
-                  <span className="text-[10px] text-stone-400 hidden sm:inline">• {cartCount} {cartCount === 1 ? 'Item' : 'Items'}</span>
+                  <span className="text-[10px] text-stone-400 hidden xs:inline">• {cartCount} {cartCount === 1 ? 'Dish' : 'Dishes'}</span>
                 </div>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-xl sm:text-2xl font-black text-white tracking-tight font-sans">
+                <div className="flex items-baseline gap-1 truncate">
+                  <span className="text-base sm:text-2xl font-black text-white tracking-tight font-sans">
                     {formatPrice(cartTotal)}
                   </span>
-                  <span className="text-[10px] text-stone-400 hidden sm:inline">(Taxes incl.)</span>
+                  <span className="text-[9px] text-amber-300/90 font-bold underline cursor-pointer hover:text-white">
+                    Tray ✏️
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Right: BIG "PLACE ORDER" BUTTON */}
             <button
-              onClick={() => setIsCartOpen(true)}
-              className="group relative bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-brand font-black text-xs sm:text-base px-4 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl shadow-[0_4px_25px_rgba(212,175,55,0.5)] flex items-center gap-2 shrink-0 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-amber-200"
+              onClick={handleOpenCart}
+              className="group relative bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-brand font-black text-xs sm:text-base px-3.5 sm:px-7 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl shadow-[0_4px_25px_rgba(212,175,55,0.5)] flex items-center gap-1.5 sm:gap-2 shrink-0 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-amber-200"
             >
-              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-red-950 animate-bounce" />
+              <Bell className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-red-950 animate-bounce" />
               <div className="text-left leading-tight">
                 <span className="block uppercase tracking-wider font-black text-xs sm:text-base text-stone-950">
                   PLACE ORDER
                 </span>
-                <span className="text-[9px] sm:text-[10px] text-red-950 font-bold block opacity-90 sm:hidden">
-                  Tap to Review Tray →
+                <span className="text-[8px] sm:text-[10px] text-red-950 font-bold block opacity-90 sm:hidden">
+                  Review Tray →
                 </span>
               </div>
               <span className="hidden sm:inline font-black text-red-950 text-base">🔔</span>

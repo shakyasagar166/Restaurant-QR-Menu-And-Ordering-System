@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { X, Printer, ExternalLink, QrCode } from 'lucide-react';
+import { X, Printer, ExternalLink, QrCode, ArrowLeft } from 'lucide-react';
 
 export default function QrCodeModal({ isOpen, onClose }) {
   const [selectedTable, setSelectedTable] = useState('T-1');
@@ -24,16 +24,25 @@ export default function QrCodeModal({ isOpen, onClose }) {
 
       {/* Modal Dialog */}
       <div className="relative bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl z-10 border border-amber-200">
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-gray-100">
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-gray-100 gap-2">
           <div className="flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-red-700" />
-            <h3 className="text-lg font-black text-gray-900">
-              Dine-In Table QR Generator
-            </h3>
+            <button
+              onClick={onClose}
+              className="flex items-center gap-1 bg-stone-100 hover:bg-stone-200 text-stone-700 px-2.5 py-1 rounded-xl text-xs font-bold transition active:scale-95"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>← Back</span>
+            </button>
+            <div className="flex items-center gap-1.5 truncate">
+              <QrCode className="w-4 h-4 text-red-700 shrink-0" />
+              <h3 className="text-sm sm:text-base font-black text-gray-900 truncate">
+                Table QR Generator
+              </h3>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 transition"
+            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 transition shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
