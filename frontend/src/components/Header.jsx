@@ -234,19 +234,6 @@ export default function Header({
               )}
             </div>
           </div>
-
-          {/* Only shown if staff/manager is logged in */}
-          {adminUser && (
-            <div className="pt-1 flex justify-end">
-              <button
-                onClick={() => setActiveTab('admin')}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-red-800 to-red-950 text-white font-brand font-bold text-[10px] px-3 py-1 rounded-xl shadow-xs border border-red-700"
-              >
-                <Bell className={`w-3 h-3 ${isBellRinging || pendingOrdersCount > 0 ? 'animate-bell text-amber-300' : ''}`} />
-                <span>Kitchen View ({pendingOrdersCount})</span>
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </header>

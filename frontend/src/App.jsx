@@ -78,12 +78,30 @@ export default function App() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [pendingOrderData, setPendingOrderData] = useState(null);
 
-  // Read URL query params on mount (e.g. ?table=T-4)
+  // Read URL query params on mount (e.g. ?table=T-4, ?admin=true, #admin)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tbl = params.get('table');
     if (tbl) {
       setTableNumber(tbl.toUpperCase());
+    }
+
+    const isAdminUrl =
+      params.get('admin') === 'true' ||
+      params.get('view') === 'admin' ||
+      window.location.hash === '#admin' ||
+      window.location.pathname === '/admin';
+
+    if (isAdminUrl) {
+      const savedAuth = localStorage.getItem('bikaner_admin_auth');
+      if (savedAuth) {
+        try {
+          setAdminUser(JSON.parse(savedAuth));
+        } catch (e) {}
+        setActiveTab('admin');
+      } else {
+        setIsAdminLoginModalOpen(true);
+      }
     }
   }, []);
 
@@ -348,6 +366,43 @@ export default function App() {
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
   const pendingOrdersCount = orders.filter((o) => o.status === 'PENDING').length;
 
+  // If in Admin Management Mode, render 100% Standalone Admin POS & Kitchen Suite (Zero customer clutter)
+  if (activeTab === 'admin') {
+    return (
+      <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans select-none">
+        <AdminDashboard
+          orders={orders}
+          stats={stats}
+          menuItems={menuItems}
+          categories={categories}
+          onUpdateStatus={handleUpdateStatus}
+          onRefresh={loadOrdersData}
+          isBellMuted={isBellMuted}
+          setIsBellMuted={setIsBellMuted}
+          openQrModal={() => setIsQrModalOpen(true)}
+          adminUser={adminUser}
+          onLogout={handleAdminLogout}
+          onBackToMenu={() => {
+            try {
+              window.history.pushState({ screen: 'menu' }, '');
+              const url = new URL(window.location);
+              url.searchParams.delete('view');
+              url.searchParams.delete('admin');
+              window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+            } catch (e) {}
+            setActiveTab('menu');
+          }}
+        />
+
+        {/* Standalone Table QR Code Standee Modal */}
+        <QrCodeModal
+          isOpen={isQrModalOpen}
+          onClose={() => setIsQrModalOpen(false)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#faf7f2] flex flex-col text-stone-900 select-none">
       {/* Toast Alert for Incoming Order - Only shown for Admin Staff */}
@@ -386,62 +441,46 @@ export default function App() {
         adminUser={adminUser}
       />
 
-      {/* Main Content */}
+      {/* Customer Main Content */}
       <main className={`flex-1 ${cartCount > 0 ? 'pb-36 sm:pb-32' : 'pb-24'}`}>
-        {activeTab === 'menu' ? (
-          <div>
-            {/* Cinematic Hero Banner */}
-            <HeroBanner
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              selectedCategory={selectedCategory}
-              onSelectCategory={setSelectedCategory}
-            />
+        <div>
+          {/* Cinematic Hero Banner */}
+          <HeroBanner
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
 
-            {/* If user searched or clicked a category card: show CategoryDetail */}
-            {selectedCategory || searchQuery ? (
-              <CategoryDetail
-                category={selectedCategory || categories[0]}
+          {/* If user searched or clicked a category card: show CategoryDetail */}
+          {selectedCategory || searchQuery ? (
+            <CategoryDetail
+              category={selectedCategory || categories[0]}
+              categories={categories}
+              menuItems={menuItems}
+              cart={cart}
+              onAddToCart={handleAddToCart}
+              onRemoveFromCart={handleRemoveFromCart}
+              onDeleteDish={handleDeleteDish}
+              onUpdateItemInstructions={handleUpdateItemInstructions}
+              onBackToCategories={handleBackToCategories}
+              onSelectCategory={handleSelectCategory}
+              searchQuery={searchQuery}
+            />
+          ) : (
+            /* User explicitly requested: First show sections (Drink, Roti, Curries, etc.) */
+            <>
+              <CategoryCards
                 categories={categories}
                 menuItems={menuItems}
-                cart={cart}
-                onAddToCart={handleAddToCart}
-                onRemoveFromCart={handleRemoveFromCart}
-                onDeleteDish={handleDeleteDish}
-                onUpdateItemInstructions={handleUpdateItemInstructions}
-                onBackToCategories={handleBackToCategories}
                 onSelectCategory={handleSelectCategory}
-                searchQuery={searchQuery}
               />
-            ) : (
-              /* User explicitly requested: First show sections (Drink, Roti, Curries, etc.) */
-              <>
-                <CategoryCards
-                  categories={categories}
-                  menuItems={menuItems}
-                  onSelectCategory={handleSelectCategory}
-                />
 
-                {/* Big Brand Signature Pillars */}
-                <BrandAmenitiesStrip />
-              </>
-            )}
-          </div>
-        ) : (
-          /* Admin / Kitchen Monitor */
-          <AdminDashboard
-            orders={orders}
-            stats={stats}
-            onUpdateStatus={handleUpdateStatus}
-            onRefresh={loadOrdersData}
-            isBellMuted={isBellMuted}
-            setIsBellMuted={setIsBellMuted}
-            openQrModal={() => setIsQrModalOpen(true)}
-            adminUser={adminUser}
-            onLogout={handleAdminLogout}
-            onBackToMenu={() => setActiveTab('menu')}
-          />
-        )}
+              {/* Big Brand Signature Pillars */}
+              <BrandAmenitiesStrip />
+            </>
+          )}
+        </div>
       </main>
 
       {/* BIG UNMISSABLE "PLACE ORDER" FLOATING BAR */}
