@@ -13,6 +13,7 @@ import {
   User,
   Phone,
   UserCheck,
+  CheckCircle2,
   CreditCard,
   Banknote,
 } from 'lucide-react';
