@@ -296,6 +296,14 @@ export default function App() {
     setCart([]);
   };
 
+  const handleUpdateItemInstructions = (itemId, instructions) => {
+    setCart((prev) =>
+      prev.map((i) =>
+        i.id === itemId ? { ...i, specialInstructions: instructions } : i
+      )
+    );
+  };
+
   // Place Order
   const handlePlaceOrder = async (orderPayload) => {
     try {
@@ -400,6 +408,7 @@ export default function App() {
                 onAddToCart={handleAddToCart}
                 onRemoveFromCart={handleRemoveFromCart}
                 onDeleteDish={handleDeleteDish}
+                onUpdateItemInstructions={handleUpdateItemInstructions}
                 onBackToCategories={handleBackToCategories}
                 onSelectCategory={handleSelectCategory}
                 searchQuery={searchQuery}
@@ -512,6 +521,7 @@ export default function App() {
         onClearCart={handleClearCart}
         tableNumber={tableNumber}
         setTableNumber={setTableNumber}
+        onUpdateItemInstructions={handleUpdateItemInstructions}
         onProceedToPayment={(orderData) => {
           setPendingOrderData(orderData);
           setIsCartOpen(false);
@@ -564,8 +574,8 @@ export default function App() {
         />
       )}
 
-      {/* Grand Brand Footer */}
-      <footer className="bg-stone-950 text-stone-400 text-xs py-12 border-t-2 border-amber-500/30">
+      {/* Grand Brand Footer (With Bottom Clearance so Floating Bar Never Covers Content) */}
+      <footer className={`bg-stone-950 text-stone-400 text-xs py-12 ${cartCount > 0 ? 'pb-36 sm:pb-32' : 'pb-16'} border-t-2 border-amber-500/30`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-white/10 text-center md:text-left">
             <div>

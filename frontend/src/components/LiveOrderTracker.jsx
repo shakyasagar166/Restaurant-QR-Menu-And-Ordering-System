@@ -69,9 +69,19 @@ export default function LiveOrderTracker({ activeOrder, onClose }) {
           </div>
         )}
 
-        <p className="text-[11px] text-stone-400 truncate">
-          {activeOrder.items?.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
-        </p>
+        <div className="text-[11px] text-stone-300 max-h-16 overflow-y-auto no-scrollbar">
+          {activeOrder.items?.map((i, idx) => (
+            <span key={idx} className="mr-2 inline-block">
+              <span className="font-bold text-amber-300">{i.quantity}x</span> {i.name}
+              {i.specialInstructions && (
+                <span className="text-[10px] text-amber-200/90 ml-1 font-semibold bg-white/10 px-1 py-0.2 rounded">
+                  📝 {i.specialInstructions}
+                </span>
+              )}
+              {idx < (activeOrder.items?.length || 0) - 1 ? ',' : ''}
+            </span>
+          ))}
+        </div>
 
         {/* Payment Method Badge */}
         <div className="mt-2 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">

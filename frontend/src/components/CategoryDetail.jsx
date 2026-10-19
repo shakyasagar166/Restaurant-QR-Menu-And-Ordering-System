@@ -14,6 +14,7 @@ export default function CategoryDetail({
   onBackToCategories,
   onSelectCategory,
   searchQuery,
+  onUpdateItemInstructions,
 }) {
   const meta = CATEGORY_METADATA[category] || {
     code: '00',
@@ -38,11 +39,11 @@ export default function CategoryDetail({
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 w-full max-w-full overflow-hidden">
-      {/* Sticky High-Visibility Back Bar */}
-      <div className="sticky top-[108px] sm:top-[80px] z-30 bg-[#faf7f2]/95 backdrop-blur-md py-2 px-2 sm:px-3 mb-4 rounded-2xl border border-amber-300/80 shadow-md flex items-center justify-between gap-2">
+      {/* High-Visibility Back Bar (Clean non-sticky to prevent covering dishes on scroll) */}
+      <div className="bg-[#faf7f2] py-2 px-2 sm:px-3 mb-4 rounded-2xl border border-amber-300/80 shadow-xs flex items-center justify-between gap-2">
         <button
           onClick={onBackToCategories}
-          className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-brand font-black text-white bg-gradient-to-r from-red-800 to-red-950 hover:from-red-900 hover:to-black px-3.5 sm:px-4 py-2 rounded-xl shadow-xs border border-amber-400/50 transition active:scale-95 shrink-0"
+          className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-brand font-black text-white bg-gradient-to-r from-red-800 to-red-950 hover:from-red-900 hover:to-black px-3.5 sm:px-4 py-2 rounded-xl shadow-xs border border-amber-400/50 transition active:scale-95 shrink-0 cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4 text-amber-300" />
           <span>← Back to Categories (वापस जाएं)</span>
@@ -127,6 +128,7 @@ export default function CategoryDetail({
               onAddToCart={onAddToCart}
               onRemoveFromCart={onRemoveFromCart}
               onDeleteDish={onDeleteDish}
+              onUpdateItemInstructions={onUpdateItemInstructions}
             />
           ))}
         </div>

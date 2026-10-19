@@ -368,19 +368,29 @@ export default function AdminDashboard({
                       order.items.map((item, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between text-xs py-1.5 border-b border-stone-100 last:border-0"
+                          className="py-1.5 border-b border-stone-100 last:border-0"
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="font-black bg-amber-100 text-amber-950 w-5 h-5 rounded-lg flex items-center justify-center text-[11px] shrink-0 font-sans">
-                              {item.quantity}×
-                            </span>
-                            <span className="font-bold text-stone-800">
-                              {item.name}
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="font-black bg-amber-100 text-amber-950 w-5 h-5 rounded-lg flex items-center justify-center text-[11px] shrink-0 font-sans">
+                                {item.quantity}×
+                              </span>
+                              <span className="font-bold text-stone-800">
+                                {item.name}
+                              </span>
+                            </div>
+                            <span className="font-black text-stone-900 font-sans">
+                              {formatPrice(item.price * item.quantity)}
                             </span>
                           </div>
-                          <span className="font-black text-stone-900 font-sans">
-                            {formatPrice(item.price * item.quantity)}
-                          </span>
+
+                          {/* Custom Dish Note / Instructions (e.g. 2 chammach cheeni, kam teekha) */}
+                          {item.specialInstructions && (
+                            <div className="ml-7 mt-1 inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-950 bg-amber-100/90 px-2 py-0.5 rounded-lg border border-amber-300 shadow-2xs">
+                              <span className="text-amber-800">📝 Chef Note:</span>
+                              <span className="font-black">{item.specialInstructions}</span>
+                            </div>
+                          )}
                         </div>
                       ))}
                   </div>

@@ -605,16 +605,32 @@ export default function AiChatBot({
 
   return (
     <>
-      {/* Floating Launcher Button */}
+      {/* Floating Launcher Button (Compact on Mobile, Full Pill on Desktop to prevent covering dishes) */}
       {!isOpen && (
         <div
           className={`fixed ${
             isCartBarVisible ? 'bottom-24 sm:bottom-24' : 'bottom-6 sm:bottom-6'
-          } right-4 sm:right-6 z-30 transition-all duration-300`}
+          } right-3 sm:right-6 z-30 transition-all duration-300 pointer-events-auto`}
         >
+          {/* Mobile View: Compact luxury round badge (Takes only 50px space, never blocks dishes) */}
           <button
             onClick={handleOpenChat}
-            className="group relative flex items-center gap-2.5 bg-gradient-to-r from-stone-950 via-red-950 to-stone-900 text-white pl-4 pr-5 py-3 rounded-full shadow-2xl border-2 border-amber-400 hover:scale-105 active:scale-95 transition-all duration-300"
+            className="sm:hidden relative flex items-center justify-center w-12 h-12 bg-gradient-to-br from-stone-950 via-red-950 to-stone-900 text-white rounded-full shadow-2xl border-2 border-amber-400 active:scale-95 transition-all"
+            title="Ask Groq AI Assistant (दिश की जानकारी व रेट पूछें)"
+            aria-label="Ask Groq AI"
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 text-stone-950 flex items-center justify-center font-bold text-sm shadow-md animate-pulse">
+              <Bot className="w-4.5 h-4.5 text-stone-950" />
+            </div>
+            <span className="absolute -top-1 -right-1 bg-red-600 text-[8px] font-black text-amber-200 px-1 py-0.2 rounded-full border border-stone-950 shadow-xs">
+              AI 🎙️
+            </span>
+          </button>
+
+          {/* Desktop & Tablet View: Full Luxury Pill */}
+          <button
+            onClick={handleOpenChat}
+            className="hidden sm:flex group relative items-center gap-2.5 bg-gradient-to-r from-stone-950 via-red-950 to-stone-900 text-white pl-4 pr-5 py-3 rounded-full shadow-2xl border-2 border-amber-400 hover:scale-105 active:scale-95 transition-all duration-300"
           >
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 text-stone-950 flex items-center justify-center font-bold text-sm shadow-md animate-pulse">
               <Bot className="w-5 h-5 text-stone-950" />

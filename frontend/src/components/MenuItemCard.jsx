@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, Minus, Sparkles, Crown, Trash2 } from 'lucide-react';
 import { formatPrice } from '../utils/formatters';
+import DishCustomizationBox from './DishCustomizationBox';
 
 export default function MenuItemCard({
   item,
@@ -8,7 +9,9 @@ export default function MenuItemCard({
   onAddToCart,
   onRemoveFromCart,
   onDeleteDish,
+  onUpdateItemInstructions,
 }) {
+  const [isCustomizing, setIsCustomizing] = useState(false);
   const quantity = cartItem ? cartItem.quantity : 0;
 
   return (
@@ -128,6 +131,25 @@ export default function MenuItemCard({
           </div>
         )}
       </div>
+
+      {/* Quick Customization Box on Menu Card when added to Tray */}
+      {quantity > 0 && (
+        <div className="px-5 pb-3.5 bg-stone-50/50 border-t border-amber-100/60">
+          <DishCustomizationBox
+            item={{
+              ...item,
+              specialInstructions: cartItem?.specialInstructions || '',
+            }}
+            isExpanded={isCustomizing}
+            onToggleExpand={() => setIsCustomizing((prev) => !prev)}
+            onSaveInstructions={(instructions) => {
+              if (onUpdateItemInstructions) {
+                onUpdateItemInstructions(item.id, instructions);
+              }
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
