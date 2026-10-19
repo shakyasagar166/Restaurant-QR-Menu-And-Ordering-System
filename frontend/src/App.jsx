@@ -15,7 +15,7 @@ import AiChatBot from './components/AiChatBot';
 import { apiService } from './api/apiService';
 import { bellPlayer } from './utils/sound';
 import { formatPrice } from './utils/formatters';
-import { ShoppingBag, Bell, Sparkles, CheckCircle2, Crown } from 'lucide-react';
+import { ShoppingBag, Bell, Sparkles, CheckCircle2, Crown, Lock } from 'lucide-react';
 
 export default function App() {
   // Navigation & view states
@@ -342,8 +342,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#faf7f2] flex flex-col text-stone-900 select-none">
-      {/* Toast Alert for Incoming Order */}
-      {newOrderAlert && (
+      {/* Toast Alert for Incoming Order - Only shown for Admin Staff */}
+      {adminUser && newOrderAlert && (
         <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-red-900 to-stone-950 text-white px-5 py-3.5 rounded-3xl shadow-2xl flex items-center gap-3 border-2 border-amber-400 animate-bounce">
           <Bell className="w-5 h-5 text-amber-300 animate-bell" />
           <div>
@@ -375,6 +375,7 @@ export default function App() {
         pendingOrdersCount={pendingOrdersCount}
         isBellRinging={isBellRinging}
         openQrModal={() => setIsQrModalOpen(true)}
+        adminUser={adminUser}
       />
 
       {/* Main Content */}
@@ -592,7 +593,18 @@ export default function App() {
 
           <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-500 gap-2 text-center sm:text-left">
             <span>© 2026 Bikaner Express Foods Pvt. Ltd. All Rights Reserved.</span>
-            <span className="text-amber-400 font-brand">Aman International Mall • Roof Top Mainpuri</span>
+            <div className="flex items-center gap-3">
+              <span className="text-amber-400 font-brand">Aman International Mall • Roof Top Mainpuri</span>
+              <span className="text-stone-700 select-none">•</span>
+              <button
+                onClick={() => handleTabSwitch('admin')}
+                className="opacity-30 hover:opacity-100 text-stone-500 hover:text-amber-300 text-[10px] flex items-center gap-1 transition"
+                title="Management Portal"
+              >
+                <Lock className="w-2.5 h-2.5" />
+                <span>Staff</span>
+              </button>
+            </div>
           </div>
         </div>
       </footer>

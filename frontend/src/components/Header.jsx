@@ -10,6 +10,7 @@ import {
   Phone,
   ShieldCheck,
   Crown,
+  Lock,
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatters';
 
@@ -24,6 +25,7 @@ export default function Header({
   pendingOrdersCount,
   isBellRinging,
   openQrModal,
+  adminUser,
 }) {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-amber-300/70 shadow-sm transition-all w-full max-w-full overflow-hidden">
@@ -51,6 +53,17 @@ export default function Header({
             >
               <QrCode className="w-3 h-3 text-amber-400" />
               <span>Table QR</span>
+            </button>
+            {/* Subtle, tiny staff lock icon in the corner */}
+            <button
+              onClick={() => setActiveTab('admin')}
+              className="opacity-25 hover:opacity-100 p-1 text-stone-400 hover:text-amber-300 transition rounded flex items-center gap-0.5"
+              title="Staff Portal"
+            >
+              <Lock className="w-3 h-3" />
+              {adminUser && (
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+              )}
             </button>
           </div>
         </div>
@@ -121,39 +134,20 @@ export default function Header({
               <ChevronDown className="w-3.5 h-3.5 text-amber-800 pointer-events-none" />
             </div>
 
-            {/* Mode Selector Pill */}
-            <div className="bg-stone-100 p-1 rounded-2xl border border-stone-200 flex items-center text-xs font-bold shadow-inner">
-              <button
-                onClick={() => setActiveTab('menu')}
-                className={`px-3.5 py-1.5 rounded-xl transition duration-200 font-brand ${
-                  activeTab === 'menu'
-                    ? 'bg-white text-stone-900 shadow-sm border border-stone-200'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                Guest Menu
-              </button>
+            {/* If staff is logged in, show discreet kitchen switch button */}
+            {adminUser && (
               <button
                 onClick={() => setActiveTab('admin')}
-                className={`px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 transition duration-200 relative font-brand ${
-                  activeTab === 'admin'
-                    ? 'bg-gradient-to-r from-red-800 to-red-900 text-white shadow-sm border border-red-700'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-red-800 to-red-950 text-white font-brand font-black text-xs px-3.5 py-2 rounded-2xl border border-red-700 shadow-sm transition active:scale-95"
               >
                 <Bell
                   className={`w-3.5 h-3.5 ${
                     isBellRinging || pendingOrdersCount > 0 ? 'animate-bell text-amber-300' : ''
                   }`}
                 />
-                <span>Kitchen Bell</span>
-                {pendingOrdersCount > 0 && (
-                  <span className="bg-amber-400 text-stone-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
-                    {pendingOrdersCount}
-                  </span>
-                )}
+                <span>Kitchen ({pendingOrdersCount})</span>
               </button>
-            </div>
+            )}
 
             {/* Cart Button */}
             {activeTab === 'menu' && (
@@ -241,39 +235,18 @@ export default function Header({
             </div>
           </div>
 
-          {/* Bottom Row on Mobile: Full-Width Segmented Tab Switcher */}
-          <div className="bg-stone-100 p-0.5 rounded-xl border border-stone-200 flex items-center text-xs font-bold shadow-inner">
-            <button
-              onClick={() => setActiveTab('menu')}
-              className={`flex-1 py-1.5 text-center rounded-lg transition font-brand text-xs ${
-                activeTab === 'menu'
-                  ? 'bg-white text-stone-950 shadow-sm border border-stone-200 font-black'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              🍽️ Dining Menu
-            </button>
-            <button
-              onClick={() => setActiveTab('admin')}
-              className={`flex-1 py-1.5 flex items-center justify-center gap-1.5 rounded-lg transition font-brand text-xs ${
-                activeTab === 'admin'
-                  ? 'bg-gradient-to-r from-red-800 to-red-950 text-white shadow-sm font-black'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <Bell
-                className={`w-3 h-3 ${
-                  isBellRinging || pendingOrdersCount > 0 ? 'animate-bell text-amber-300' : ''
-                }`}
-              />
-              <span>Kitchen Bell</span>
-              {pendingOrdersCount > 0 && (
-                <span className="bg-amber-400 text-stone-950 text-[9px] font-black px-1.5 py-0.2 rounded-full">
-                  {pendingOrdersCount}
-                </span>
-              )}
-            </button>
-          </div>
+          {/* Only shown if staff/manager is logged in */}
+          {adminUser && (
+            <div className="pt-1 flex justify-end">
+              <button
+                onClick={() => setActiveTab('admin')}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-red-800 to-red-950 text-white font-brand font-bold text-[10px] px-3 py-1 rounded-xl shadow-xs border border-red-700"
+              >
+                <Bell className={`w-3 h-3 ${isBellRinging || pendingOrdersCount > 0 ? 'animate-bell text-amber-300' : ''}`} />
+                <span>Kitchen View ({pendingOrdersCount})</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
