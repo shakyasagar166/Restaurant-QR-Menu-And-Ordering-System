@@ -33,6 +33,8 @@ export default function AiChatBot({
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+  const currentAudioRef = useRef(null);
+
   const initialGreeting = `Namaste! 🙏 Main **Bikaner Express AI Assistant** hoon.\n\nMain aapki kya help kar sakti hoon? 😊\n• Kisi bhi dish ki **price (rate)** jaanni hai?\n• Ya koi dish abhi hamare restaurant me **available hai ya nahi** yeh jaanna hai?\n• Ya aapke **Table [${tableNumber || 'T-1'}]** ke order ka **live status** dekhna hai?`;
 
   const [messages, setMessages] = useState([
@@ -40,6 +42,7 @@ export default function AiChatBot({
       id: 1,
       sender: 'bot',
       text: initialGreeting,
+      audioUrl: '/audio/ai-greeting.mp3',
       items: [],
       poweredBy: 'Groq Cloud AI',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -60,7 +63,7 @@ export default function AiChatBot({
     }
   }, [messages, isOpen]);
 
-  // Load voices for Speech Synthesis
+  // Load natural voices for Speech Synthesis
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.getVoices();
@@ -76,17 +79,75 @@ export default function AiChatBot({
     }
   }, []);
 
+  // Stop any ongoing voice (both audio file & speech synthesis)
+  const stopSpeaking = () => {
+    if (currentAudioRef.current) {
+      try {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.currentTime = 0;
+      } catch (e) {}
+      currentAudioRef.current = null;
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {}
+    }
+    setIsSpeaking(false);
+  };
+
+  // Play studio-recorded neural human voice audio file
+  const playAudioFile = (url) => {
+    if (!isVoiceEnabled) return;
+    stopSpeaking();
+    try {
+      const audio = new Audio(url);
+      currentAudioRef.current = audio;
+      setIsSpeaking(true);
+      audio.onended = () => {
+        setIsSpeaking(false);
+        currentAudioRef.current = null;
+      };
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        currentAudioRef.current = null;
+      };
+      audio.play().catch((err) => {
+        console.warn('Audio play error:', err);
+        setIsSpeaking(false);
+      });
+    } catch (err) {
+      setIsSpeaking(false);
+    }
+  };
+
+  // Natural human Speech Synthesis for custom/dynamic answers
   const speakText = (text) => {
-    if (!isVoiceEnabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (!isVoiceEnabled || typeof window === 'undefined') return;
+
+    // Check if we have a pre-recorded neural audio for this message
+    if (text.includes('kya help kar sakti hoon')) {
+      playAudioFile('/audio/ai-greeting.mp3');
+      return;
+    }
+    if (text.includes('100% Pure Shuddh Shakahari')) {
+      playAudioFile('/audio/ai-pure-veg.mp3');
+      return;
+    }
+    if (text.includes('Signature Delights')) {
+      playAudioFile('/audio/ai-special.mp3');
+      return;
+    }
+
+    if (!('speechSynthesis' in window)) return;
+    stopSpeaking();
 
     try {
-      window.speechSynthesis.cancel();
-
-      // Clean text for speech
+      // Clean and format text for natural human pronunciation
       const clean = text
         .replace(/\*\*(.*?)\*\*/g, '$1')
         .replace(/[•*#_-]/g, ' ')
-        .replace(/₹/g, 'rupees ')
+        .replace(/₹/g, ' रुपए ')
         .replace(/\s+/g, ' ')
         .trim();
 
@@ -94,19 +155,42 @@ export default function AiChatBot({
 
       const utterance = new SpeechSynthesisUtterance(clean);
       const voices = window.speechSynthesis.getVoices();
-      const preferredVoice = voices.find(
-        (v) =>
-          v.lang.startsWith('hi') ||
-          v.lang.includes('IN') ||
-          v.name.toLowerCase().includes('hindi') ||
-          v.name.toLowerCase().includes('india')
-      );
 
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
+      // Prioritize modern Neural & Natural human voices
+      const humanVoice =
+        voices.find(
+          (v) =>
+            (v.name.includes('Natural') ||
+              v.name.includes('Neural') ||
+              v.name.includes('Google') ||
+              v.name.includes('Online')) &&
+            (v.lang.startsWith('hi') ||
+              v.lang.includes('IN') ||
+              v.name.toLowerCase().includes('hindi') ||
+              v.name.toLowerCase().includes('india'))
+        ) ||
+        voices.find(
+          (v) =>
+            v.lang.startsWith('hi') ||
+            v.lang.includes('IN') ||
+            v.name.toLowerCase().includes('swara') ||
+            v.name.toLowerCase().includes('neerja') ||
+            v.name.toLowerCase().includes('hindi')
+        ) ||
+        voices.find(
+          (v) =>
+            v.name.includes('Natural') ||
+            v.name.includes('Neural') ||
+            v.name.includes('Google')
+        );
+
+      if (humanVoice) {
+        utterance.voice = humanVoice;
       }
-      utterance.rate = 1.0;
-      utterance.pitch = 1.05;
+
+      // Natural conversational pacing (human speed & warm pitch)
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
 
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
@@ -119,20 +203,12 @@ export default function AiChatBot({
     }
   };
 
-  const stopSpeaking = () => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    setIsSpeaking(false);
-  };
-
   const handleOpenChat = () => {
     setIsOpen(true);
-    const spokenGreeting =
-      'Namaste! Main Bikaner Express AI hoon. Main aapki kya help kar sakti hoon? Koi dish ki price jaanni hai, ya wo abhi hamare restaurant me available hai ya nahi?';
+    // Play ultra-realistic studio neural voice greeting
     setTimeout(() => {
-      speakText(spokenGreeting);
-    }, 300);
+      playAudioFile('/audio/ai-greeting.mp3');
+    }, 250);
   };
 
   const handleCloseChat = () => {
@@ -188,6 +264,7 @@ export default function AiChatBot({
     const lower = query.toLowerCase();
     let reply = '';
     let suggestedItems = [];
+    let audioUrl = null;
 
     // Non-veg check
     if (
@@ -202,7 +279,8 @@ export default function AiChatBot({
       suggestedItems = (menuItems || []).filter(
         (m) => m.name.includes('Chaap') || m.name.includes('Paneer Tikka')
       );
-      return { reply, items: suggestedItems };
+      audioUrl = '/audio/ai-pure-veg.mp3';
+      return { reply, items: suggestedItems, audioUrl };
     }
 
     // Alcohol check
@@ -298,7 +376,8 @@ export default function AiChatBot({
       suggestedItems = (menuItems || [])
         .filter((m) => m.tag === 'Bestseller' || m.tag === 'Chef Special')
         .slice(0, 3);
-      return { reply, items: suggestedItems };
+      audioUrl = '/audio/ai-special.mp3';
+      return { reply, items: suggestedItems, audioUrl };
     }
 
     reply = `Namaste! Bikaner Express rooftop me aapka swagat hai. Main aapki kya help kar sakti hoon? Kisi bhi dish ka price (rate), availability, ya Table [${tableNumber}] ke order status ke baare me pooch sakte hain!`;
@@ -330,6 +409,7 @@ export default function AiChatBot({
 
       let botReply = '';
       let botItems = [];
+      let botAudioUrl = null;
       let poweredBy = backendRes?.poweredBy || 'Groq Cloud';
 
       if (backendRes && backendRes.reply) {
@@ -339,6 +419,7 @@ export default function AiChatBot({
         const nlp = clientNlpAnswer(text.trim());
         botReply = nlp.reply;
         botItems = nlp.items || [];
+        botAudioUrl = nlp.audioUrl || null;
         poweredBy = 'Bikaner AI Engine';
       }
 
@@ -349,13 +430,18 @@ export default function AiChatBot({
           sender: 'bot',
           text: botReply,
           items: botItems,
+          audioUrl: botAudioUrl,
           poweredBy,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
 
-      if (isVoiceEnabled && botReply) {
-        speakText(botReply);
+      if (isVoiceEnabled) {
+        if (botAudioUrl) {
+          playAudioFile(botAudioUrl);
+        } else if (botReply) {
+          speakText(botReply);
+        }
       }
     } catch (err) {
       const nlp = clientNlpAnswer(text.trim());
@@ -366,13 +452,18 @@ export default function AiChatBot({
           sender: 'bot',
           text: nlp.reply,
           items: nlp.items || [],
+          audioUrl: nlp.audioUrl || null,
           poweredBy: 'Bikaner AI Engine',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
 
-      if (isVoiceEnabled && nlp.reply) {
-        speakText(nlp.reply);
+      if (isVoiceEnabled) {
+        if (nlp.audioUrl) {
+          playAudioFile(nlp.audioUrl);
+        } else if (nlp.reply) {
+          speakText(nlp.reply);
+        }
       }
     } finally {
       setIsTyping(false);
@@ -492,7 +583,7 @@ export default function AiChatBot({
                       setIsVoiceEnabled(false);
                     } else {
                       setIsVoiceEnabled(true);
-                      speakText('Awaaz chalu kar di gayi hai.');
+                      playAudioFile('/audio/ai-greeting.mp3');
                     }
                   }}
                   className={`w-7 h-7 rounded-lg flex items-center justify-center transition ${
@@ -500,7 +591,7 @@ export default function AiChatBot({
                       ? 'bg-amber-400 text-stone-950 hover:bg-amber-500'
                       : 'bg-white/10 hover:bg-white/20 text-stone-400'
                   }`}
-                  title={isVoiceEnabled ? 'Voice Voice Chalu Hai (Mute Karein)' : 'Voice Band Hai (Unmute Karein)'}
+                  title={isVoiceEnabled ? 'Voice Chalu Hai (Mute Karein)' : 'Voice Band Hai (Unmute Karein)'}
                 >
                   {isVoiceEnabled ? (
                     <Volume2 className="w-3.5 h-3.5" />
@@ -530,7 +621,7 @@ export default function AiChatBot({
               <div className="mt-2 flex items-center justify-between bg-amber-400/20 border border-amber-400/40 rounded-xl px-2.5 py-1 text-[11px] text-amber-200 animate-pulse">
                 <span className="flex items-center gap-1.5">
                   <Volume2 className="w-3.5 h-3.5 text-amber-300 animate-bounce" />
-                  Speaking: &quot;Main aapki kya help kar sakti hoon...&quot;
+                  Natural Voice Speaking...
                 </span>
                 <button
                   onClick={stopSpeaking}
@@ -646,7 +737,13 @@ export default function AiChatBot({
                         </div>
                       )}
                       <button
-                        onClick={() => speakText(msg.text)}
+                        onClick={() => {
+                          if (msg.audioUrl) {
+                            playAudioFile(msg.audioUrl);
+                          } else {
+                            speakText(msg.text);
+                          }
+                        }}
                         className="flex items-center gap-1 text-[10px] text-amber-800 hover:text-amber-950 font-bold bg-amber-50 hover:bg-amber-100 px-2 py-0.5 rounded-md transition"
                         title="Sunne ke liye click karein"
                       >
