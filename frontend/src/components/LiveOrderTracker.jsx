@@ -1,6 +1,6 @@
 import React from 'react';
 import { CheckCircle2, Clock, ChefHat, UtensilsCrossed, X, Sparkles, ArrowLeft } from 'lucide-react';
-import { formatPrice } from '../utils/formatters';
+import { formatPrice, formatTime, getTimeAgo } from '../utils/formatters';
 
 export default function LiveOrderTracker({ activeOrder, onClose }) {
   if (!activeOrder) return null;
@@ -56,6 +56,19 @@ export default function LiveOrderTracker({ activeOrder, onClose }) {
             {formatPrice(activeOrder.totalAmount)}
           </span>
         </div>
+
+        {activeOrder.createdAt && (
+          <div className="flex justify-between items-center text-[10px] text-stone-400 mb-1.5 pb-1 border-b border-white/5 font-mono">
+            <span className="flex items-center gap-1 text-stone-300">
+              <Clock className="w-3 h-3 text-amber-400" />
+              <span>{formatTime(activeOrder.createdAt)}</span>
+            </span>
+            <span className="font-bold text-amber-300">
+              {getTimeAgo(activeOrder.createdAt)}
+            </span>
+          </div>
+        )}
+
         <p className="text-[11px] text-stone-400 truncate">
           {activeOrder.items?.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
         </p>

@@ -15,6 +15,9 @@ import {
   Volume2,
   VolumeX,
   ArrowLeft,
+  Minus,
+  ShoppingBag,
+  CheckCircle2,
 } from 'lucide-react';
 import { apiService } from '../api/apiService';
 import { formatPrice } from '../utils/formatters';
@@ -25,6 +28,9 @@ export default function AiChatBot({
   categories = [],
   activeCustomerOrder,
   onAddToCart,
+  onRemoveFromCart,
+  cart = [],
+  onOpenCart,
   isCartBarVisible = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,6 +69,30 @@ export default function AiChatBot({
       checkGroqStatus();
     }
   }, [messages, isOpen]);
+
+  // Populate initial greeting with signature dishes so diner can + Add directly
+  useEffect(() => {
+    if (menuItems && menuItems.length > 0) {
+      const topDishes = menuItems
+        .filter(
+          (m) =>
+            m.name.includes('Paneer Butter Masala') ||
+            m.name.includes('Dal Makhani') ||
+            m.name.includes('Special Thali') ||
+            m.tag === 'Bestseller'
+        )
+        .slice(0, 3);
+
+      setMessages((prev) => {
+        if (prev.length > 0 && prev[0].id === 1 && (!prev[0].items || prev[0].items.length === 0)) {
+          const updated = [...prev];
+          updated[0] = { ...updated[0], items: topDishes };
+          return updated;
+        }
+        return prev;
+      });
+    }
+  }, [menuItems]);
 
   // Load natural voices for Speech Synthesis
   useEffect(() => {
@@ -424,13 +454,44 @@ export default function AiChatBot({
         poweredBy = 'Bikaner AI Engine';
       }
 
+      // Automatic Dish Recognition across entire menu
+      const scanCombined = `${text} ${botReply}`.toLowerCase();
+      const detectedMenuDishes = [];
+      if (menuItems && menuItems.length > 0) {
+        for (const dish of menuItems) {
+          if (!dish || !dish.name) continue;
+          const dishLower = dish.name.toLowerCase();
+          if (scanCombined.includes(dishLower)) {
+            if (!detectedMenuDishes.some((d) => d.id === dish.id)) {
+              detectedMenuDishes.push(dish);
+            }
+          }
+        }
+      }
+
+      // Direct Natural Language "Add to Cart / Order" recognition
+      const isAddCommand = /(add|order|daal do|dal do|jod do|shamil|lao|chahiye|mangwa)/i.test(text);
+      if (isAddCommand && detectedMenuDishes.length > 0 && onAddToCart) {
+        const dishToAutoAdd = detectedMenuDishes[0];
+        onAddToCart(dishToAutoAdd);
+        botReply = `${botReply}\n\n✨ **${dishToAutoAdd.name}** aapki Table Tray me **ADD** ho gayi hai! Neeche button par click karke tray dekhein.`;
+      }
+
+      // Merge backend items and detected items
+      const finalItems = [...(botItems || [])];
+      for (const d of detectedMenuDishes) {
+        if (!finalItems.some((i) => i.id === d.id)) {
+          finalItems.push(d);
+        }
+      }
+
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 1,
           sender: 'bot',
           text: botReply,
-          items: botItems,
+          items: finalItems,
           audioUrl: botAudioUrl,
           poweredBy,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -446,13 +507,42 @@ export default function AiChatBot({
       }
     } catch (err) {
       const nlp = clientNlpAnswer(text.trim());
+      let catchReply = nlp.reply;
+      const scanCombined = `${text} ${catchReply}`.toLowerCase();
+      const detectedMenuDishes = [];
+      if (menuItems && menuItems.length > 0) {
+        for (const dish of menuItems) {
+          if (!dish || !dish.name) continue;
+          const dishLower = dish.name.toLowerCase();
+          if (scanCombined.includes(dishLower)) {
+            if (!detectedMenuDishes.some((d) => d.id === dish.id)) {
+              detectedMenuDishes.push(dish);
+            }
+          }
+        }
+      }
+
+      const isAddCommand = /(add|order|daal do|dal do|jod do|shamil|lao|chahiye|mangwa)/i.test(text);
+      if (isAddCommand && detectedMenuDishes.length > 0 && onAddToCart) {
+        const dishToAutoAdd = detectedMenuDishes[0];
+        onAddToCart(dishToAutoAdd);
+        catchReply = `${catchReply}\n\n✨ **${dishToAutoAdd.name}** aapki Table Tray me **ADD** ho gayi hai!`;
+      }
+
+      const finalCatchItems = [...(nlp.items || [])];
+      for (const d of detectedMenuDishes) {
+        if (!finalCatchItems.some((i) => i.id === d.id)) {
+          finalCatchItems.push(d);
+        }
+      }
+
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 1,
           sender: 'bot',
-          text: nlp.reply,
-          items: nlp.items || [],
+          text: catchReply,
+          items: finalCatchItems,
           audioUrl: nlp.audioUrl || null,
           poweredBy: 'Bikaner AI Engine',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -462,8 +552,8 @@ export default function AiChatBot({
       if (isVoiceEnabled) {
         if (nlp.audioUrl) {
           playAudioFile(nlp.audioUrl);
-        } else if (nlp.reply) {
-          speakText(nlp.reply);
+        } else if (catchReply) {
+          speakText(catchReply);
         }
       }
     } finally {
@@ -699,39 +789,101 @@ export default function AiChatBot({
                   {/* Interactive dish cards in AI replies */}
                   {msg.items && msg.items.length > 0 && (
                     <div className="mt-3 pt-2.5 border-t border-amber-100 space-y-2">
-                      <span className="text-[10px] font-brand font-black uppercase text-amber-800 tracking-wider block">
-                        Quick Add to Order Tray:
-                      </span>
-                      {msg.items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-2 flex items-center justify-between gap-2"
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <img
-                              src={item.imageUrl}
-                              alt={item.name}
-                              className="w-9 h-9 rounded-lg object-cover shrink-0"
-                            />
-                            <div className="truncate">
-                              <span className="font-bold text-stone-900 block truncate text-[11px]">
-                                {item.name}
-                              </span>
-                              <span className="text-amber-900 font-extrabold text-[10px]">
-                                {formatPrice(item.price)}
-                              </span>
-                            </div>
-                          </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-brand font-black uppercase text-amber-900 tracking-wider flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-amber-600" />
+                          <span>Quick Add to Table Tray:</span>
+                        </span>
+                        <span className="text-[9px] text-stone-500 font-medium">
+                          1-Tap Order
+                        </span>
+                      </div>
+                      {msg.items.map((item) => {
+                        const inCart = (cart || []).find((c) => c.id === item.id);
+                        const qty = inCart ? inCart.quantity : 0;
 
-                          <button
-                            onClick={() => onAddToCart(item)}
-                            className="bg-gradient-to-r from-red-800 to-red-900 hover:from-red-900 hover:to-black text-white font-brand font-black text-[10px] px-2.5 py-1 rounded-lg shrink-0 flex items-center gap-1 shadow-xs transition"
+                        return (
+                          <div
+                            key={item.id}
+                            className="bg-amber-50/80 border border-amber-200/90 rounded-2xl p-2.5 flex items-center justify-between gap-2.5 shadow-2xs hover:border-amber-400 transition"
                           >
-                            <Plus className="w-3 h-3 text-amber-300" />
-                            <span>Add</span>
-                          </button>
-                        </div>
-                      ))}
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <img
+                                src={item.imageUrl}
+                                alt={item.name}
+                                className="w-10 h-10 rounded-xl object-cover shrink-0 border border-amber-200 shadow-2xs"
+                              />
+                              <div className="truncate">
+                                <span className="font-brand font-black text-stone-900 block truncate text-xs">
+                                  {item.name}
+                                </span>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className="text-red-700 font-black text-xs font-sans">
+                                    {formatPrice(item.price)}
+                                  </span>
+                                  {item.category && (
+                                    <span className="text-[9px] text-stone-500 bg-white/80 px-1.5 py-0.2 rounded border border-stone-200">
+                                      {item.category}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Quantity Controls / Add Button */}
+                            {qty > 0 ? (
+                              <div className="flex items-center gap-1 bg-emerald-700 text-white rounded-xl p-0.5 shadow-xs shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => onRemoveFromCart && onRemoveFromCart(item.id)}
+                                  className="w-6 h-6 flex items-center justify-center hover:bg-emerald-800 rounded-lg text-white font-black transition active:scale-90 cursor-pointer"
+                                  title="Kam karein"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="font-brand font-black text-xs px-1 text-white select-none">
+                                  {qty}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => onAddToCart(item)}
+                                  className="w-6 h-6 flex items-center justify-center hover:bg-emerald-800 rounded-lg text-white font-black transition active:scale-90 cursor-pointer"
+                                  title="Badhayein"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => onAddToCart(item)}
+                                className="bg-gradient-to-r from-red-800 via-red-900 to-stone-950 hover:from-red-900 hover:to-black text-white font-brand font-black text-[11px] px-3 py-1.5 rounded-xl shrink-0 flex items-center gap-1 shadow-md transition active:scale-95 border border-amber-400 cursor-pointer"
+                              >
+                                <Plus className="w-3.5 h-3.5 text-amber-300" />
+                                <span>+ Add</span>
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {/* Shortcut to View Cart / Tray if anything added */}
+                      {cart && cart.length > 0 && onOpenCart && (
+                        <button
+                          type="button"
+                          onClick={onOpenCart}
+                          className="mt-2.5 w-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-brand font-black text-xs py-2 px-3 rounded-xl flex items-center justify-between shadow-md transition active:scale-98 cursor-pointer border border-amber-300"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <ShoppingBag className="w-3.5 h-3.5 text-stone-950" />
+                            <span>Table Tray ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
+                          </span>
+                          <span className="text-stone-950 font-bold flex items-center gap-1">
+                            <span className="text-red-950 font-black">₹{cart.reduce((s, i) => s + i.price * i.quantity, 0)}</span>
+                            <span>• View Tray ➔</span>
+                          </span>
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -775,6 +927,30 @@ export default function AiChatBot({
             )}
             <div ref={messagesEndRef} />
           </div>
+
+          {/* Pinned Quick Tray Bar if items are added */}
+          {cart && cart.length > 0 && onOpenCart && (
+            <div className="px-3.5 py-2 bg-gradient-to-r from-stone-950 via-red-950 to-stone-900 border-t border-amber-400/40 flex items-center justify-between text-white font-brand shrink-0">
+              <div className="flex items-center gap-2 text-xs font-black">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <ShoppingBag className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-stone-200">
+                  {cart.reduce((s, i) => s + i.quantity, 0)} Items in Tray
+                </span>
+                <span className="text-amber-300 font-mono font-bold text-xs bg-white/10 px-1.5 py-0.2 rounded">
+                  ₹{cart.reduce((s, i) => s + i.price * i.quantity, 0)}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={onOpenCart}
+                className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 font-brand font-black text-[11px] px-3 py-1 rounded-xl shadow-xs transition active:scale-95 flex items-center gap-1 cursor-pointer"
+              >
+                <span>View Tray &amp; Order</span>
+                <span>➔</span>
+              </button>
+            </div>
+          )}
 
           {/* Input Box */}
           <div className="p-3 border-t border-stone-200 bg-white">

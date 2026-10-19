@@ -528,6 +528,9 @@ export default function App() {
           categories={categories}
           activeCustomerOrder={activeCustomerOrder}
           onAddToCart={handleAddToCart}
+          onRemoveFromCart={handleRemoveFromCart}
+          cart={cart}
+          onOpenCart={handleOpenCart}
           isCartBarVisible={cartCount > 0 && !isCartOpen}
         />
       )}

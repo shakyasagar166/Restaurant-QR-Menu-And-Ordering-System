@@ -3,24 +3,57 @@ export function formatPrice(amount) {
   return `₹${Math.round(amount)}`;
 }
 
+function parseDateRobust(isoString) {
+  if (!isoString) return null;
+  if (isoString instanceof Date) return isoString;
+  const str = String(isoString).trim();
+
+  // If already has Z or offset (+05:30 / -05:00)
+  if (str.includes('Z') || /[+-]\d{2}:?\d{2}$/.test(str)) {
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  // If string is LocalDateTime from Spring Boot like "2026-10-20T02:40:00"
+  // Append Indian Standard Time offset (+05:30) for 100% precision
+  const d = new Date(`${str}+05:30`);
+  if (!isNaN(d.getTime())) return d;
+
+  const fallback = new Date(str);
+  return isNaN(fallback.getTime()) ? null : fallback;
+}
+
 export function formatTime(isoString) {
-  if (!isoString) return '';
   try {
-    const date = new Date(isoString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const date = parseDateRobust(isoString);
+    if (!date) return '';
+    return date.toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
   } catch {
     return '';
   }
 }
 
 export function getTimeAgo(isoString) {
-  if (!isoString) return '';
   try {
-    const diff = (Date.now() - new Date(isoString).getTime()) / 1000;
-    if (diff < 30) return 'Just now';
-    if (diff < 60) return `${Math.floor(diff)}s ago`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    return `${Math.floor(diff / 3600)}h ago`;
+    const date = parseDateRobust(isoString);
+    if (!date) return '';
+    const now = Date.now();
+    const timeMs = date.getTime();
+    const diffSec = Math.floor((now - timeMs) / 1000);
+
+    if (diffSec < 0 || diffSec < 20) return 'Just now (अभी)';
+    if (diffSec < 60) return `${diffSec}s ago`;
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
   } catch {
     return '';
   }

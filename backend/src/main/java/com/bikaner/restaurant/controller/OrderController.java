@@ -11,6 +11,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +38,8 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<Order> placeOrder(@RequestBody Order order) {
         order.setStatus(OrderStatus.PENDING);
-        order.setCreatedAt(LocalDateTime.now());
-        order.setUpdatedAt(LocalDateTime.now());
+        order.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+        order.setUpdatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
 
         if (order.getItems() != null) {
             order.getItems().forEach(item -> item.setOrder(order));
@@ -115,7 +116,7 @@ public class OrderController {
         return orderRepository.findById(id).map(order -> {
             OrderStatus newStatus = OrderStatus.valueOf(newStatusStr.toUpperCase());
             order.setStatus(newStatus);
-            order.setUpdatedAt(LocalDateTime.now());
+            order.setUpdatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
             Order updated = orderRepository.save(order);
 
             // Asynchronous broadcast of status change
@@ -142,7 +143,7 @@ public class OrderController {
             if (paymentDetails.containsKey("paymentId")) {
                 order.setPaymentId(paymentDetails.get("paymentId"));
             }
-            order.setUpdatedAt(LocalDateTime.now());
+            order.setUpdatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
             Order updated = orderRepository.save(order);
 
             CompletableFuture.runAsync(() -> {
