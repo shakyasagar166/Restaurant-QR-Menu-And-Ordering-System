@@ -10,6 +10,7 @@ import AdminDashboard from './components/AdminDashboard';
 import AdminLoginModal from './components/AdminLoginModal';
 import LiveOrderTracker from './components/LiveOrderTracker';
 import QrCodeModal from './components/QrCodeModal';
+import PaymentModal from './components/PaymentModal';
 import AiChatBot from './components/AiChatBot';
 import { apiService } from './api/apiService';
 import { bellPlayer } from './utils/sound';
@@ -73,6 +74,10 @@ export default function App() {
   // QR Modal
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
 
+  // Payment Selection Modal (Standalone top-level, locks background)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [pendingOrderData, setPendingOrderData] = useState(null);
+
   // Read URL query params on mount (e.g. ?table=T-4)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -85,7 +90,10 @@ export default function App() {
   // Mobile phone hardware & browser Back Button integration
   useEffect(() => {
     const handlePopState = () => {
-      if (isCartOpen) {
+      if (isPaymentModalOpen) {
+        setIsPaymentModalOpen(false);
+        setIsCartOpen(true);
+      } else if (isCartOpen) {
         setIsCartOpen(false);
       } else if (isQrModalOpen) {
         setIsQrModalOpen(false);
@@ -101,7 +109,7 @@ export default function App() {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [isCartOpen, isQrModalOpen, isAdminLoginModalOpen, selectedCategory, searchQuery, activeTab]);
+  }, [isPaymentModalOpen, isCartOpen, isQrModalOpen, isAdminLoginModalOpen, selectedCategory, searchQuery, activeTab]);
 
   // Persist cart
   useEffect(() => {
@@ -503,7 +511,27 @@ export default function App() {
         onClearCart={handleClearCart}
         tableNumber={tableNumber}
         setTableNumber={setTableNumber}
+        onProceedToPayment={(orderData) => {
+          setPendingOrderData(orderData);
+          setIsCartOpen(false);
+          setIsPaymentModalOpen(true);
+        }}
         onPlaceOrder={handlePlaceOrder}
+        isPlacingOrder={isPlacingOrder}
+      />
+
+      {/* Standalone Root-Level Payment Modal (Clean z-[100] presentation, zero background scroll or bleed-through) */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+          setIsCartOpen(true);
+        }}
+        orderData={pendingOrderData}
+        onConfirmOrder={(finalOrderPayload) => {
+          setIsPaymentModalOpen(false);
+          handlePlaceOrder(finalOrderPayload);
+        }}
         isPlacingOrder={isPlacingOrder}
       />
 

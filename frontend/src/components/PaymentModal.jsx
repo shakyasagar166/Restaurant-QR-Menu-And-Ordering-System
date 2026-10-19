@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CreditCard,
   Banknote,
@@ -25,6 +25,21 @@ export default function PaymentModal({
   const [selectedMethod, setSelectedMethod] = useState('ONLINE'); // 'ONLINE' or 'CASH'
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState('');
+
+  // Lock background body scroll completely when payment modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      const originalTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.touchAction = originalTouchAction;
+      };
+    }
+  }, [isOpen]);
 
   if (!isOpen || !orderData) return null;
 
@@ -77,8 +92,8 @@ export default function PaymentModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-950/75 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-amber-200/90 overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-stone-950/95 backdrop-blur-md overflow-hidden overscroll-contain animate-in fade-in duration-200">
+      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border-2 border-amber-300 overflow-hidden flex flex-col max-h-[92vh] z-10">
         {/* Header */}
         <div className="px-5 py-4 bg-gradient-to-r from-red-950 via-stone-900 to-amber-950 text-white flex items-center justify-between border-b border-amber-500/30">
           <div className="flex items-center gap-2.5">

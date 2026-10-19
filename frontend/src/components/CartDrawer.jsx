@@ -18,7 +18,6 @@ import {
   Banknote,
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatters';
-import PaymentModal from './PaymentModal';
 
 export default function CartDrawer({
   isOpen,
@@ -30,6 +29,7 @@ export default function CartDrawer({
   onClearCart,
   tableNumber,
   setTableNumber,
+  onProceedToPayment,
   onPlaceOrder,
   isPlacingOrder,
 }) {
@@ -52,8 +52,6 @@ export default function CartDrawer({
   const [cookingNotes, setCookingNotes] = useState('');
   const [validationError, setValidationError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({ name: false, phone: false });
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [pendingOrderData, setPendingOrderData] = useState(null);
 
   if (!isOpen) return null;
 
@@ -129,8 +127,11 @@ export default function CartDrawer({
       })),
     };
 
-    setPendingOrderData(orderData);
-    setIsPaymentModalOpen(true);
+    if (onProceedToPayment) {
+      onProceedToPayment(orderData);
+    } else {
+      onPlaceOrder(orderData);
+    }
   };
 
   return (
@@ -510,18 +511,6 @@ export default function CartDrawer({
           </div>
         )}
       </div>
-
-      {/* Payment Selection Modal (Razorpay Online vs Cash on Delivery) */}
-      <PaymentModal
-        isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        orderData={pendingOrderData}
-        onConfirmOrder={(finalOrderPayload) => {
-          setIsPaymentModalOpen(false);
-          onPlaceOrder(finalOrderPayload);
-        }}
-        isPlacingOrder={isPlacingOrder}
-      />
     </div>
   );
 }
