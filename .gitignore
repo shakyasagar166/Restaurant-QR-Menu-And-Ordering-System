@@ -25,6 +25,8 @@ pnpm-debug.log*
 .env
 .env.local
 .env.*.local
+*.local
+groq-key.local
 
 # IDEs & OS
 .idea/
