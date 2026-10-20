@@ -48,6 +48,8 @@ import {
   AlertTriangle,
   CheckCircle2,
   CheckCheck,
+  KeyRound,
+  Zap,
 } from 'lucide-react';
 import { formatPrice, formatTime, getTimeAgo } from '../utils/formatters';
 import { bellPlayer } from '../utils/sound';
