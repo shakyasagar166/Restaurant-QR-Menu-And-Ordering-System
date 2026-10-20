@@ -878,24 +878,55 @@ export default function AdminDashboard({
       <div className="flex-1 flex flex-col min-w-0 bg-[#eef2f6]">
         {/* Top Control Header Strip */}
         <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-300 px-5 sm:px-8 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3.5 shadow-sm">
-          {/* Left: Global Search */}
-          <div className="relative w-full sm:w-96">
-            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search table, customer name, dish, phone..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-100 border border-slate-300 rounded-2xl pl-11 pr-8 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition shadow-inner"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-800 font-bold"
-              >
-                ✕
-              </button>
-            )}
+          {/* Left: HIGH-VISIBILITY HIGHLIGHTED GLOBAL ORDER SEARCH */}
+          <div className="relative w-full sm:w-[440px] md:w-[480px] lg:w-[540px]">
+            <div
+              className={`relative flex items-center bg-white border-2 rounded-2xl transition-all duration-200 shadow-sm ${
+                searchQuery
+                  ? 'border-blue-600 ring-4 ring-blue-100 shadow-blue-500/20'
+                  : 'border-amber-400 hover:border-amber-500 ring-2 ring-amber-100/80 focus-within:border-blue-600 focus-within:ring-4 focus-within:ring-blue-100'
+              }`}
+            >
+              {/* Eye-Catching Highlight Badge */}
+              <div className="flex items-center pl-2.5 pr-1.5 py-1.5 shrink-0">
+                <span className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 font-black text-[11px] sm:text-xs px-2.5 py-1 rounded-xl shadow-xs flex items-center gap-1.5 tracking-wide border border-amber-300">
+                  <Search className="w-3.5 h-3.5 text-slate-950 stroke-[3]" />
+                  <span>SEARCH</span>
+                </span>
+              </div>
+
+              {/* High Contrast Input */}
+              <input
+                type="text"
+                placeholder="Table # (e.g. 1, T-2), Customer Name, Dish, Phone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent pl-1.5 pr-2 py-2 text-xs sm:text-sm font-black text-slate-950 placeholder-slate-500 focus:outline-none"
+              />
+
+              {/* Active Results Pill or Clear Button */}
+              {searchQuery ? (
+                <div className="flex items-center gap-1.5 pr-2.5 shrink-0">
+                  <span className="hidden sm:inline-block bg-blue-100 text-blue-900 font-black text-[10px] px-2 py-0.5 rounded-lg border border-blue-300">
+                    {filteredOrders.length} found
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="w-6 h-6 rounded-lg bg-slate-200 hover:bg-rose-500 hover:text-white text-slate-700 flex items-center justify-center text-xs font-black transition cursor-pointer"
+                    title="Clear search"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div className="pr-3 shrink-0 hidden md:flex items-center">
+                  <span className="text-[10px] font-black text-amber-900 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md">
+                    Live Search ⚡
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right: Sound Alert Actions & Live Digital Clock */}
@@ -1483,6 +1514,38 @@ export default function AdminDashboard({
                 </div>
               )}
 
+              {/* Active Search Results Indicator Banner */}
+              {searchQuery && filteredOrders.length > 0 && (
+                <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border-2 border-blue-400 rounded-3xl p-4 px-5 flex items-center justify-between gap-3 shadow-sm animate-in fade-in">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black shadow-sm shrink-0">
+                      <Search className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-sm text-slate-950">
+                          Search Filter Active:
+                        </span>
+                        <span className="bg-blue-600 text-white text-xs font-black px-2.5 py-0.5 rounded-lg shadow-2xs">
+                          "{searchQuery}"
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 font-bold mt-0.5">
+                        Found {filteredOrders.length} matching {filteredOrders.length === 1 ? 'order' : 'orders'}. Table number, customer name, dish, ya phone number se matched.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="bg-white hover:bg-rose-50 text-rose-700 hover:text-rose-800 border-2 border-rose-300 hover:border-rose-400 text-xs font-black px-4 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-2xs shrink-0"
+                  >
+                    <span>Clear Search</span>
+                    <span className="text-sm font-black">✕</span>
+                  </button>
+                </div>
+              )}
+
               {/* Main Orders Display Grid with BIGGER DETAILS & NO SIMPLE WHITE LINES */}
               {filteredOrders.length === 0 ? (
                 <div className="bg-white rounded-3xl border border-slate-300 p-12 text-center my-6 shadow-sm">
@@ -1846,14 +1909,37 @@ export default function AdminDashboard({
                 </div>
 
                 <div className="relative w-full sm:w-80">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder="Search dish name..."
-                    value={menuSearch}
-                    onChange={(e) => setMenuSearch(e.target.value)}
-                    className="w-full bg-slate-100 border border-slate-300 rounded-2xl pl-11 pr-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600"
-                  />
+                  <div
+                    className={`relative flex items-center bg-white border-2 rounded-2xl transition-all duration-200 shadow-sm ${
+                      menuSearch
+                        ? 'border-blue-600 ring-4 ring-blue-100 shadow-blue-500/15'
+                        : 'border-amber-400 hover:border-amber-500 ring-2 ring-amber-100/80 focus-within:border-blue-600 focus-within:ring-4 focus-within:ring-blue-100'
+                    }`}
+                  >
+                    <div className="flex items-center pl-2.5 pr-1 py-1 shrink-0">
+                      <span className="bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-lg flex items-center gap-1 border border-amber-300">
+                        <Search className="w-3 h-3 text-slate-950 stroke-[3]" />
+                        <span>DISH</span>
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search dish or category..."
+                      value={menuSearch}
+                      onChange={(e) => setMenuSearch(e.target.value)}
+                      className="w-full bg-transparent pl-1.5 pr-8 py-2 text-xs sm:text-sm font-bold text-slate-900 placeholder-slate-400 focus:outline-none"
+                    />
+                    {menuSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setMenuSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md bg-slate-200 hover:bg-rose-500 hover:text-white text-slate-700 flex items-center justify-center text-[10px] font-black transition cursor-pointer"
+                        title="Clear dish search"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
