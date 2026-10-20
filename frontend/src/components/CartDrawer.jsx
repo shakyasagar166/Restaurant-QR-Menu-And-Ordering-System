@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   CreditCard,
   Banknote,
-  MessageCircle,
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatters';
 import DishCustomizationBox from './DishCustomizationBox';
@@ -75,10 +74,10 @@ export default function CartDrawer({
   const grandTotal = subtotal + gst;
 
   const quickInstructions = [
-    'ðŸŒ¶ï¸ Medium Spicy',
-    'ðŸŒ¿ Jain (No Onion/Garlic)',
-    'ðŸ§ˆ Extra Butter',
-    'ðŸ‹ Extra Lemon & Onions',
+    '🌶️ Medium Spicy',
+    '🌿 Jain (No Onion/Garlic)',
+    '🧈 Extra Butter',
+    '🍋 Extra Lemon & Onions',
   ];
 
   const handleAddQuickNote = (note) => {
@@ -109,11 +108,11 @@ export default function CartDrawer({
     if (hasError) {
       setFieldErrors(newFieldErrors);
       if (newFieldErrors.name && newFieldErrors.phone) {
-        setValidationError('âš ï¸ Kripya apna Naam aur 10-digit Mobile Number daalein (Order ke liye anivarya hai)!');
+        setValidationError('⚠️ Kripya apna Naam aur 10-digit Mobile Number darj karein!');
       } else if (newFieldErrors.name) {
-        setValidationError('âš ï¸ Kripya apna Naam (Customer Name) darj karein!');
+        setValidationError('⚠️ Kripya apna Naam (Customer Name) darj karein!');
       } else {
-        setValidationError('âš ï¸ Kripya sahi 10-digit Mobile Number daalein (10 anko ka number zaroori hai)!');
+        setValidationError('⚠️ Kripya 10-digit ka valid Mobile Number darj karein!');
       }
       return;
     }
@@ -148,7 +147,7 @@ export default function CartDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div className="fixed inset-0 z-50 flex justify-end font-sans">
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -166,14 +165,14 @@ export default function CartDrawer({
               title="Menu par wapas jayein"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
-              <span>â† Back (à¤µà¤¾à¤ªà¤¸)</span>
+              <span>← Back</span>
             </button>
             <div className="border-l border-white/20 pl-2">
               <h3 className="font-brand font-black text-sm sm:text-base text-white tracking-wide">
                 Your Table Tray
               </h3>
               <span className="text-[10px] text-amber-300 font-bold block">
-                {tableNumber} â€¢ Rooftop Restaurant
+                {tableNumber} • Rooftop Restaurant
               </span>
             </div>
           </div>
@@ -188,9 +187,9 @@ export default function CartDrawer({
 
         {/* Cart Body */}
         {cart.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center font-sans">
             <div className="w-20 h-20 rounded-3xl bg-amber-100/80 text-amber-800 flex items-center justify-center text-4xl mb-4 shadow-inner">
-              ðŸ²
+              🍲
             </div>
             <h4 className="font-brand font-bold text-stone-900 text-lg mb-1">
               Your plate is empty
@@ -202,11 +201,11 @@ export default function CartDrawer({
               onClick={onClose}
               className="bg-red-700 hover:bg-red-800 text-white font-extrabold text-xs px-6 py-3 rounded-2xl shadow-md transition"
             >
-              â† Explore Menu
+              ← Explore Menu
             </button>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 font-sans">
             {/* Table Selector Bar */}
             <div className="bg-stone-50 rounded-2xl p-3 border border-stone-200 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
@@ -229,7 +228,7 @@ export default function CartDrawer({
               </select>
             </div>
 
-            {/* ðŸ”¥ HIGH-CONTRAST HIGHLIGHTED COMPULSORY GUEST DETAILS CARD ðŸ”¥ */}
+            {/* COMPULSORY GUEST DETAILS CARD - CLEAN MODERN TYPOGRAPHY */}
             <div
               className={`rounded-2xl sm:rounded-3xl p-4 sm:p-5 border-2 transition-all duration-300 shadow-md ${
                 validationError
@@ -244,34 +243,34 @@ export default function CartDrawer({
                     <UserCheck className="w-4.5 h-4.5" />
                   </div>
                   <div>
-                    <span className="font-brand font-black text-xs sm:text-sm text-stone-900 block leading-tight">
-                      Customer Details (à¤…à¤¨à¤¿à¤µà¤¾à¤°à¥à¤¯)
+                    <span className="font-sans font-bold text-xs sm:text-sm text-stone-900 block leading-tight">
+                      Customer Details (अनिवार्य)
                     </span>
-                    <span className="text-[10px] text-stone-600 font-semibold block">
+                    <span className="text-[10px] text-stone-600 font-medium block">
                       Kitchen bill &amp; table service record
                     </span>
                   </div>
                 </div>
-                <span className="bg-red-700 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full shadow-xs animate-pulse font-brand shrink-0">
+                <span className="bg-red-700 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-xs animate-pulse font-sans shrink-0">
                   * REQUIRED
                 </span>
               </div>
 
               {/* Validation Alert Banner if empty */}
               {validationError && (
-                <div className="bg-red-600 text-white rounded-xl p-2.5 mb-3 flex items-center gap-2 text-xs font-bold shadow-xs">
+                <div className="bg-red-600 text-white rounded-xl p-2.5 mb-3 flex items-center gap-2 text-xs font-bold shadow-xs font-sans">
                   <AlertCircle className="w-4 h-4 shrink-0 animate-bounce" />
                   <span>{validationError}</span>
                 </div>
               )}
 
-              <div className="space-y-3">
+              <div className="space-y-3 font-sans">
                 {/* 1. Customer Name */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-stone-900 flex items-center gap-1 font-brand">
+                    <label className="text-xs font-bold text-stone-800 flex items-center gap-1 font-sans">
                       <User className="w-3.5 h-3.5 text-amber-800" />
-                      <span>Aapka Naam (Customer Name)</span>
+                      <span>Customer Name (आपका नाम)</span>
                       <span className="text-red-600 text-sm font-black">*</span>
                     </label>
                     {customerName.trim().length >= 2 && (
@@ -282,14 +281,14 @@ export default function CartDrawer({
                   </div>
                   <input
                     type="text"
-                    placeholder="à¤‰à¤¦à¤¾. Shivam Shakya / Sharma Ji"
+                    placeholder="e.g. Rahul Sharma / Shivam"
                     value={customerName}
                     onChange={(e) => {
                       setCustomerName(e.target.value);
                       if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: false }));
                       if (validationError) setValidationError('');
                     }}
-                    className={`w-full bg-white rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-bold text-stone-900 placeholder-stone-400 focus:outline-none transition shadow-xs border-2 ${
+                    className={`w-full bg-white rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-sans font-semibold text-stone-900 placeholder-stone-400 focus:outline-none transition shadow-xs border-2 ${
                       fieldErrors.name
                         ? 'border-red-500 ring-2 ring-red-300 bg-red-50/50'
                         : 'border-amber-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-400'
@@ -301,25 +300,25 @@ export default function CartDrawer({
                 {/* 2. Customer Phone Number */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-black uppercase tracking-wider text-stone-900 flex items-center gap-1 font-brand">
+                    <label className="text-xs font-bold text-stone-800 flex items-center gap-1 font-sans">
                       <Phone className="w-3.5 h-3.5 text-amber-800" />
-                      <span>Mobile Number (à¤®à¥‹à¤¬à¤¾à¤‡à¤² à¤¨à¤‚à¤¬à¤°)</span>
+                      <span>Mobile Number (मोबाइल नंबर)</span>
                       <span className="text-red-600 text-sm font-black">*</span>
                     </label>
                     <span
-                      className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                      className={`text-[10px] font-black px-1.5 py-0.5 rounded font-sans ${
                         customerPhone.trim().replace(/\D/g, '').length === 10
                           ? 'bg-emerald-100 text-emerald-800 flex items-center gap-0.5'
                           : 'text-stone-600 bg-stone-200/90'
                       }`}
                     >
                       {customerPhone.trim().replace(/\D/g, '').length === 10
-                        ? 'âœ“ 10 Digits Done'
+                        ? '✓ 10 Digits Done'
                         : `${customerPhone.trim().replace(/\D/g, '').length}/10 Digits`}
                     </span>
                   </div>
                   <div className="relative flex items-center">
-                    <span className="absolute left-3 font-mono font-bold text-xs sm:text-sm text-stone-500 select-none">
+                    <span className="absolute left-3 font-sans font-bold text-xs sm:text-sm text-stone-500 select-none">
                       +91
                     </span>
                     <input
@@ -333,7 +332,7 @@ export default function CartDrawer({
                         if (fieldErrors.phone) setFieldErrors((prev) => ({ ...prev, phone: false }));
                         if (validationError) setValidationError('');
                       }}
-                      className={`w-full bg-white rounded-xl pl-11 pr-3.5 py-2.5 text-xs sm:text-sm font-mono font-bold text-stone-900 placeholder-stone-400 focus:outline-none transition shadow-xs border-2 ${
+                      className={`w-full bg-white rounded-xl pl-11 pr-3.5 py-2.5 text-xs sm:text-sm font-sans font-bold tracking-wider text-stone-900 placeholder-stone-400 focus:outline-none transition shadow-xs border-2 ${
                         fieldErrors.phone
                           ? 'border-red-500 ring-2 ring-red-300 bg-red-50/50'
                           : 'border-amber-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-400'
@@ -344,23 +343,23 @@ export default function CartDrawer({
                 </div>
               </div>
 
-              <div className="mt-2.5 pt-2 border-t border-amber-200/80 text-[10px] text-stone-700 flex items-center gap-1 font-medium">
-                <span className="text-amber-800 font-bold">ðŸ”’ Note:</span>
+              <div className="mt-2.5 pt-2 border-t border-amber-200/80 text-[10px] text-stone-700 flex items-center gap-1 font-sans">
+                <span className="text-amber-800 font-bold">🔒 Note:</span>
                 <span>Order submit karne ke liye naam aur 10-digit mobile number anivarya hai.</span>
               </div>
             </div>
 
             {/* Selected Items */}
-            <div className="space-y-3">
+            <div className="space-y-3 font-sans">
               <div className="flex items-center justify-between text-xs font-black text-stone-500 uppercase tracking-widest pb-1 border-b border-stone-100">
                 <span>Selected Items ({cart.length})</span>
                 <button
                   onClick={onClearCart}
-                  className="text-red-700 hover:text-red-900 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-xl text-[11px] font-bold normal-case flex items-center gap-1.5 transition border border-red-200/60"
+                  className="text-red-700 hover:text-red-900 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-xl text-[11px] font-bold normal-case flex items-center gap-1.5 transition border border-red-200/60 cursor-pointer"
                   title="Saari dishes tray se hatayein"
                 >
                   <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                  <span>Clear All (à¤¸à¤¬ à¤¹à¤Ÿà¤¾à¤à¤‚)</span>
+                  <span>Clear All (सब हटाएं)</span>
                 </button>
               </div>
 
@@ -381,7 +380,7 @@ export default function CartDrawer({
                       </div>
                       <div className="flex items-center gap-2 text-[11px] text-stone-500">
                         <span>{formatPrice(item.price)} each</span>
-                        <span className="text-stone-300">â€¢</span>
+                        <span className="text-stone-300">•</span>
                         <span className="font-black text-red-900">
                           {formatPrice(item.price * item.quantity)}
                         </span>
@@ -420,7 +419,7 @@ export default function CartDrawer({
                     {/* Dedicated 1-Click Remove (Delete) Button */}
                     <button
                       onClick={() => (onDeleteDish ? onDeleteDish(item.id) : onRemoveFromCart(item.id))}
-                      className="w-8 h-8 rounded-xl bg-red-100/80 hover:bg-red-600 text-red-700 hover:text-white flex items-center justify-center transition shrink-0 border border-red-200/80 shadow-2xs"
+                      className="w-8 h-8 rounded-xl bg-red-100/80 hover:bg-red-600 text-red-700 hover:text-white flex items-center justify-center transition shrink-0 border border-red-200/80 shadow-2xs cursor-pointer"
                       title="Is dish ko tray se poori tarah hataayein (Remove item)"
                       aria-label="Remove dish"
                     >
@@ -428,7 +427,7 @@ export default function CartDrawer({
                     </button>
                   </div>
 
-                  {/* Dish-Specific Customization Box (e.g. Chai me kitni chammach cheeni, teekha, makhan) */}
+                  {/* Dish-Specific Customization Box */}
                   <DishCustomizationBox
                     item={item}
                     isExpanded={expandedItemId === item.id}
@@ -446,7 +445,7 @@ export default function CartDrawer({
             </div>
 
             {/* Special Instructions & Quick Chips */}
-            <div className="space-y-2">
+            <div className="space-y-2 font-sans">
               <label className="text-xs font-bold text-stone-800 block">
                 Special Kitchen Instructions:
               </label>
@@ -456,7 +455,7 @@ export default function CartDrawer({
                     key={chip}
                     type="button"
                     onClick={() => handleAddQuickNote(chip)}
-                    className="text-[10px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 px-2.5 py-1 rounded-lg transition"
+                    className="text-[10px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 px-2.5 py-1 rounded-lg transition cursor-pointer"
                   >
                     + {chip}
                   </button>
@@ -467,7 +466,7 @@ export default function CartDrawer({
                 placeholder="e.g. Less spicy, Jain preparation, hot rotis only..."
                 value={cookingNotes}
                 onChange={(e) => setCookingNotes(e.target.value)}
-                className="w-full bg-stone-50 border border-stone-200 rounded-2xl p-3 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                className="w-full bg-stone-50 border border-stone-200 rounded-2xl p-3 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none font-sans"
               ></textarea>
             </div>
           </div>
@@ -475,7 +474,7 @@ export default function CartDrawer({
 
         {/* Footer Billing & Ring Bell Action */}
         {cart.length > 0 && (
-          <div className="p-4 sm:p-6 border-t border-amber-100 bg-stone-50 space-y-3">
+          <div className="p-4 sm:p-6 border-t border-amber-100 bg-stone-50 space-y-3 font-sans">
             <div className="space-y-1.5 text-xs text-stone-600">
               <div className="flex justify-between">
                 <span>Subtotal</span>
@@ -494,13 +493,13 @@ export default function CartDrawer({
             </div>
 
             {/* Payment Mode (Cash on Delivery / Pay at Table) */}
-            <div className="bg-emerald-50/90 border border-emerald-300/80 rounded-xl p-2.5 flex items-center justify-between text-[11px] shadow-2xs">
+            <div className="bg-emerald-50/90 border border-emerald-300/80 rounded-xl p-2.5 flex items-center justify-between text-[11px] shadow-2xs font-sans">
               <div className="flex items-center gap-1.5 font-bold text-stone-800">
                 <Banknote className="w-4 h-4 text-emerald-700" />
                 <span>Payment Mode:</span>
               </div>
               <div className="flex items-center gap-1 text-[11px] font-black text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-md border border-emerald-300">
-                ðŸ’µ Pay Cash at Table / Counter
+                💵 Pay Cash at Table / Counter
               </div>
             </div>
 
@@ -514,7 +513,7 @@ export default function CartDrawer({
               ) : (
                 <>
                   <Bell className="w-5 h-5 text-amber-300 animate-bounce" />
-                  <span className="tracking-wide uppercase">CONFIRM &amp; PLACE ORDER ðŸ””</span>
+                  <span className="tracking-wide uppercase">CONFIRM &amp; PLACE ORDER 🔔</span>
                 </>
               )}
             </button>
@@ -522,10 +521,10 @@ export default function CartDrawer({
             <button
               type="button"
               onClick={onClose}
-              className="w-full text-center text-xs font-bold text-stone-600 hover:text-stone-900 py-1 flex items-center justify-center gap-1.5 transition"
+              className="w-full text-center text-xs font-bold text-stone-600 hover:text-stone-900 py-1 flex items-center justify-center gap-1.5 transition cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-stone-500" />
-              <span>â† Continue Adding Dishes (à¤”à¤° à¤¡à¤¿à¤¶ à¤œà¥‹à¤¡à¤¼à¥‡à¤‚)</span>
+              <span>← Continue Adding Dishes (और डिश जोड़ें)</span>
             </button>
 
             <p className="text-[10px] sm:text-[11px] text-center text-stone-500 flex items-center justify-center gap-1">
