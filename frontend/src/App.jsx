@@ -61,6 +61,9 @@ export default function App() {
   const [isBellRinging, setIsBellRinging] = useState(false);
   const [newOrderAlert, setNewOrderAlert] = useState(null);
 
+  // Ref to track recent status updates to prevent race conditions from background polling
+  const recentStatusOverridesRef = useRef(new Map());
+
   // Customer's currently active order for live tracking
   const [activeCustomerOrder, setActiveCustomerOrder] = useState(() => {
     try {
@@ -167,12 +170,23 @@ export default function App() {
         apiService.getOrders(),
         apiService.getStats(),
       ]);
-      setOrders(ordersList);
+
+      // Protect against race conditions: preserve recent explicit status updates (e.g. ACCEPTED/SERVED)
+      const now = Date.now();
+      const mergedOrders = ordersList.map((fetched) => {
+        const override = recentStatusOverridesRef.current.get(fetched.id);
+        if (override && now - override.timestamp < 30000) {
+          return { ...fetched, status: override.status };
+        }
+        return fetched;
+      });
+
+      setOrders(mergedOrders);
       setStats(statsData);
 
       // Check if current customer order was updated
       if (activeCustomerOrder) {
-        const found = ordersList.find((o) => o.id === activeCustomerOrder.id);
+        const found = mergedOrders.find((o) => o.id === activeCustomerOrder.id);
         if (found && found.status !== activeCustomerOrder.status) {
           setActiveCustomerOrder(found);
         }
@@ -200,21 +214,22 @@ export default function App() {
         setTimeout(() => setIsBellRinging(false), 3000);
 
         setNewOrderAlert(newOrder);
-        setTimeout(() => setNewOrderAlert(null), 6000);
 
         // Update orders list & stats
         setOrders((prev) => [newOrder, ...prev.filter((o) => o.id !== newOrder.id)]);
-        loadOrdersData();
       },
       // onOrderUpdated
       (updatedOrder) => {
+        recentStatusOverridesRef.current.set(updatedOrder.id, {
+          status: updatedOrder.status,
+          timestamp: Date.now(),
+        });
         setOrders((prev) =>
-          prev.map((o) => (o.id === updatedOrder.id ? updatedOrder : o))
+          prev.map((o) => (o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o))
         );
         if (activeCustomerOrder && activeCustomerOrder.id === updatedOrder.id) {
           setActiveCustomerOrder(updatedOrder);
         }
-        loadOrdersData();
       }
     );
 
@@ -348,16 +363,41 @@ export default function App() {
     }
   };
 
-  // Update order status from Admin Kitchen
+  // Update order status from Admin Kitchen (Instant Optimistic UI update with zero delay)
   const handleUpdateStatus = async (orderId, newStatus) => {
+    // 1. Lock override so background polling can never revert it
+    recentStatusOverridesRef.current.set(orderId, {
+      status: newStatus,
+      timestamp: Date.now(),
+    });
+
+    // 2. Synchronous Instant Optimistic State Update (0ms delay!)
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? { ...o, status: newStatus, updatedAt: new Date().toISOString() }
+          : o
+      )
+    );
+
+    if (activeCustomerOrder && activeCustomerOrder.id === orderId) {
+      setActiveCustomerOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
+    }
+
+    // 3. Send update to backend in background
     try {
       const updated = await apiService.updateOrderStatus(orderId, newStatus);
-      setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
-      if (activeCustomerOrder && activeCustomerOrder.id === orderId) {
-        setActiveCustomerOrder(updated);
-      }
-      loadOrdersData();
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, ...updated } : o))
+      );
+      recentStatusOverridesRef.current.set(orderId, {
+        status: updated.status,
+        timestamp: Date.now(),
+      });
     } catch (err) {
+      // Revert on failure
+      recentStatusOverridesRef.current.delete(orderId);
+      loadOrdersData();
       alert('Failed to update status: ' + err.message);
     }
   };

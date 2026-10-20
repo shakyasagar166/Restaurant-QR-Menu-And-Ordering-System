@@ -114,6 +114,22 @@ export default function AdminDashboard({
   const [togglingDishId, setTogglingDishId] = useState(null);
   const [isAcceptingAll, setIsAcceptingAll] = useState(false);
 
+  // Locally dismissed pending order IDs for 0ms instant dismissal
+  const [dismissedPendingIds, setDismissedPendingIds] = useState(new Set());
+
+  // Function to accept single order with 0ms delay
+  const handleAcceptOrder = (orderId) => {
+    // 1. Immediately remove from pending in 0 milliseconds
+    setDismissedPendingIds((prev) => new Set(prev).add(orderId));
+    // 2. Trigger instant optimistic update in App.jsx and background API
+    onUpdateStatus(orderId, 'ACCEPTED');
+  };
+
+  const handleRejectOrder = (orderId) => {
+    setDismissedPendingIds((prev) => new Set(prev).add(orderId));
+    onUpdateStatus(orderId, 'CANCELLED');
+  };
+
   // Real-time live clock
   useEffect(() => {
     const timer = setInterval(() => {
@@ -126,12 +142,12 @@ export default function AdminDashboard({
     bellPlayer.playOrderBell();
   };
 
-  // Order Counts
-  const pendingOrders = orders.filter((o) => o.status === 'PENDING');
+  // Order Counts - excluding any locally dismissed pending orders
+  const pendingOrders = orders.filter((o) => o.status === 'PENDING' && !dismissedPendingIds.has(o.id));
   const pendingCount = pendingOrders.length;
   const preparingCount = orders.filter((o) => o.status === 'PREPARING').length;
   const servedCount = orders.filter((o) => o.status === 'SERVED').length;
-  const acceptedCount = orders.filter((o) => o.status === 'ACCEPTED').length;
+  const acceptedCount = orders.filter((o) => o.status === 'ACCEPTED' || (o.status === 'PENDING' && dismissedPendingIds.has(o.id))).length;
 
   // Online vs Cash totals calculation
   const onlineOrders = orders.filter((o) => o.paymentMethod === 'ONLINE' || o.paymentStatus === 'PAID');
@@ -186,6 +202,7 @@ export default function AdminDashboard({
 
   // Filtered orders by status, payment mode, and search query
   const filteredOrders = orders.filter((order) => {
+    const effectiveStatus = dismissedPendingIds.has(order.id) && order.status === 'PENDING' ? 'ACCEPTED' : order.status;
     let matchesStatus = true;
     if (activeFilter === 'ALL') {
       matchesStatus = true;
@@ -194,7 +211,7 @@ export default function AdminDashboard({
     } else if (activeFilter === 'CASH') {
       matchesStatus = order.paymentMethod !== 'ONLINE' && order.paymentStatus !== 'PAID';
     } else {
-      matchesStatus = order.status === activeFilter;
+      matchesStatus = effectiveStatus === activeFilter;
     }
     if (!matchesStatus) return false;
 
@@ -212,17 +229,26 @@ export default function AdminDashboard({
   const activeOrders = orders.filter((o) => o.status === 'PENDING' || o.status === 'ACCEPTED' || o.status === 'PREPARING');
   const occupiedTables = new Set(activeOrders.map((o) => o.tableNumber));
 
-  // Quick Accept All Pending Orders
+  // Quick Accept All Pending Orders with 0ms Instant Dismissal
   const handleAcceptAllPending = async () => {
     if (pendingOrders.length === 0) return;
     setIsAcceptingAll(true);
+    const idsToAccept = pendingOrders.map((o) => o.id);
+
+    // 1. Instantly dismiss all from pending notifications in 0ms!
+    setDismissedPendingIds((prev) => {
+      const next = new Set(prev);
+      idsToAccept.forEach((id) => next.add(id));
+      return next;
+    });
+
+    // 2. Propagate optimistic status to each
     try {
       await Promise.all(
-        pendingOrders.map((ord) => apiService.updateOrderStatus(ord.id, 'ACCEPTED'))
+        idsToAccept.map((id) => onUpdateStatus(id, 'ACCEPTED'))
       );
-      if (onRefresh) onRefresh();
     } catch (e) {
-      alert('Error accepting all orders: ' + e.message);
+      console.error('Error accepting all orders:', e);
     } finally {
       setIsAcceptingAll(false);
     }
@@ -760,14 +786,14 @@ export default function AdminDashboard({
                           {/* Action Button: ACCEPT ORDER (Removes notification card only upon acceptance) */}
                           <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-200">
                             <button
-                              onClick={() => onUpdateStatus(order.id, 'ACCEPTED')}
+                              onClick={() => handleAcceptOrder(order.id)}
                               className="col-span-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-3.5 rounded-2xl shadow-md transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                             >
                               <Check className="w-5 h-5" />
                               <span>ACCEPT ORDER</span>
                             </button>
                             <button
-                              onClick={() => onUpdateStatus(order.id, 'CANCELLED')}
+                              onClick={() => handleRejectOrder(order.id)}
                               className="bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-800 font-bold text-xs sm:text-sm py-3.5 rounded-2xl transition border border-slate-300 cursor-pointer text-center"
                             >
                               Reject
@@ -1076,14 +1102,14 @@ export default function AdminDashboard({
                             {isPending && (
                               <div className="grid grid-cols-4 gap-2">
                                 <button
-                                  onClick={() => onUpdateStatus(order.id, 'ACCEPTED')}
+                                  onClick={() => handleAcceptOrder(order.id)}
                                   className="col-span-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm sm:text-base py-3.5 rounded-2xl shadow-md transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                                 >
                                   <Check className="w-5 h-5" />
                                   <span>ACCEPT ORDER</span>
                                 </button>
                                 <button
-                                  onClick={() => onUpdateStatus(order.id, 'CANCELLED')}
+                                  onClick={() => handleRejectOrder(order.id)}
                                   className="bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-800 font-bold text-xs sm:text-sm py-3.5 rounded-2xl transition border border-slate-300 cursor-pointer"
                                 >
                                   Reject
