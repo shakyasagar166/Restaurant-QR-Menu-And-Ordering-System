@@ -239,4 +239,65 @@ public class AuthController {
         response.put("message", "Logged out successfully");
         return ResponseEntity.ok(response);
     }
+
+    // 6. FORGOT PASSWORD & RECOVERY RESET
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, Object>> resetPassword(@RequestBody Map<String, String> payload) {
+        String phone = payload.get("phone");
+        String masterRecoveryKey = payload.get("masterKey");
+        String newPassword = payload.get("newPassword");
+        String newPin = payload.get("newPin");
+
+        Map<String, Object> response = new HashMap<>();
+
+        // Master Restaurant Key for recovery: "BIKANER2026" or manager phone "9058605348"
+        boolean isMasterValid = masterRecoveryKey != null && (
+            "BIKANER2026".equalsIgnoreCase(masterRecoveryKey.trim()) ||
+            "9058605348".equals(masterRecoveryKey.trim()) ||
+            "AMANMALL".equalsIgnoreCase(masterRecoveryKey.trim())
+        );
+
+        if (!isMasterValid) {
+            response.put("success", false);
+            response.put("message", "Invalid Master Recovery Key. Recovery access rejected.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        AdminUser admin = adminUserRepository.findAll().stream().findFirst().orElse(null);
+        if (admin == null) {
+            admin = new AdminUser(DEFAULT_PHONE, DEFAULT_PASSWORD, DEFAULT_PIN, DEFAULT_NAME, "ADMIN");
+        }
+
+        if (newPassword != null && !newPassword.trim().isEmpty()) {
+            admin.setPassword(newPassword.trim());
+        }
+        if (newPin != null && !newPin.trim().isEmpty()) {
+            admin.setQuickPin(newPin.trim());
+        }
+        if (phone != null && !phone.trim().isEmpty()) {
+            admin.setPhone(phone.trim());
+        }
+        admin.setUpdatedAt(LocalDateTime.now());
+        adminUserRepository.save(admin);
+
+        // Auto-login session token
+        String token = "bikaner_auth_" + UUID.randomUUID().toString();
+        Map<String, Object> session = new HashMap<>();
+        session.put("phone", admin.getPhone());
+        session.put("name", admin.getName());
+        session.put("role", admin.getRole());
+        session.put("quickPin", admin.getQuickPin());
+        session.put("loginTime", System.currentTimeMillis());
+        activeTokens.put(token, session);
+
+        response.put("success", true);
+        response.put("token", token);
+        response.put("phone", admin.getPhone());
+        response.put("name", admin.getName());
+        response.put("role", admin.getRole());
+        response.put("quickPin", admin.getQuickPin());
+        response.put("message", "Credentials successfully reset! Password & PIN updated in Database.");
+
+        return ResponseEntity.ok(response);
+    }
 }

@@ -193,6 +193,19 @@ export const apiService = {
     return data;
   },
 
+  async resetPassword(payload) {
+    const res = await fetchWithTimeout(`${API_BASE}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }, 8000);
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to reset password');
+    }
+    return data;
+  },
+
   async verifyAdminSession(token) {
     try {
       const res = await fetchWithTimeout(`${API_BASE}/auth/verify`, {

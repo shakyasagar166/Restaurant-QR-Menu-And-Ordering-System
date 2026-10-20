@@ -14,12 +14,13 @@ import {
   Zap,
   Delete,
   CheckCircle2,
+  RotateCcw,
 } from 'lucide-react';
 import { apiService } from '../api/apiService';
 import { bellPlayer } from '../utils/sound';
 
 export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
-  // Login Mode: 'pin' (Default fast 4-digit PIN) | 'password' (Phone & Password)
+  // Login Mode: 'pin' (4-digit PIN) | 'password' (Phone & Password) | 'forgot' (Reset Recovery)
   const [authMode, setAuthMode] = useState('pin');
 
   // PIN state (4 digits)
@@ -30,8 +31,15 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Forgot / Reset state
+  const [masterKey, setMasterKey] = useState('');
+  const [resetPhone, setResetPhone] = useState('9058605348');
+  const [resetNewPin, setResetNewPin] = useState('9058');
+  const [resetNewPassword, setResetNewPassword] = useState('shivamshakya098');
+
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Physical keyboard listener for PIN when PIN tab is active
   useEffect(() => {
@@ -137,7 +145,6 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
       setErrorMessage('');
       const data = await apiService.loginAdmin(phone.trim(), password.trim());
 
-      // Store session
       localStorage.setItem(
         'bikaner_admin_auth',
         JSON.stringify({
@@ -154,6 +161,53 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
       onClose();
     } catch (err) {
       setErrorMessage(err.message || 'Invalid Mobile Number or Password. Access denied.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Submit Forgot Password & Reset Form
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+    if (!masterKey) {
+      setErrorMessage('Please enter Master Recovery Key.');
+      return;
+    }
+    if (resetNewPin && resetNewPin.length !== 4) {
+      setErrorMessage('Quick PIN must be exactly 4 digits.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+      const data = await apiService.resetPassword({
+        phone: resetPhone.trim(),
+        masterKey: masterKey.trim(),
+        newPin: resetNewPin.trim(),
+        newPassword: resetNewPassword.trim(),
+      });
+
+      localStorage.setItem(
+        'bikaner_admin_auth',
+        JSON.stringify({
+          token: data.token,
+          name: data.name,
+          phone: data.phone,
+          role: data.role,
+          quickPin: data.quickPin,
+        })
+      );
+
+      setSuccessMessage('Credentials reset successfully! Logging into POS...');
+      bellPlayer.playSuccessSound();
+
+      setTimeout(() => {
+        onLoginSuccess(data);
+        onClose();
+      }, 1200);
+    } catch (err) {
+      setErrorMessage(err.message || 'Invalid Master Recovery Key. Recovery rejected.');
     } finally {
       setIsLoading(false);
     }
@@ -198,47 +252,51 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
           </span>
 
           <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-            Staff &amp; Manager Login
+            {authMode === 'forgot' ? 'Forgot Password & Reset' : 'Staff & Manager Login'}
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            Bikaner Express Rooftop Dining POS
+            {authMode === 'forgot'
+              ? 'Enter Master Key to reset Staff PIN & Password'
+              : 'Bikaner Express Rooftop Dining POS'}
           </p>
         </div>
 
-        {/* Dual Mode Switcher Tabs */}
-        <div className="p-3 bg-slate-900/90 border-b border-slate-800 flex gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setAuthMode('pin');
-              setErrorMessage('');
-            }}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${
-              authMode === 'pin'
-                ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md'
-                : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-750'
-            }`}
-          >
-            <Zap className="w-3.5 h-3.5 text-amber-300" />
-            <span>⚡ 4-Digit Quick PIN</span>
-          </button>
+        {/* Dual Mode Switcher Tabs (Hidden when in Forgot mode) */}
+        {authMode !== 'forgot' && (
+          <div className="p-3 bg-slate-900/90 border-b border-slate-800 flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('pin');
+                setErrorMessage('');
+              }}
+              className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                authMode === 'pin'
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md'
+                  : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-750'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-300" />
+              <span>⚡ 4-Digit Quick PIN</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setAuthMode('password');
-              setErrorMessage('');
-            }}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${
-              authMode === 'password'
-                ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md'
-                : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-750'
-            }`}
-          >
-            <KeyRound className="w-3.5 h-3.5 text-cyan-300" />
-            <span>Password Login</span>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode('password');
+                setErrorMessage('');
+              }}
+              className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                authMode === 'password'
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md'
+                  : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-750'
+              }`}
+            >
+              <KeyRound className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Password Login</span>
+            </button>
+          </div>
+        )}
 
         {/* Form Body */}
         <div className="p-5 sm:p-6 space-y-4">
@@ -248,6 +306,14 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
             <div className="bg-rose-950/80 border border-rose-500/60 rounded-2xl p-3 flex items-center gap-2 text-xs text-rose-200 animate-shake">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
               <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {/* Success Banner */}
+          {successMessage && (
+            <div className="bg-emerald-950/80 border border-emerald-500/60 rounded-2xl p-3 flex items-center gap-2 text-xs text-emerald-200">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+              <span>{successMessage}</span>
             </div>
           )}
 
@@ -429,11 +495,120 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
             </form>
           )}
 
-          <div className="text-center pt-2 border-t border-slate-800">
-            <span className="text-[11px] text-slate-500 flex items-center justify-center gap-1 font-mono">
+          {/* =========================================================
+              MODE 3: FORGOT PASSWORD & RECOVERY RESET FORM
+          ========================================================= */}
+          {authMode === 'forgot' && (
+            <form onSubmit={handleForgotSubmit} className="space-y-3.5 animate-in fade-in duration-200">
+              <div className="bg-amber-950/40 border border-amber-500/40 rounded-2xl p-3 text-xs text-amber-200">
+                <div className="font-bold flex items-center gap-1.5 mb-1 text-amber-300">
+                  <KeyRound className="w-4 h-4" />
+                  <span>Master Security Key Recovery</span>
+                </div>
+                <p className="text-[11px] text-amber-200/80 leading-relaxed">
+                  Forgot your password or PIN? Enter your Master Security Key to reset your Staff PIN and Password in the database.
+                </p>
+              </div>
+
+              {/* Master Recovery Key */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">
+                    Master Security Key:
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setMasterKey('BIKANER2026')}
+                    className="text-[10px] text-cyan-400 font-mono font-bold underline cursor-pointer"
+                  >
+                    Auto-Fill (BIKANER2026)
+                  </button>
+                </div>
+                <div className="relative">
+                  <KeyRound className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Enter BIKANER2026 or Manager Phone"
+                    value={masterKey}
+                    onChange={(e) => setMasterKey(e.target.value)}
+                    className="w-full bg-[#090d16] border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm font-mono text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Set New Quick PIN */}
+              <div>
+                <label className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300 block mb-1">
+                  Set New 4-Digit Staff PIN:
+                </label>
+                <input
+                  type="text"
+                  maxLength="4"
+                  placeholder="e.g. 9058 or 1234"
+                  value={resetNewPin}
+                  onChange={(e) => setResetNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  className="w-full bg-[#090d16] border border-cyan-500/50 rounded-xl px-4 py-2 text-base font-mono font-black text-cyan-300 tracking-widest text-center focus:outline-none focus:border-cyan-400"
+                  required
+                />
+              </div>
+
+              {/* Set New Password */}
+              <div>
+                <label className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300 block mb-1">
+                  Set New Password:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter new password"
+                  value={resetNewPassword}
+                  onChange={(e) => setResetNewPassword(e.target.value)}
+                  className="w-full bg-[#090d16] border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                  required
+                />
+              </div>
+
+              {/* Reset Action Buttons */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black py-3 rounded-xl shadow-lg transition active:scale-98 disabled:opacity-50 text-sm cursor-pointer"
+              >
+                {isLoading ? 'Resetting Credentials...' : 'RESET & LOG IN TO POS'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode('pin');
+                  setErrorMessage('');
+                }}
+                className="w-full text-center text-xs text-slate-400 hover:text-white font-mono py-1 transition cursor-pointer"
+              >
+                ← Cancel and Return to PIN Login
+              </button>
+            </form>
+          )}
+
+          {/* Bottom Bar: Encrypted badge & UNMISSABLE Forgot Password Trigger */}
+          <div className="flex items-center justify-between pt-3 border-t border-slate-800 text-[11px]">
+            <span className="text-slate-500 flex items-center gap-1 font-mono">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              PIN and Password can be changed anytime in POS Settings.
+              <span>Encrypted Session</span>
             </span>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode(authMode === 'forgot' ? 'pin' : 'forgot');
+                setErrorMessage('');
+                setSuccessMessage('');
+              }}
+              className="text-amber-400 hover:text-amber-300 font-bold underline cursor-pointer flex items-center gap-1 transition"
+            >
+              <RotateCcw className="w-3 h-3 text-amber-400" />
+              <span>{authMode === 'forgot' ? 'Back to Login' : 'Forgot Password / PIN?'}</span>
+            </button>
           </div>
 
         </div>
