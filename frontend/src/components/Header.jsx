@@ -79,11 +79,12 @@ export default function Header({
             className="flex items-center gap-3 cursor-pointer group select-none"
           >
             <div className="relative">
-              <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-gradient-to-br from-red-800 via-red-950 to-amber-700 p-0.5 shadow-lg shadow-red-950/20 group-hover:scale-105 transition duration-300 border border-amber-400/50">
-                <div className="w-full h-full rounded-[14px] bg-stone-950 flex flex-col items-center justify-center text-amber-400">
-                  <Crown className="w-3.5 h-3.5 text-amber-400 -mb-0.5" />
-                  <UtensilsCrossed className="w-5 h-5 text-amber-300 drop-shadow-sm" />
-                </div>
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 via-red-600 to-amber-300 shadow-md shadow-red-950/20 group-hover:scale-105 transition duration-300">
+                <img
+                  src="/bikaner-logo.jpg"
+                  alt="Bikaner Express Logo"
+                  className="w-full h-full rounded-full object-cover bg-white"
+                />
               </div>
               <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-600 border-2 border-white flex items-center justify-center text-[8px] text-white font-black shadow-xs">
                 ✓
@@ -183,10 +184,12 @@ export default function Header({
               onClick={() => setActiveTab('menu')}
               className="flex items-center gap-2 cursor-pointer truncate"
             >
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-800 to-amber-700 p-0.5 border border-amber-400/50 shrink-0">
-                <div className="w-full h-full rounded-[10px] bg-stone-950 flex items-center justify-center text-amber-400">
-                  <UtensilsCrossed className="w-4 h-4 text-amber-300" />
-                </div>
+              <div className="w-9 h-9 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 via-red-600 to-amber-300 shadow-xs shrink-0">
+                <img
+                  src="/bikaner-logo.jpg"
+                  alt="Bikaner Express Logo"
+                  className="w-full h-full rounded-full object-cover bg-white"
+                />
               </div>
               <div className="truncate">
                 <div className="font-brand font-black text-sm tracking-wide text-stone-900 leading-none">

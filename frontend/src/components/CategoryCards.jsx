@@ -131,23 +131,29 @@ export default function CategoryCards({ categories, menuItems, onSelectCategory 
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-      {/* Brand Section Header */}
-      <div className="text-center max-w-3xl mx-auto mb-10">
-        <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-red-800 bg-amber-100/80 px-3.5 py-1 rounded-full border border-amber-300 mb-3 font-brand">
-          <Crown className="w-3.5 h-3.5 text-amber-600" />
-          <span>Interactive Dining Pavilion</span>
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-6">
+      {/* Space-Efficient Section Header */}
+      <div className="flex items-center justify-between gap-2 mb-3 sm:mb-5">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-400/40 flex items-center justify-center text-amber-700 shadow-2xs">
+            <Crown className="w-4 h-4 text-amber-600" />
+          </div>
+          <div>
+            <h3 className="text-base sm:text-2xl font-brand font-black text-stone-950 tracking-tight leading-none">
+              Explore Menu Categories
+            </h3>
+            <p className="text-[10px] sm:text-xs text-stone-500 font-semibold mt-0.5">
+              Tap any category to view dishes &amp; place order
+            </p>
+          </div>
         </div>
-        <h3 className="text-2xl sm:text-4xl font-brand font-black text-stone-950 tracking-tight">
-          Select a Culinary Collection
-        </h3>
-        <p className="text-xs sm:text-sm text-stone-600 mt-2 leading-relaxed">
-          Tap any section below (like <strong>Roti &amp; Naan</strong> or <strong>Drinks &amp; Brews</strong>) to open the full collection with authentic dishes, pricing &amp; chef recommendations.
-        </p>
+        <span className="text-[11px] sm:text-xs font-black text-amber-900 bg-amber-100/90 border border-amber-300/80 px-2.5 py-1 rounded-xl shrink-0 shadow-2xs font-brand">
+          🍽️ 11 Sections
+        </span>
       </div>
 
-      {/* Grid of Grand Brand Pavilion Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      {/* 2-Column Grid on Mobile, 3-Column on Tablet, 4-Column on Desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {categories.map((category) => {
           const meta = CATEGORY_METADATA[category] || {
             code: '00',
@@ -166,71 +172,55 @@ export default function CategoryCards({ categories, menuItems, onSelectCategory 
             <div
               key={category}
               onClick={() => onSelectCategory(category)}
-              className="group relative bg-white rounded-3xl border-2 border-amber-200/80 shadow-md hover:shadow-2xl hover:border-amber-400 transition-all duration-500 cursor-pointer overflow-hidden flex flex-col transform hover:-translate-y-2"
+              className="group relative bg-white rounded-2xl sm:rounded-3xl border border-amber-200/90 hover:border-amber-400 shadow-xs hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden flex flex-col active:scale-[0.98]"
             >
-              {/* Grand Photo Stage with Cinematic Overlay */}
-              <div className="relative h-56 sm:h-60 overflow-hidden bg-stone-900">
+              {/* Photo Stage (Compact & Space-Saving) */}
+              <div className="relative h-24 xs:h-28 sm:h-32 lg:h-36 overflow-hidden bg-stone-900">
                 <img
                   src={meta.image}
                   alt={meta.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out opacity-95 group-hover:opacity-100"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-95 group-hover:opacity-100"
                   loading="lazy"
                 />
 
                 {/* Dark Vignette Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-black/20"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/15"></div>
 
-                {/* Top Bar on Image: Collection Code + Specialty Badge */}
-                <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
-                  <span className="bg-stone-950/80 backdrop-blur-md text-amber-300 text-[11px] font-brand font-black px-3 py-1 rounded-full border border-amber-400/40 shadow-md tracking-wider">
-                    {meta.code ? `COLLECTION ${meta.code}` : 'SPECIALTY'}
+                {/* Top Bar on Image: Collection Code + Dish Count Badge */}
+                <div className="absolute top-1.5 left-1.5 right-1.5 flex items-center justify-between">
+                  <span className="bg-stone-950/85 backdrop-blur-xs text-amber-300 text-[9px] font-brand font-black px-1.5 py-0.5 rounded border border-amber-400/30">
+                    {meta.code ? `#${meta.code}` : '★'}
                   </span>
 
-                  <span className="bg-white/95 backdrop-blur-md text-stone-950 text-xs font-black px-3 py-1 rounded-full shadow-md font-brand">
+                  <span className="bg-white/95 backdrop-blur-xs text-stone-950 text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-2xs font-brand">
                     {count} Dishes
                   </span>
                 </div>
 
                 {/* Emblem & Category Title pinned at bottom of photo */}
-                <div className="absolute bottom-4 left-4 right-4 text-white">
-                  <div className="w-11 h-11 rounded-2xl bg-stone-900/80 backdrop-blur-md border border-amber-400/40 text-amber-300 flex items-center justify-center text-2xl mb-2.5 shadow-lg group-hover:scale-110 transition duration-300">
-                    {meta.icon}
+                <div className="absolute bottom-1.5 left-2 right-2 text-white">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm shrink-0 drop-shadow">{meta.icon}</span>
+                    <h4 className="text-xs sm:text-sm font-brand font-black leading-tight text-white group-hover:text-amber-300 transition duration-200 drop-shadow truncate">
+                      {meta.shortTitle || meta.title}
+                    </h4>
                   </div>
-                  <h4 className="text-xl sm:text-2xl font-brand font-black leading-tight text-white group-hover:text-amber-300 transition duration-300 drop-shadow-md">
-                    {meta.title}
-                  </h4>
                 </div>
               </div>
 
-              {/* Card Body: Highlights & Action Pill */}
-              <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between bg-gradient-to-b from-white to-amber-50/30">
-                <div>
-                  <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed mb-3.5">
-                    {meta.subtitle}
-                  </p>
-
-                  {/* Highlight tags */}
-                  {meta.highlights && (
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {meta.highlights.map((h, i) => (
-                        <span
-                          key={i}
-                          className="text-[10px] font-bold bg-amber-100/70 text-amber-950 px-2.5 py-0.5 rounded-md border border-amber-200"
-                        >
-                          {h}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              {/* Compact Card Body */}
+              <div className="p-2 sm:p-2.5 flex-1 flex flex-col justify-between bg-gradient-to-b from-white to-amber-50/20">
+                <p className="text-[10px] sm:text-[11px] text-stone-600 line-clamp-1 leading-snug mb-1">
+                  {meta.subtitle}
+                </p>
 
                 {/* Action CTA Bar */}
-                <div className="pt-3.5 border-t border-amber-100 flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-red-800 group-hover:text-amber-800 transition font-brand flex items-center gap-1.5">
-                    <span>Explore Section</span>
+                <div className="pt-1.5 border-t border-amber-100 flex items-center justify-between">
+                  <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-red-800 group-hover:text-amber-800 transition font-brand flex items-center gap-1">
+                    <span>Open Menu</span>
                   </span>
-                  <div className="w-9 h-9 rounded-2xl bg-amber-100 group-hover:bg-red-800 text-red-800 group-hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm">
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-amber-100 group-hover:bg-red-800 text-red-800 group-hover:text-white flex items-center justify-center transition-all duration-200 shadow-2xs">
+                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
               </div>

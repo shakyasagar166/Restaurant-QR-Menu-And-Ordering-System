@@ -652,8 +652,12 @@ export default function AdminDashboard({
           <div className="p-5 border-b border-slate-800/80 bg-[#0d1322]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 text-white flex items-center justify-center font-black shadow-lg shadow-blue-500/30">
-                  <Utensils className="w-6 h-6" />
+                <div className="w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-amber-400 via-red-600 to-amber-300 shadow-lg shadow-red-950/40 shrink-0">
+                  <img
+                    src="/bikaner-logo.jpg"
+                    alt="Bikaner Express Logo"
+                    className="w-full h-full rounded-full object-cover bg-white"
+                  />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">

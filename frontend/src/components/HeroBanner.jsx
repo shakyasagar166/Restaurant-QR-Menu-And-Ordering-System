@@ -12,37 +12,37 @@ export default function HeroBanner({ searchQuery, setSearchQuery, selectedCatego
   ];
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-b from-amber-100/50 via-amber-50/20 to-transparent pt-6 pb-6 px-4 sm:px-6">
+    <div className="relative overflow-hidden bg-gradient-to-b from-amber-100/50 via-amber-50/20 to-transparent pt-3 pb-3 sm:pt-6 sm:pb-6 px-3 sm:px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="relative rounded-3xl bg-gradient-to-br from-stone-950 via-red-950 to-stone-950 text-white p-6 sm:p-10 shadow-2xl border-2 border-amber-500/40 overflow-hidden">
+        <div className="relative rounded-2xl sm:rounded-3xl bg-gradient-to-br from-stone-950 via-red-950 to-stone-950 text-white p-4 sm:p-10 shadow-2xl border-2 border-amber-500/40 overflow-hidden">
           {/* Ambient lighting glows */}
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
           <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-red-600/15 rounded-full blur-3xl pointer-events-none"></div>
 
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
             {/* Left Content Column */}
             <div className="lg:col-span-7">
               {/* Grand Brand Top Badge */}
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/40 backdrop-blur-md uppercase tracking-widest font-brand">
-                  <Crown className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Aman International Mall • Roof Top Mainpuri</span>
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2.5 sm:mb-4">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/40 backdrop-blur-md uppercase tracking-wider font-brand">
+                  <Crown className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
+                  <span>Aman International Mall • Roof Top</span>
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <ShieldCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400" />
                   <span>100% Pure Shuddh Veg</span>
                 </span>
               </div>
 
               {/* Grand Headline in Cinzel & Playfair Display */}
-              <h2 className="text-3xl sm:text-5xl md:text-6xl font-brand font-black tracking-tight text-white mb-4 leading-[1.1]">
+              <h2 className="text-2xl sm:text-5xl md:text-6xl font-brand font-black tracking-tight text-white mb-2 sm:mb-4 leading-tight">
                 Royal Vegetarian <br />
                 <span className="gold-gradient-text">
                   Culinary Heritage
                 </span>
               </h2>
 
-              <p className="text-stone-300 text-xs sm:text-sm mb-6 leading-relaxed max-w-xl">
+              <p className="hidden sm:block text-stone-300 text-xs sm:text-sm mb-6 leading-relaxed max-w-xl">
                 Indulge in time-honored North Indian curries simmered in pure desi ghee, clay-oven charred tandoori rotis, South Indian dosas, Delhi-6 street chaat, and artisan mocktails. Order straight from your rooftop table with instant kitchen bell notification.
               </p>
 
