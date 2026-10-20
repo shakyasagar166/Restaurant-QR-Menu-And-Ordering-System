@@ -36,6 +36,15 @@ export default function PaymentModal({
   const [selectedMethod, setSelectedMethod] = useState('ONLINE'); // 'ONLINE' or 'CASH'
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState('');
+  // Check if Admin has enabled or disabled Online Payment
+  const isOnlinePaymentEnabled = (() => {
+    try {
+      return localStorage.getItem('bikaner_online_payment_enabled') !== 'false';
+    } catch {
+      return true;
+    }
+  })();
+
 
   // Razorpay Test Simulator State
   const [isSimulatorOpen, setIsSimulatorOpen] = useState(false);
@@ -49,6 +58,9 @@ export default function PaymentModal({
 
   useEffect(() => {
     if (isOpen) {
+      if (!isOnlinePaymentEnabled) {
+        setSelectedMethod('CASH');
+      }
       setCustomKeyInput(getSavedRazorpayKey());
       setPaymentError('');
       setIsSimulatorOpen(false);
@@ -293,11 +305,19 @@ export default function PaymentModal({
               <div className="space-y-3">
                 {/* Option 1: Razorpay Online Payment */}
                 <div
-                  onClick={() => setSelectedMethod('ONLINE')}
-                  className={`relative rounded-2xl p-4 border-2 cursor-pointer transition-all ${
-                    selectedMethod === 'ONLINE'
-                      ? 'border-blue-600 bg-blue-50/70 shadow-md ring-2 ring-blue-300'
-                      : 'border-stone-200 hover:border-blue-300 bg-white'
+                  onClick={() => {
+                    if (isOnlinePaymentEnabled) {
+                      setSelectedMethod('ONLINE');
+                    } else {
+                      alert('Online payment abhi Admin dwara PAUSE hai. Kripya Cash on Delivery chunein.');
+                    }
+                  }}
+                  className={`relative rounded-2xl p-4 border-2 transition-all ${
+                    !isOnlinePaymentEnabled
+                      ? 'border-stone-300 bg-stone-100/80 opacity-60 cursor-not-allowed'
+                      : selectedMethod === 'ONLINE'
+                      ? 'border-blue-600 bg-blue-50/70 shadow-md ring-2 ring-blue-300 cursor-pointer'
+                      : 'border-stone-200 hover:border-blue-300 bg-white cursor-pointer'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -316,9 +336,15 @@ export default function PaymentModal({
                           <h4 className="font-brand font-black text-sm sm:text-base text-stone-900">
                             Online Payment (ऑनलाइन पेमेंट)
                           </h4>
-                          <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300">
-                            ⚡ Powered by Razorpay
-                          </span>
+                          {isOnlinePaymentEnabled ? (
+                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300">
+                              ⚡ Powered by Razorpay
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300">
+                              🔒 Paused by Restaurant
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-stone-600 mt-1">
                           Pay instantly via <b>UPI</b> (Google Pay, PhonePe, Paytm), <b>Debit/Credit Cards</b>, NetBanking.

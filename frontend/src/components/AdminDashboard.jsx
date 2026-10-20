@@ -103,6 +103,24 @@ export default function AdminDashboard({
   const [isAddDishOpen, setIsAddDishOpen] = useState(false);
   const [printingOrder, setPrintingOrder] = useState(null);
 
+  // Master Online Payment Gateway Switch (Can be turned ON/OFF anytime by Admin)
+  const [isOnlinePaymentActive, setIsOnlinePaymentActive] = useState(() => {
+    try {
+      return localStorage.getItem('bikaner_online_payment_enabled') !== 'false';
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleOnlinePayment = () => {
+    const next = !isOnlinePaymentActive;
+    setIsOnlinePaymentActive(next);
+    try {
+      localStorage.setItem('bikaner_online_payment_enabled', String(next));
+    } catch {}
+  };
+
+
   // Security & Password Change Modal
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [securityForm, setSecurityForm] = useState({
@@ -725,6 +743,33 @@ export default function AdminDashboard({
             >
               <Bell className="w-4 h-4 text-blue-600 animate-bell" />
               <span className="hidden xs:inline">Test Bell</span>
+            </button>
+
+            {/* Online Payment Master Switch (Instant ON/OFF Control) */}
+            <button
+              onClick={toggleOnlinePayment}
+              className={`flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-2xl border text-xs sm:text-sm font-black transition cursor-pointer shadow-2xs ${
+                isOnlinePaymentActive
+                  ? 'bg-blue-50 border-blue-300 text-blue-900 hover:bg-blue-100'
+                  : 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100'
+              }`}
+              title={
+                isOnlinePaymentActive
+                  ? 'Online Payment Active on Menu (Click to Pause)'
+                  : 'Online Payment Paused on Menu (Click to Activate)'
+              }
+            >
+              <CreditCard className={`w-4 h-4 ${isOnlinePaymentActive ? 'text-blue-600' : 'text-rose-600'}`} />
+              <span className="hidden md:inline">Online Pay:</span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wide ${
+                  isOnlinePaymentActive
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-rose-600 text-white'
+                }`}
+              >
+                {isOnlinePaymentActive ? '🟢 ON' : '🔴 OFF'}
+              </span>
             </button>
 
             {/* Sound Mute / Unmute */}
