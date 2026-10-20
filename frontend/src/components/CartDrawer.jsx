@@ -132,6 +132,8 @@ export default function CartDrawer({
       customerPhone: cleanPhone,
       notes: cookingNotes.trim(),
       totalAmount: grandTotal,
+      paymentMethod: 'CASH',
+      paymentStatus: 'PENDING',
       items: cart.map((item) => ({
         menuItemId: item.id,
         name: item.name,
@@ -141,11 +143,7 @@ export default function CartDrawer({
       })),
     };
 
-    if (onProceedToPayment) {
-      onProceedToPayment(orderData);
-    } else {
-      onPlaceOrder(orderData);
-    }
+    onPlaceOrder(orderData);
   };
 
   return (
@@ -494,20 +492,14 @@ export default function CartDrawer({
               </div>
             </div>
 
-            {/* Payment Options Available at next step */}
-            <div className="bg-gradient-to-r from-blue-50/90 via-amber-50/70 to-emerald-50/80 border border-amber-300/80 rounded-xl p-2.5 flex items-center justify-between text-[11px] shadow-2xs">
+            {/* Payment Mode (Cash on Delivery / Pay at Table) */}
+            <div className="bg-emerald-50/90 border border-emerald-300/80 rounded-xl p-2.5 flex items-center justify-between text-[11px] shadow-2xs">
               <div className="flex items-center gap-1.5 font-bold text-stone-800">
-                <CreditCard className="w-4 h-4 text-blue-700" />
-                <span>Payment Options:</span>
+                <Banknote className="w-4 h-4 text-emerald-700" />
+                <span>Payment Mode:</span>
               </div>
-              <div className="flex items-center gap-1 text-[10px] font-black">
-                <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded border border-blue-300">
-                  ⚡ Online (Razorpay)
-                </span>
-                <span className="text-stone-400 font-bold">/</span>
-                <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded border border-amber-300">
-                  💵 Cash
-                </span>
+              <div className="flex items-center gap-1 text-[11px] font-black text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-md border border-emerald-300">
+                💵 Pay Cash at Table / Counter
               </div>
             </div>
 
@@ -517,11 +509,11 @@ export default function CartDrawer({
               className="w-full bg-gradient-to-r from-red-700 via-red-800 to-amber-700 hover:from-red-800 hover:to-amber-800 text-white font-brand font-black py-3.5 sm:py-4 rounded-2xl shadow-xl shadow-red-900/30 flex items-center justify-center gap-2.5 transition-all active:scale-98 disabled:opacity-50 text-sm sm:text-base border-2 border-amber-400 cursor-pointer"
             >
               {isPlacingOrder ? (
-                <span className="animate-pulse">Confirming Order...</span>
+                <span className="animate-pulse">Placing Order...</span>
               ) : (
                 <>
                   <Bell className="w-5 h-5 text-amber-300 animate-bounce" />
-                  <span className="tracking-wide uppercase">CONFIRM ORDER &amp; CHOOSE PAYMENT ➔</span>
+                  <span className="tracking-wide uppercase">CONFIRM &amp; PLACE ORDER 🔔</span>
                 </>
               )}
             </button>

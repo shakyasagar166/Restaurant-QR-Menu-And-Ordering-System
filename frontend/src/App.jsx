@@ -100,9 +100,23 @@ export default function App() {
   });
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false);
 
-  // Order management & Realtime Bell Alert
-  const [orders, setOrders] = useState([]);
-  const [stats, setStats] = useState(null);
+  // Order management & Realtime Bell Alert (Cached in localStorage so orders NEVER disappear across reboots)
+  const [orders, setOrders] = useState(() => {
+    try {
+      const cached = localStorage.getItem('bikaner_orders_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [stats, setStats] = useState(() => {
+    try {
+      const cached = localStorage.getItem('bikaner_stats_cache');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
   const [isBellMuted, setIsBellMuted] = useState(false);
   const [isBellRinging, setIsBellRinging] = useState(false);
   const [newOrderAlert, setNewOrderAlert] = useState(null);
@@ -251,6 +265,14 @@ export default function App() {
 
       setOrders(mergedOrders);
       setStats(statsData);
+
+      // Persist orders and financial metrics permanently in localStorage
+      try {
+        localStorage.setItem('bikaner_orders_cache', JSON.stringify(mergedOrders));
+        if (statsData) {
+          localStorage.setItem('bikaner_stats_cache', JSON.stringify(statsData));
+        }
+      } catch (e) {}
 
       // Check if current customer order was updated
       if (activeCustomerOrder) {
@@ -408,6 +430,7 @@ export default function App() {
       window.history.pushState({ screen: 'admin' }, '');
     } catch (e) {}
     setActiveTab('admin');
+    loadOrdersData();
   };
 
   const handleAdminLogout = async () => {
@@ -747,27 +770,7 @@ export default function App() {
         tableNumber={tableNumber}
         setTableNumber={setTableNumber}
         onUpdateItemInstructions={handleUpdateItemInstructions}
-        onProceedToPayment={(orderData) => {
-          setPendingOrderData(orderData);
-          setIsCartOpen(false);
-          setIsPaymentModalOpen(true);
-        }}
         onPlaceOrder={handlePlaceOrder}
-        isPlacingOrder={isPlacingOrder}
-      />
-
-      {/* Standalone Root-Level Payment Modal (Clean z-[100] presentation, zero background scroll or bleed-through) */}
-      <PaymentModal
-        isOpen={isPaymentModalOpen}
-        onClose={() => {
-          setIsPaymentModalOpen(false);
-          setIsCartOpen(true);
-        }}
-        orderData={pendingOrderData}
-        onConfirmOrder={(finalOrderPayload) => {
-          setIsPaymentModalOpen(false);
-          handlePlaceOrder(finalOrderPayload);
-        }}
         isPlacingOrder={isPlacingOrder}
       />
 

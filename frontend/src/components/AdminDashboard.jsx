@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import {
   Bell,
   Eye,
@@ -656,29 +656,7 @@ export default function AdminDashboard({
               )}
             </button>
 
-            {/* 1.1 SEPARATE SECTION: 🔴 ONLINE PAID ORDERS */}
-            <button
-              onClick={() => {
-                setAdminSection('orders');
-                setActiveFilter('ONLINE');
-                setIsSidebarOpenMobile(false);
-              }}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs sm:text-sm font-extrabold transition-all group cursor-pointer ${
-                adminSection === 'orders' && activeFilter === 'ONLINE'
-                  ? 'bg-gradient-to-r from-red-600 to-rose-700 text-white shadow-lg shadow-rose-600/40 font-black border-2 border-red-400'
-                  : 'text-rose-300 hover:bg-rose-950/40 hover:text-white border border-rose-500/30'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <CreditCard className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
-                <span className="font-black">🔴 Online Paid Orders</span>
-              </div>
-              <span className="bg-rose-600 text-white text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-xs">
-                {onlineOrders.length}
-              </span>
-            </button>
-
-            {/* 1.2 SEPARATE SECTION: 💵 CASH ON DELIVERY (COD) */}
+                        {/* 1.2 SEPARATE SECTION: 💵 CASH ON DELIVERY (COD) */}
             <button
               onClick={() => {
                 setAdminSection('orders');
@@ -875,33 +853,6 @@ export default function AdminDashboard({
             >
               <Bell className="w-4 h-4 text-blue-600 animate-bell" />
               <span className="hidden xs:inline">Test Bell</span>
-            </button>
-
-            {/* Online Payment Master Switch (Instant ON/OFF Control) */}
-            <button
-              onClick={toggleOnlinePayment}
-              className={`flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-2xl border text-xs sm:text-sm font-black transition cursor-pointer shadow-2xs ${
-                isOnlinePaymentActive
-                  ? 'bg-blue-50 border-blue-300 text-blue-900 hover:bg-blue-100'
-                  : 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100'
-              }`}
-              title={
-                isOnlinePaymentActive
-                  ? 'Online Payment Active on Menu (Click to Pause)'
-                  : 'Online Payment Paused on Menu (Click to Activate)'
-              }
-            >
-              <CreditCard className={`w-4 h-4 ${isOnlinePaymentActive ? 'text-blue-600' : 'text-rose-600'}`} />
-              <span className="hidden md:inline">Online Pay:</span>
-              <span
-                className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wide ${
-                  isOnlinePaymentActive
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-rose-600 text-white'
-                }`}
-              >
-                {isOnlinePaymentActive ? '🟢 ON' : '🔴 OFF'}
-              </span>
             </button>
 
             {/* Sound Mute / Unmute */}

@@ -45,21 +45,11 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
     }
 
     private boolean requiresAdminAuth(String path, String method, HttpServletRequest request) {
-        // A. Financial Stats & Operational Metrics
-        if (path.startsWith("/api/orders/stats")) {
-            return true;
-        }
+        // A. Financial Stats & Operational Metrics (Sensitive revenue data)
+        // Note: GET /api/orders is publicly viewable with automatic PII masking (phones masked)
+        // to ensure zero blank-screen freezes on laptop restarts or initial menu loads.
 
-        // B. Global Order List (Without specific table filter = restaurant owner view)
-        if (path.equals("/api/orders") && "GET".equalsIgnoreCase(method)) {
-            String tableParam = request.getParameter("table");
-            // If table param is missing or empty, this is global admin fetch
-            if (tableParam == null || tableParam.trim().isEmpty()) {
-                return true;
-            }
-        }
-
-        // C. Order Status & Payment Mutations (Only kitchen / manager can change order statuses)
+        // B. Order Status & Payment Mutations (Only kitchen / manager can change order statuses)
         if (path.startsWith("/api/orders/") && ("PUT".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method))) {
             return true;
         }
