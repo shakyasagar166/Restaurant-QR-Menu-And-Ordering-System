@@ -235,6 +235,20 @@ export default function App() {
         return fetched;
       });
 
+      // Fail-safe check: if new pending order arrived during polling interval, ring bell
+      const currentOrders = ordersRef.current || [];
+      if (currentOrders.length > 0) {
+        const existingIds = new Set(currentOrders.map((o) => o.id));
+        const hasNewIncoming = mergedOrders.some(
+          (o) => o.status === 'PENDING' && !existingIds.has(o.id)
+        );
+        if (hasNewIncoming && !isBellMutedRef.current) {
+          bellPlayer.playOrderBell();
+          setIsBellRinging(true);
+          setTimeout(() => setIsBellRinging(false), 3500);
+        }
+      }
+
       setOrders(mergedOrders);
       setStats(statsData);
 
@@ -255,48 +269,85 @@ export default function App() {
     loadOrdersData();
   }, []);
 
-  // Real-time SSE listener for Kitchen Order Bell
+  // Persistent refs for stable real-time listener without reconnect tears
+  const isBellMutedRef = useRef(isBellMuted);
   useEffect(() => {
-    const eventSource = apiService.subscribeToOrderAlerts(
-      // onNewOrder
+    isBellMutedRef.current = isBellMuted;
+  }, [isBellMuted]);
+
+  const activeCustomerOrderRef = useRef(activeCustomerOrder);
+  useEffect(() => {
+    activeCustomerOrderRef.current = activeCustomerOrder;
+  }, [activeCustomerOrder]);
+
+  const ordersRef = useRef(orders);
+  useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
+
+  // Real-time SSE & Local IPC listener for Instant Kitchen Alerts (0ms delay)
+  useEffect(() => {
+    const subscriber = apiService.subscribeToOrderAlerts(
+      // onNewOrder: Instantly triggered via Server-Sent Events when customer submits order
       (newOrder) => {
-        // 🔔 Ring the Bell!
-        if (!isBellMuted) {
+        if (!newOrder || !newOrder.id) return;
+
+        // 🔔 Ring the Royal Temple Bell!
+        if (!isBellMutedRef.current) {
           bellPlayer.playOrderBell();
+          bellPlayer.triggerHaptic([100, 50, 100]);
         }
         setIsBellRinging(true);
-        setTimeout(() => setIsBellRinging(false), 3000);
+        setTimeout(() => setIsBellRinging(false), 3500);
 
         setNewOrderAlert(newOrder);
 
-        // Update orders list & stats
-        setOrders((prev) => [newOrder, ...prev.filter((o) => o.id !== newOrder.id)]);
+        // Update orders list immediately without needing page refresh
+        setOrders((prev) => {
+          const exists = prev.some((o) => o.id === newOrder.id);
+          if (exists) {
+            return prev.map((o) => (o.id === newOrder.id ? { ...o, ...newOrder } : o));
+          }
+          return [newOrder, ...prev];
+        });
+
+        // Check if current customer placed it
+        if (activeCustomerOrderRef.current && activeCustomerOrderRef.current.id === newOrder.id) {
+          setActiveCustomerOrder(newOrder);
+        }
+
+        // Background fetch updated stats
+        apiService.getStats().then((s) => setStats(s)).catch(() => {});
       },
       // onOrderUpdated
       (updatedOrder) => {
+        if (!updatedOrder || !updatedOrder.id) return;
+
         recentStatusOverridesRef.current.set(updatedOrder.id, {
           status: updatedOrder.status,
           timestamp: Date.now(),
         });
+
         setOrders((prev) =>
           prev.map((o) => (o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o))
         );
-        if (activeCustomerOrder && activeCustomerOrder.id === updatedOrder.id) {
+
+        if (activeCustomerOrderRef.current && activeCustomerOrderRef.current.id === updatedOrder.id) {
           setActiveCustomerOrder(updatedOrder);
         }
       }
     );
 
-    // Polling fallback every 4s
+    // Fast polling fallback every 2.5s for fail-safe redundancy
     const interval = setInterval(() => {
       loadOrdersData();
-    }, 4000);
+    }, 2500);
 
     return () => {
-      if (eventSource) eventSource.close();
+      if (subscriber && subscriber.close) subscriber.close();
       clearInterval(interval);
     };
-  }, [isBellMuted, activeCustomerOrder]);
+  }, []); // Permanent SSE connection: zero reconnection thrashing!
 
   // Tab switcher with Admin Auth Protection
   const handleTabSwitch = (targetTab) => {

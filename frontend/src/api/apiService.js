@@ -80,7 +80,18 @@ export const apiService = {
       body: JSON.stringify(orderData),
     }, 10000);
     if (!res.ok) throw new Error('Failed to submit order');
-    return res.json();
+    const savedOrder = await res.json();
+
+    // Instant local broadcast to all open Admin tabs on the device (0ms latency!)
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('bikaner_pos_events');
+        bc.postMessage({ type: 'NEW_ORDER', order: savedOrder });
+        bc.close();
+      }
+    } catch {}
+
+    return savedOrder;
   },
 
   async getOrders(status, table) {
@@ -229,37 +240,95 @@ export const apiService = {
     } catch {}
   },
 
-  // Real-time Server-Sent Events (SSE) subscriber
+  // Real-time Server-Sent Events (SSE) & Local IPC subscriber
   subscribeToOrderAlerts(onNewOrder, onOrderUpdated) {
+    let eventSource = null;
+    let reconnectTimer = null;
+    let isTerminated = false;
+    let broadcastChannel = null;
+
+    // 1. Instant Local Inter-Tab Channel (0ms latency between tabs on same machine)
     try {
-      const eventSource = new EventSource(`${API_BASE}/orders/stream`);
-
-      eventSource.addEventListener('NEW_ORDER', (event) => {
-        try {
-          const order = JSON.parse(event.data);
-          if (onNewOrder) onNewOrder(order);
-        } catch (e) {
-          console.error('Error parsing SSE NEW_ORDER:', e);
-        }
-      });
-
-      eventSource.addEventListener('ORDER_UPDATED', (event) => {
-        try {
-          const order = JSON.parse(event.data);
-          if (onOrderUpdated) onOrderUpdated(order);
-        } catch (e) {
-          console.error('Error parsing SSE ORDER_UPDATED:', e);
-        }
-      });
-
-      eventSource.onerror = (err) => {
-        console.warn('SSE stream notice (will auto-reconnect):', err);
-      };
-
-      return eventSource;
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        broadcastChannel = new BroadcastChannel('bikaner_pos_events');
+        broadcastChannel.onmessage = (event) => {
+          if (!event || !event.data) return;
+          if (event.data.type === 'NEW_ORDER' && onNewOrder && event.data.order) {
+            onNewOrder(event.data.order);
+          } else if (event.data.type === 'ORDER_UPDATED' && onOrderUpdated && event.data.order) {
+            onOrderUpdated(event.data.order);
+          }
+        };
+      }
     } catch (e) {
-      console.warn('Could not establish SSE connection:', e);
-      return null;
+      console.warn('BroadcastChannel notice:', e);
     }
+
+    // 2. Real-Time Server-Sent Events (SSE) from Spring Boot Backend
+    const establishSSE = () => {
+      if (isTerminated) return;
+
+      try {
+        if (eventSource) {
+          try { eventSource.close(); } catch {}
+        }
+
+        const streamUrl = `${API_BASE}/orders/stream`;
+        eventSource = new EventSource(streamUrl);
+
+        eventSource.addEventListener('NEW_ORDER', (event) => {
+          try {
+            const order = JSON.parse(event.data);
+            if (onNewOrder && order) onNewOrder(order);
+          } catch (e) {
+            console.error('Error parsing SSE NEW_ORDER:', e);
+          }
+        });
+
+        eventSource.addEventListener('ORDER_UPDATED', (event) => {
+          try {
+            const order = JSON.parse(event.data);
+            if (onOrderUpdated && order) onOrderUpdated(order);
+          } catch (e) {
+            console.error('Error parsing SSE ORDER_UPDATED:', e);
+          }
+        });
+
+        eventSource.onerror = (err) => {
+          // If SSE connection breaks, clean up and reconnect in 1.5 seconds
+          if (eventSource) {
+            try { eventSource.close(); } catch {}
+            eventSource = null;
+          }
+          if (!isTerminated) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(establishSSE, 1500);
+          }
+        };
+      } catch (err) {
+        console.warn('Could not establish SSE, retry in 2.5s:', err);
+        if (!isTerminated) {
+          clearTimeout(reconnectTimer);
+          reconnectTimer = setTimeout(establishSSE, 2500);
+        }
+      }
+    };
+
+    establishSSE();
+
+    return {
+      close: () => {
+        isTerminated = true;
+        clearTimeout(reconnectTimer);
+        if (eventSource) {
+          try { eventSource.close(); } catch {}
+          eventSource = null;
+        }
+        if (broadcastChannel) {
+          try { broadcastChannel.close(); } catch {}
+          broadcastChannel = null;
+        }
+      }
+    };
   }
 };

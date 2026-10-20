@@ -69,15 +69,12 @@ public class OrderController {
             savedOrder = orderRepository.save(order);
         }
 
-        // Asynchronous non-blocking instant notification to Kitchen / Admin Bell System
-        final Order finalOrder = savedOrder;
-        CompletableFuture.runAsync(() -> {
-            try {
-                notificationService.notifyNewOrder(finalOrder);
-            } catch (Exception e) {
-                System.err.println("Async notification warning: " + e.getMessage());
-            }
-        });
+        // Instant Real-Time Server-Sent Events Notification to Kitchen / Admin Bell System
+        try {
+            notificationService.notifyNewOrder(savedOrder);
+        } catch (Exception e) {
+            System.err.println("SSE notify error: " + e.getMessage());
+        }
 
         return ResponseEntity.ok(savedOrder);
     }
@@ -119,10 +116,12 @@ public class OrderController {
             order.setUpdatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
             Order updated = orderRepository.save(order);
 
-            // Asynchronous broadcast of status change
-            CompletableFuture.runAsync(() -> {
+            // Instant Real-Time broadcast of status change via SSE
+            try {
                 notificationService.notifyStatusChange(updated);
-            });
+            } catch (Exception e) {
+                System.err.println("SSE notify status error: " + e.getMessage());
+            }
 
             return ResponseEntity.ok(updated);
         }).orElse(ResponseEntity.notFound().build());
@@ -146,9 +145,12 @@ public class OrderController {
             order.setUpdatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
             Order updated = orderRepository.save(order);
 
-            CompletableFuture.runAsync(() -> {
+            // Instant Real-Time broadcast of payment change via SSE
+            try {
                 notificationService.notifyStatusChange(updated);
-            });
+            } catch (Exception e) {
+                System.err.println("SSE notify payment error: " + e.getMessage());
+            }
 
             return ResponseEntity.ok(updated);
         }).orElse(ResponseEntity.notFound().build());
