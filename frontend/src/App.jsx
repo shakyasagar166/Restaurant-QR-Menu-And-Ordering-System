@@ -692,6 +692,7 @@ export default function App() {
               onBackToCategories={handleBackToCategories}
               onSelectCategory={handleSelectCategory}
               searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
             />
           ) : (
             /* User explicitly requested: First show sections (Drink, Roti, Curries, etc.) */

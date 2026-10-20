@@ -46,24 +46,51 @@ export default function HeroBanner({ searchQuery, setSearchQuery, selectedCatego
                 Indulge in time-honored North Indian curries simmered in pure desi ghee, clay-oven charred tandoori rotis, South Indian dosas, Delhi-6 street chaat, and artisan mocktails. Order straight from your rooftop table with instant kitchen bell notification.
               </p>
 
-              {/* Luxury Search Bar */}
-              <div className="relative max-w-lg mb-4">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400" />
-                <input
-                  type="text"
-                  placeholder="Search over 85+ authentic dishes (e.g. Paneer Butter Masala, Garlic Naan, Mojito)..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/10 backdrop-blur-md text-white placeholder-stone-400 pl-11 pr-16 py-3.5 rounded-2xl border border-amber-400/30 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white/15 transition text-xs sm:text-sm shadow-inner"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-300 hover:text-white bg-white/20 px-2 py-1 rounded-lg"
-                  >
-                    Clear
-                  </button>
-                )}
+              {/* High-Visibility Highlighted Customer Search Bar */}
+              <div className="relative max-w-xl mb-4 group">
+                {/* Subtle Ambient Golden Glow Behind Search Bar */}
+                <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 rounded-3xl blur-md opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
+
+                {/* Bright Crisp White & Gold Search Container */}
+                <div
+                  className={`relative flex items-center bg-white rounded-2xl sm:rounded-3xl p-1.5 sm:p-2 border-2 transition-all duration-200 shadow-2xl ${
+                    searchQuery
+                      ? 'border-red-600 ring-4 ring-red-100 shadow-red-500/20'
+                      : 'border-amber-400 hover:border-amber-500 ring-2 ring-amber-100/90 focus-within:border-amber-600 focus-within:ring-4 focus-within:ring-amber-200'
+                  }`}
+                >
+                  {/* Eye-Catching Golden Search Badge */}
+                  <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-stone-950 font-black text-xs sm:text-sm px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-sm shrink-0 border border-amber-300">
+                    <Search className="w-4 h-4 text-stone-950 stroke-[3]" />
+                    <span className="font-brand uppercase tracking-wider hidden xs:inline">Search</span>
+                  </div>
+
+                  {/* High Contrast Input */}
+                  <input
+                    type="text"
+                    placeholder="Search 85+ pure veg dishes (Paneer, Naan, Dosa, Chaat)..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-transparent pl-2.5 pr-2 py-2 text-xs sm:text-sm font-black text-stone-950 placeholder-stone-500 focus:outline-none"
+                  />
+
+                  {/* Action Button: Clear or Dish Count Badge */}
+                  {searchQuery ? (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="flex items-center gap-1 bg-rose-50 hover:bg-rose-500 text-rose-700 hover:text-white border border-rose-300 text-xs font-black px-3 py-1.5 rounded-xl transition cursor-pointer shrink-0 mr-1 shadow-xs"
+                      title="Clear search"
+                    >
+                      <span>Clear</span>
+                      <span className="text-sm font-black">✕</span>
+                    </button>
+                  ) : (
+                    <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-black text-amber-950 bg-amber-100/90 border border-amber-300 px-2.5 py-1 rounded-xl shrink-0 mr-1">
+                      ⚡ 85+ Pure Veg
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Popular Signature Dishes Quick-Filter */}
@@ -75,8 +102,11 @@ export default function HeroBanner({ searchQuery, setSearchQuery, selectedCatego
                 {quickTags.map((tag) => (
                   <button
                     key={tag.label}
-                    onClick={() => onSelectCategory(tag.cat)}
-                    className="bg-white/10 hover:bg-amber-500/20 text-stone-200 hover:text-amber-300 px-3 py-1 rounded-xl text-[11px] font-semibold border border-white/10 hover:border-amber-400/40 transition"
+                    onClick={() => {
+                      setSearchQuery(tag.label);
+                      if (onSelectCategory) onSelectCategory(tag.cat);
+                    }}
+                    className="bg-white/10 hover:bg-amber-500/20 text-stone-200 hover:text-amber-300 px-3 py-1 rounded-xl text-[11px] font-semibold border border-white/10 hover:border-amber-400/40 transition cursor-pointer"
                   >
                     {tag.label}
                   </button>

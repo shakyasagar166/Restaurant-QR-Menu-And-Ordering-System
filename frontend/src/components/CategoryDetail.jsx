@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Sparkles, Filter, Crown, Check, Tag } from 'lucide-react';
+import { ArrowLeft, Sparkles, Filter, Crown, Check, Tag, Search } from 'lucide-react';
 import MenuItemCard from './MenuItemCard';
 import { CATEGORY_METADATA } from './CategoryCards';
 
@@ -14,6 +14,7 @@ export default function CategoryDetail({
   onBackToCategories,
   onSelectCategory,
   searchQuery,
+  setSearchQuery,
   onUpdateItemInstructions,
 }) {
   const [activeFilterPill, setActiveFilterPill] = useState('ALL'); // 'ALL' | 'IN_STOCK' | 'SPECIAL' | 'BUDGET'
@@ -57,7 +58,7 @@ export default function CategoryDetail({
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 w-full max-w-full overflow-hidden">
       {/* High-Visibility Back Bar (Clean non-sticky to prevent covering dishes on scroll) */}
-      <div className="bg-[#faf7f2] py-2 px-2 sm:px-3 mb-4 rounded-2xl border border-amber-300/80 shadow-xs flex items-center justify-between gap-2">
+      <div className="bg-[#faf7f2] py-2 px-2 sm:px-3 mb-3 rounded-2xl border border-amber-300/80 shadow-xs flex items-center justify-between gap-2">
         <button
           onClick={onBackToCategories}
           className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-brand font-black text-white bg-gradient-to-r from-red-800 to-red-950 hover:from-red-900 hover:to-black px-3.5 sm:px-4 py-2 rounded-xl shadow-xs border border-amber-400/50 transition active:scale-95 shrink-0 cursor-pointer"
@@ -70,6 +71,43 @@ export default function CategoryDetail({
           {filteredItems.length} Dishes
         </span>
       </div>
+
+      {/* High-Visibility Highlighted Dish Search Bar inside Category View */}
+      {setSearchQuery && (
+        <div className="relative w-full mb-3 group">
+          <div
+            className={`relative flex items-center bg-white border-2 rounded-2xl transition-all shadow-sm ${
+              searchQuery
+                ? 'border-red-600 ring-4 ring-red-100 shadow-red-500/15'
+                : 'border-amber-400 hover:border-amber-500 ring-2 ring-amber-100/80 focus-within:border-red-600 focus-within:ring-4 focus-within:ring-red-100'
+            }`}
+          >
+            <div className="flex items-center pl-2.5 pr-1.5 py-1.5 shrink-0">
+              <span className="bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-black text-[11px] sm:text-xs px-2.5 py-1 rounded-xl shadow-xs flex items-center gap-1.5 tracking-wide border border-amber-300">
+                <Search className="w-3.5 h-3.5 text-stone-950 stroke-[3]" />
+                <span>SEARCH DISH</span>
+              </span>
+            </div>
+            <input
+              type="text"
+              placeholder={`Search dishes in ${searchQuery ? 'menu' : category} (Paneer, Naan, Dosa)...`}
+              value={searchQuery || ''}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-transparent pl-1.5 pr-9 py-2 text-xs sm:text-sm font-bold text-stone-950 placeholder-stone-500 focus:outline-none"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg bg-stone-200 hover:bg-rose-500 hover:text-white text-stone-700 flex items-center justify-center text-xs font-black transition cursor-pointer"
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Horizontal Category Ribbon (Swipeable on Mobile) */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-3 pt-1 border-b border-amber-200">
