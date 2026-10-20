@@ -3,6 +3,24 @@
  * Supports UPI (GPay, PhonePe, Paytm), Debit/Credit Cards, and NetBanking.
  */
 
+export const getSavedRazorpayKey = () => {
+  try {
+    const stored = localStorage.getItem('bikaner_razorpay_key_id');
+    if (stored && stored.trim().length > 5) return stored.trim();
+  } catch {}
+  return import.meta.env.VITE_RAZORPAY_KEY_ID || '';
+};
+
+export const saveRazorpayKey = (key) => {
+  try {
+    if (key && key.trim()) {
+      localStorage.setItem('bikaner_razorpay_key_id', key.trim());
+    } else {
+      localStorage.removeItem('bikaner_razorpay_key_id');
+    }
+  } catch {}
+};
+
 export const loadRazorpayScript = () => {
   return new Promise((resolve) => {
     if (typeof window !== 'undefined' && window.Razorpay) {
@@ -35,26 +53,21 @@ export const initiateRazorpayPayment = async ({
   const isLoaded = await loadRazorpayScript();
 
   if (!isLoaded || !window.Razorpay) {
-    // Graceful fallback for local development or adblockers blocking checkout.razorpay.com
-    const confirmFallback = window.confirm(
-      `Razorpay SDK load nahi ho saka (ho sakta hai ad-blocker ya network issue ho).\n\nKya aap Test Online Payment Simulate karna chahte hain?`
-    );
-    if (confirmFallback) {
-      const mockPaymentId = `pay_mock_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
-      onSuccess({
-        razorpay_payment_id: mockPaymentId,
-        is_simulated: true,
-      });
-      return;
-    } else {
-      if (onFailure) onFailure(new Error('Razorpay script could not be loaded'));
-      return;
+    if (onFailure) {
+      onFailure(new Error('Razorpay SDK load nahi ho saka (Network ya Adblocker issue).'));
     }
+    return;
   }
 
-  // Razorpay Key ID - standard public test key or custom key from env
-  const razorpayKey =
-    import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag';
+  // Razorpay Key ID - from localStorage or env
+  const razorpayKey = getSavedRazorpayKey();
+
+  if (!razorpayKey) {
+    if (onFailure) {
+      onFailure(new Error('Razorpay Key ID nahi mili. Kripya Test Mode Simulator use karein ya apni Key enter karein.'));
+    }
+    return;
+  }
 
   const amountInPaise = Math.round(Number(amount) * 100);
 
@@ -84,7 +97,7 @@ export const initiateRazorpayPayment = async ({
       },
     },
     handler: function (response) {
-      // response contains razorpay_payment_id, etc.
+      // response contains razorpay_payment_id, razorpay_order_id, razorpay_signature
       if (onSuccess) {
         onSuccess(response);
       }
