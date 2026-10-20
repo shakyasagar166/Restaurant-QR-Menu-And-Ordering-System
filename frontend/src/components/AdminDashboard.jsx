@@ -100,6 +100,62 @@ export default function AdminDashboard({
   const [editingDish, setEditingDish] = useState(null);
   const [isAddDishOpen, setIsAddDishOpen] = useState(false);
   const [printingOrder, setPrintingOrder] = useState(null);
+
+  // Security & Password Change Modal
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [securityForm, setSecurityForm] = useState({
+    currentPassword: '',
+    newPin: adminUser?.quickPin || '9058',
+    newPassword: '',
+    newPhone: adminUser?.phone || '9058605348',
+    newName: adminUser?.name || 'Shivam Shakya (Manager)',
+  });
+  const [isUpdatingSecurity, setIsUpdatingSecurity] = useState(false);
+  const [securityMessage, setSecurityMessage] = useState({ type: '', text: '' });
+
+  const handleChangeCredentialsSubmit = async (e) => {
+    e.preventDefault();
+    if (!securityForm.currentPassword) {
+      setSecurityMessage({ type: 'error', text: 'Current Password / PIN is required for verification.' });
+      return;
+    }
+    if (securityForm.newPin && securityForm.newPin.length !== 4) {
+      setSecurityMessage({ type: 'error', text: 'Quick Staff PIN must be exactly 4 digits.' });
+      return;
+    }
+
+    try {
+      setIsUpdatingSecurity(true);
+      setSecurityMessage({ type: '', text: '' });
+      const res = await apiService.changeCredentials({
+        currentPassword: securityForm.currentPassword,
+        newPassword: securityForm.newPassword,
+        newPin: securityForm.newPin,
+        newPhone: securityForm.newPhone,
+        newName: securityForm.newName,
+      });
+
+      // Update local storage session
+      const updatedUser = {
+        ...adminUser,
+        phone: res.phone || securityForm.newPhone,
+        name: res.name || securityForm.newName,
+        quickPin: res.quickPin || securityForm.newPin,
+      };
+      localStorage.setItem('bikaner_admin_auth', JSON.stringify(updatedUser));
+
+      setSecurityMessage({ type: 'success', text: 'Credentials updated successfully in Database!' });
+      setTimeout(() => {
+        setIsSecurityModalOpen(false);
+        setSecurityMessage({ type: '', text: '' });
+        setSecurityForm((prev) => ({ ...prev, currentPassword: '', newPassword: '' }));
+      }, 1500);
+    } catch (err) {
+      setSecurityMessage({ type: 'error', text: err.message || 'Failed to update credentials.' });
+    } finally {
+      setIsUpdatingSecurity(false);
+    }
+  };
   const [dishFormData, setDishFormData] = useState({
     id: null,
     name: '',
@@ -540,13 +596,22 @@ export default function AdminDashboard({
               </div>
             </div>
 
-            <button
-              onClick={onLogout}
-              className="p-2.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/40 transition shrink-0 ml-1 cursor-pointer"
-              title="Logout Session"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0 ml-1">
+              <button
+                onClick={() => setIsSecurityModalOpen(true)}
+                className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-white border border-slate-700 transition cursor-pointer"
+                title="Change Password & 4-Digit PIN"
+              >
+                <KeyRound className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onLogout}
+                className="p-2.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/40 transition cursor-pointer"
+                title="Logout Session"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>
@@ -2006,6 +2071,147 @@ export default function AdminDashboard({
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          SECURITY & CHANGE PASSWORD / PIN MODAL
+      ========================================================================= */}
+      {isSecurityModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-slate-900 text-white rounded-3xl max-w-md w-full shadow-2xl border-2 border-slate-700 overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+                  <KeyRound className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-black text-base text-white font-pos">
+                    Security &amp; Password Settings
+                  </h4>
+                  <span className="text-xs text-slate-400">
+                    Change 4-Digit Staff PIN &amp; Login Password
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsSecurityModalOpen(false);
+                  setSecurityMessage({ type: '', text: '' });
+                }}
+                className="text-slate-400 hover:text-white p-1 rounded-xl transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleChangeCredentialsSubmit} className="p-5 space-y-4">
+              {/* Message Banner */}
+              {securityMessage.text && (
+                <div
+                  className={`p-3 rounded-2xl text-xs font-bold flex items-center gap-2 ${
+                    securityMessage.type === 'success'
+                      ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/50'
+                      : 'bg-rose-950/80 text-rose-300 border border-rose-500/50'
+                  }`}
+                >
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{securityMessage.text}</span>
+                </div>
+              )}
+
+              {/* 1. Quick Staff PIN (4 Digits) */}
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black uppercase text-cyan-400 flex items-center gap-1.5 font-pos">
+                    <Zap className="w-3.5 h-3.5 text-amber-300" />
+                    <span>4-Digit Quick Staff PIN:</span>
+                  </label>
+                  <span className="text-[10px] text-slate-500 font-mono">Used on Touchpad Keypad</span>
+                </div>
+                <input
+                  type="text"
+                  maxLength="4"
+                  placeholder="e.g. 9058"
+                  value={securityForm.newPin}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    setSecurityForm({ ...securityForm, newPin: val });
+                  }}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-lg font-mono font-black text-cyan-300 tracking-widest text-center focus:border-cyan-400 focus:outline-none"
+                  required
+                />
+              </div>
+
+              {/* 2. New Password */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-slate-300 block">
+                  New Password (Optional, leave blank to keep same):
+                </label>
+                <input
+                  type="text"
+                  placeholder="Leave blank or enter new password"
+                  value={securityForm.newPassword}
+                  onChange={(e) => setSecurityForm({ ...securityForm, newPassword: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white focus:border-cyan-400 focus:outline-none"
+                />
+              </div>
+
+              {/* 3. Registered Mobile Number */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase text-slate-300 block">
+                  Manager Mobile Number:
+                </label>
+                <input
+                  type="tel"
+                  placeholder="e.g. 9058605348"
+                  value={securityForm.newPhone}
+                  onChange={(e) => setSecurityForm({ ...securityForm, newPhone: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white focus:border-cyan-400 focus:outline-none font-mono"
+                  required
+                />
+              </div>
+
+              {/* 4. Current Password / PIN (Security Check) */}
+              <div className="pt-2 border-t border-slate-800 space-y-1">
+                <label className="text-xs font-black uppercase text-amber-300 block">
+                  Current Password or PIN (Security Verification):
+                </label>
+                <input
+                  type="password"
+                  placeholder="Enter current password or current PIN to confirm"
+                  value={securityForm.currentPassword}
+                  onChange={(e) => setSecurityForm({ ...securityForm, currentPassword: e.target.value })}
+                  className="w-full bg-slate-950 border border-amber-500/60 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white focus:border-amber-400 focus:outline-none"
+                  required
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-3 flex gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSecurityModalOpen(false);
+                    setSecurityMessage({ type: '', text: '' });
+                  }}
+                  className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-3 rounded-2xl text-xs transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdatingSecurity}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-black py-3 rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isUpdatingSecurity ? 'Saving to Database...' : 'Save &amp; Update Credentials'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

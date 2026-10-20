@@ -154,6 +154,19 @@ export const apiService = {
   },
 
   // Admin Authentication APIs
+  async loginWithPin(pin) {
+    const res = await fetchWithTimeout(`${API_BASE}/auth/pin-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin }),
+    }, 6000);
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Invalid 4-digit PIN');
+    }
+    return data;
+  },
+
   async loginAdmin(phone, password) {
     const res = await fetchWithTimeout(`${API_BASE}/auth/login`, {
       method: 'POST',
@@ -163,6 +176,19 @@ export const apiService = {
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.message || 'Authentication failed');
+    }
+    return data;
+  },
+
+  async changeCredentials(payload) {
+    const res = await fetchWithTimeout(`${API_BASE}/auth/change-credentials`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }, 8000);
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to update credentials');
     }
     return data;
   },
