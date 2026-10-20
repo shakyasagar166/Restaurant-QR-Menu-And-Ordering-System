@@ -369,7 +369,7 @@ export default function App() {
   // If in Admin Management Mode, render 100% Standalone Admin POS & Kitchen Suite (Zero customer clutter)
   if (activeTab === 'admin') {
     return (
-      <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans select-none">
+      <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-sans select-none antialiased">
         <AdminDashboard
           orders={orders}
           stats={stats}
