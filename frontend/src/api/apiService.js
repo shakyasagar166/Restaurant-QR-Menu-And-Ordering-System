@@ -1,7 +1,10 @@
+const CLOUD_BACKEND_URL = 'https://bikaner-express-backend.onrender.com';
+
 // Dynamic resilient API_BASE:
 // 1. If VITE_API_BASE_URL is provided in env (e.g. Render backend URL), use it.
-// 2. If opened from mobile on local Wi-Fi (e.g. http://10.136.198.117:3000), use laptop's Wi-Fi IP port 8080.
-// 3. Otherwise fallback to http://localhost:8080.
+// 2. If running on Vercel or public internet domain, connect to Render Cloud Backend.
+// 3. If opened from mobile on local Wi-Fi (e.g. http://10.136.198.117:3000), use laptop's Wi-Fi IP port 8080.
+// 4. Otherwise fallback to http://localhost:8080.
 const getDynamicApiBase = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
     const raw = import.meta.env.VITE_API_BASE_URL.trim();
@@ -9,7 +12,12 @@ const getDynamicApiBase = () => {
   }
   if (typeof window !== 'undefined' && window.location && window.location.hostname) {
     const host = window.location.hostname;
-    if (host !== 'localhost' && host !== '127.0.0.1' && !host.includes('vercel.app')) {
+    // Cloud environments: Vercel edge CDN, Render, or any public internet domain
+    if (host.includes('vercel.app') || host.includes('onrender.com') || (!host.includes('localhost') && !host.includes('127.0.0.1') && !host.startsWith('192.168.') && !host.startsWith('10.') && !host.startsWith('172.'))) {
+      return `${CLOUD_BACKEND_URL}/api`;
+    }
+    // Local Wi-Fi mobile testing (e.g. http://10.136.198.117:3000)
+    if (host !== 'localhost' && host !== '127.0.0.1') {
       return `http://${host}:8080/api`;
     }
   }
@@ -17,6 +25,10 @@ const getDynamicApiBase = () => {
 };
 
 const API_BASE = getDynamicApiBase();
+
+// Cloud requests need up to 35s to handle Render free-tier cold-start wake-up
+const isCloudEnv = typeof window !== 'undefined' && window.location && window.location.hostname && (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('onrender.com'));
+const DEFAULT_TIMEOUT_MS = isCloudEnv ? 35000 : 10000;
 
 // Security Token Extraction for Protected Admin Operations
 export function getAuthHeaders() {
@@ -38,7 +50,7 @@ export function getAuthHeaders() {
 }
 
 // Resilient fetch with automatic timeout to prevent browser UI freezing / hanging
-async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+async function fetchWithTimeout(url, options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -61,13 +73,13 @@ export const apiService = {
     if (category && category !== 'All') params.append('category', category);
     if (search) params.append('search', search);
 
-    const res = await fetchWithTimeout(`${API_BASE}/menu?${params.toString()}`, {}, 6000);
+    const res = await fetchWithTimeout(`${API_BASE}/menu?${params.toString()}`, {}, DEFAULT_TIMEOUT_MS);
     if (!res.ok) throw new Error('Failed to load menu');
     return res.json();
   },
 
   async getCategories() {
-    const res = await fetchWithTimeout(`${API_BASE}/menu/categories`, {}, 6000);
+    const res = await fetchWithTimeout(`${API_BASE}/menu/categories`, {}, DEFAULT_TIMEOUT_MS);
     if (!res.ok) throw new Error('Failed to load categories');
     return res.json();
   },
@@ -76,7 +88,7 @@ export const apiService = {
     const res = await fetchWithTimeout(`${API_BASE}/menu/${id}/toggle-availability`, {
       method: 'PUT',
       headers: { ...getAuthHeaders() },
-    }, 6000);
+    }, DEFAULT_TIMEOUT_MS);
     if (!res.ok) throw new Error('Failed to toggle dish availability');
     return res.json();
   },
@@ -86,7 +98,7 @@ export const apiService = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(itemData),
-    }, 8000);
+    }, DEFAULT_TIMEOUT_MS);
     if (!res.ok) throw new Error('Failed to update dish');
     return res.json();
   },
@@ -96,7 +108,7 @@ export const apiService = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(itemData),
-    }, 8000);
+    }, DEFAULT_TIMEOUT_MS);
     if (!res.ok) throw new Error('Failed to add dish');
     return res.json();
   },
@@ -105,7 +117,7 @@ export const apiService = {
     const res = await fetchWithTimeout(`${API_BASE}/menu/${id}`, {
       method: 'DELETE',
       headers: { ...getAuthHeaders() },
-    }, 8000);
+    }, DEFAULT_TIMEOUT_MS);
     if (!res.ok) throw new Error('Failed to delete dish');
     return true;
   },
@@ -116,7 +128,7 @@ export const apiService = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orderData),
-    }, 10000);
+    }, DEFAULT_TIMEOUT_MS);
     if (!res.ok) throw new Error('Failed to submit order');
     const savedOrder = await res.json();
 
@@ -139,7 +151,7 @@ export const apiService = {
 
     const res = await fetchWithTimeout(`${API_BASE}/orders?${params.toString()}`, {
       headers: { ...getAuthHeaders() },
-    }, 6000);
+    }, DEFAULT_TIMEOUT_MS);
     if (!res.ok) throw new Error('Failed to load orders');
     return res.json();
   },
@@ -149,7 +161,7 @@ export const apiService = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ status: newStatus }),
-    }, 8000);
+    }, DEFAULT_TIMEOUT_MS);
     if (!res.ok) throw new Error('Failed to update status');
     const updated = await res.json();
 
@@ -170,7 +182,7 @@ export const apiService = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(paymentDetails),
-    }, 8000);
+    }, DEFAULT_TIMEOUT_MS);
     if (!res.ok) throw new Error('Failed to update payment status');
     const updated = await res.json();
 
@@ -189,7 +201,7 @@ export const apiService = {
   async getStats() {
     const res = await fetchWithTimeout(`${API_BASE}/orders/stats`, {
       headers: { ...getAuthHeaders() },
-    }, 6000);
+    }, DEFAULT_TIMEOUT_MS);
     if (!res.ok) throw new Error('Failed to load stats');
     return res.json();
   },
@@ -234,7 +246,7 @@ export const apiService = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pin }),
-    }, 6000);
+    }, DEFAULT_TIMEOUT_MS);
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.message || 'Invalid 4-digit PIN');
@@ -247,7 +259,7 @@ export const apiService = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, password }),
-    }, 8000);
+    }, DEFAULT_TIMEOUT_MS);
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.message || 'Authentication failed');
@@ -260,7 +272,7 @@ export const apiService = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(payload),
-    }, 8000);
+    }, DEFAULT_TIMEOUT_MS);
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.message || 'Failed to update credentials');
@@ -273,7 +285,7 @@ export const apiService = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-    }, 8000);
+    }, DEFAULT_TIMEOUT_MS);
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.message || 'Failed to reset password');

@@ -231,13 +231,17 @@ export default function App() {
     }
   };
 
-  // Fetch orders & stats for Admin Kitchen view
-  const loadOrdersData = async () => {
+  // Fetch orders & stats for Admin Kitchen view (Resilient cloud sync with auto-retry)
+  const loadOrdersData = async (retryCount = 0) => {
     try {
       const [ordersList, statsData] = await Promise.all([
         apiService.getOrders(),
-        apiService.getStats(),
+        apiService.getStats().catch(() => null),
       ]);
+
+      if (!ordersList || !Array.isArray(ordersList)) {
+        return;
+      }
 
       // Protect against race conditions: preserve recent explicit status updates (e.g. ACCEPTED/SERVED)
       const now = Date.now();
@@ -264,7 +268,7 @@ export default function App() {
       }
 
       setOrders(mergedOrders);
-      setStats(statsData);
+      if (statsData) setStats(statsData);
 
       // Persist orders and financial metrics permanently in localStorage
       try {
@@ -282,13 +286,24 @@ export default function App() {
         }
       }
     } catch (err) {
-      console.warn('Orders fetch error:', err);
+      console.warn('Cloud sync notice (cold-start / network waking):', err);
+      // Auto-retry up to 3 times to ensure cloud database syncs when Render wakes up
+      if (retryCount < 3) {
+        setTimeout(() => loadOrdersData(retryCount + 1), 3500);
+      }
     }
   };
 
   useEffect(() => {
     loadMenuData();
     loadOrdersData();
+
+    // Auto-sync polling every 12 seconds so ANY device gets fresh live orders automatically
+    const syncInterval = setInterval(() => {
+      loadOrdersData();
+    }, 12000);
+
+    return () => clearInterval(syncInterval);
   }, []);
 
   // Persistent refs for stable real-time listener without reconnect tears
