@@ -1,5 +1,22 @@
-const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-const API_BASE = rawBase.endsWith('/api') ? rawBase : `${rawBase.replace(/\/$/, '')}/api`;
+// Dynamic resilient API_BASE:
+// 1. If VITE_API_BASE_URL is provided in env (e.g. Render backend URL), use it.
+// 2. If opened from mobile on local Wi-Fi (e.g. http://10.136.198.117:3000), use laptop's Wi-Fi IP port 8080.
+// 3. Otherwise fallback to http://localhost:8080.
+const getDynamicApiBase = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    const raw = import.meta.env.VITE_API_BASE_URL.trim();
+    return raw.endsWith('/api') ? raw : `${raw.replace(/\/$/, '')}/api`;
+  }
+  if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1' && !host.includes('vercel.app')) {
+      return `http://${host}:8080/api`;
+    }
+  }
+  return 'http://localhost:8080/api';
+};
+
+const API_BASE = getDynamicApiBase();
 
 // Resilient fetch with automatic timeout to prevent browser UI freezing / hanging
 async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
