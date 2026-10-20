@@ -111,7 +111,18 @@ export const apiService = {
       body: JSON.stringify({ status: newStatus }),
     }, 8000);
     if (!res.ok) throw new Error('Failed to update status');
-    return res.json();
+    const updated = await res.json();
+
+    // Broadcast status change across all open tabs on the machine in 0.001ms
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('bikaner_pos_events');
+        bc.postMessage({ type: 'ORDER_UPDATED', order: updated });
+        bc.close();
+      }
+    } catch {}
+
+    return updated;
   },
 
   async updateOrderPayment(orderId, paymentDetails) {
@@ -121,7 +132,18 @@ export const apiService = {
       body: JSON.stringify(paymentDetails),
     }, 8000);
     if (!res.ok) throw new Error('Failed to update payment status');
-    return res.json();
+    const updated = await res.json();
+
+    // Broadcast payment change across all open tabs on the machine in 0.001ms
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('bikaner_pos_events');
+        bc.postMessage({ type: 'ORDER_UPDATED', order: updated });
+        bc.close();
+      }
+    } catch {}
+
+    return updated;
   },
 
   async getStats() {

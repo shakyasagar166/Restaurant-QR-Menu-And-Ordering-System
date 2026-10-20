@@ -148,6 +148,18 @@ export default function LiveOrderTracker({ activeOrder, onClose }) {
           👨‍🍳 Chef is actively preparing your fresh dishes!
         </div>
       )}
+
+      {activeOrder.status === 'SERVED' && (
+        <div className="bg-gradient-to-r from-emerald-950 via-teal-950 to-emerald-900 border-2 border-emerald-400 rounded-2xl p-2.5 text-center text-xs text-emerald-200 font-bold shadow-lg animate-bounce">
+          🍽️✨ Order Complete &amp; Served at your table! Enjoy your royal meal!
+        </div>
+      )}
+
+      {activeOrder.status === 'CANCELLED' && (
+        <div className="bg-rose-950/80 border border-rose-500/40 rounded-2xl p-2.5 text-center text-xs text-rose-200 font-medium">
+          ❌ This order was cancelled. Please contact staff or waiter.
+        </div>
+      )}
     </div>
   );
 }

@@ -1661,7 +1661,7 @@ export default function AdminDashboard({
                             <div className="space-y-2.5">
                               {/* Primary Big Button: COMPLETE ORDER */}
                               <button
-                                onClick={() => onUpdateStatus(order.id, 'SERVED')}
+                                onClick={() => { try { bellPlayer.playSuccessSound(); } catch {} onUpdateStatus(order.id, 'SERVED'); }}
                                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-base sm:text-lg py-4 rounded-2xl shadow-lg transition flex items-center justify-center gap-2.5 cursor-pointer active:scale-95 border border-blue-400/40"
                               >
                                 <CheckCircle className="w-6 h-6" />

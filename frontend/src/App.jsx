@@ -333,7 +333,25 @@ export default function App() {
         );
 
         if (activeCustomerOrderRef.current && activeCustomerOrderRef.current.id === updatedOrder.id) {
+          const prevStatus = activeCustomerOrderRef.current.status;
           setActiveCustomerOrder(updatedOrder);
+
+          // Real-time instant delight for customer when Admin marks ACCEPTED or SERVED
+          if (updatedOrder.status === 'SERVED' && prevStatus !== 'SERVED') {
+            try {
+              bellPlayer.playSuccessSound();
+              confetti({
+                particleCount: 100,
+                spread: 75,
+                origin: { y: 0.7 },
+                colors: ['#10b981', '#3b82f6', '#f59e0b', '#ec4899'],
+              });
+            } catch {}
+          } else if (updatedOrder.status === 'ACCEPTED' && prevStatus !== 'ACCEPTED') {
+            try {
+              bellPlayer.playSuccessSound();
+            } catch {}
+          }
         }
       }
     );
