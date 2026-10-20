@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Bell,
   Eye,
@@ -53,10 +53,14 @@ import {
   CheckCheck,
   KeyRound,
   Zap,
+  MessageCircle,
+  Receipt,
+  Percent,
 } from 'lucide-react';
 import { formatPrice, formatTime, getTimeAgo, formatDate, getISODateKey } from '../utils/formatters';
 import { bellPlayer } from '../utils/sound';
 import { apiService } from '../api/apiService';
+import { generateWhatsAppOrderMessage, openWhatsApp } from '../utils/whatsapp';
 
 // High-resolution curated Indian food photos for quick 1-click select
 const PHOTO_PRESETS = [
@@ -105,6 +109,50 @@ export default function AdminDashboard({
   const [editingDish, setEditingDish] = useState(null);
   const [isAddDishOpen, setIsAddDishOpen] = useState(false);
   const [printingOrder, setPrintingOrder] = useState(null);
+
+  // GST & Bill Customization States (Admin can edit GST, discount, and details)
+  const [billGstEnabled, setBillGstEnabled] = useState(false);
+  const [billGstRate, setBillGstRate] = useState(5); // Default 5% restaurant GST (2.5% CGST + 2.5% SGST)
+  const [billDiscount, setBillDiscount] = useState(0);
+  const [billGstin, setBillGstin] = useState(() => {
+    try { return localStorage.getItem('bikaner_restaurant_gstin') || ''; } catch { return ''; }
+  });
+  const [billFssai, setBillFssai] = useState(() => {
+    try { return localStorage.getItem('bikaner_restaurant_fssai') || '22723000001234'; } catch { return '22723000001234'; }
+  });
+  const [isUpdatingBill, setIsUpdatingBill] = useState(false);
+  const [billSaveNotice, setBillSaveNotice] = useState('');
+
+  // Reset bill discount & notices when opening a new bill
+  useEffect(() => {
+    if (printingOrder) {
+      setBillDiscount(0);
+      setBillSaveNotice('');
+    }
+  }, [printingOrder]);
+
+  // Real-time bill calculations (Subtotal, Discount, CGST, SGST, Grand Total)
+  const billComputed = useMemo(() => {
+    if (!printingOrder) return { subtotal: 0, discount: 0, taxable: 0, rate: 0, cgst: 0, sgst: 0, totalGst: 0, grandTotal: 0 };
+    const subtotal = (printingOrder.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0) || printingOrder.totalAmount || 0;
+    const discount = Math.min(Number(billDiscount) || 0, subtotal);
+    const taxable = Math.max(0, subtotal - discount);
+    const rate = Number(billGstRate) || 0;
+    const totalGst = billGstEnabled ? (taxable * rate) / 100 : 0;
+    const cgst = totalGst / 2;
+    const sgst = totalGst / 2;
+    const grandTotal = Math.round(taxable + totalGst);
+    return {
+      subtotal,
+      discount,
+      taxable,
+      rate,
+      totalGst,
+      cgst,
+      sgst,
+      grandTotal,
+    };
+  }, [printingOrder, billDiscount, billGstEnabled, billGstRate]);
 
   // Daily Sales Register States
   const [salesDateFilter, setSalesDateFilter] = useState('TODAY'); // 'TODAY' | 'YESTERDAY' | 'WEEK' | 'ALL' | 'CUSTOM'
@@ -632,7 +680,7 @@ export default function AdminDashboard({
               Management Modules
             </div>
 
-            {/* 1. Live Orders & KOT */}
+            {/* 1. Live Orders & Bills */}
             <button
               onClick={() => {
                 setAdminSection('orders');
@@ -647,7 +695,7 @@ export default function AdminDashboard({
             >
               <div className="flex items-center gap-3">
                 <ChefHat className={`w-5 h-5 ${adminSection === 'orders' && activeFilter === 'ALL' ? 'text-white' : 'text-slate-400 group-hover:text-cyan-400'}`} />
-                <span>All Live Orders &amp; KOT</span>
+                <span>All Live Orders &amp; Bills</span>
               </div>
               {pendingCount > 0 && (
                 <span className="bg-rose-500 text-white text-xs font-black px-2.5 py-1 rounded-full shadow-md animate-bounce">
@@ -958,7 +1006,7 @@ export default function AdminDashboard({
         {/* Dynamic Workspace Container */}
         <main className="flex-1 p-4 sm:p-7 overflow-y-auto">
           {/* =========================================================================
-              VIEW 1: LIVE ORDERS & KOT TERMINAL
+              VIEW 1: LIVE ORDERS & BILLING TERMINAL
           ========================================================================= */}
           {adminSection === 'orders' && (
             <div className="space-y-7">
@@ -1063,10 +1111,21 @@ export default function AdminDashboard({
                                 <button
                                   onClick={() => setPrintingOrder(order)}
                                   className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white font-black text-xs px-2.5 py-1 rounded-xl border border-slate-700 transition cursor-pointer"
-                                  title="Print Kitchen KOT Slip"
+                                  title="Print Customer Bill"
                                 >
-                                  <Printer className="w-3.5 h-3.5 text-cyan-400" />
-                                  <span>KOT</span>
+                                  <Receipt className="w-3.5 h-3.5 text-cyan-400" />
+                                  <span>Bill</span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const msg = generateWhatsAppOrderMessage(order);
+                                    openWhatsApp(order.customerPhone, msg);
+                                  }}
+                                  className="flex items-center gap-1 bg-emerald-950/90 hover:bg-emerald-800 text-emerald-300 hover:text-white font-black text-xs px-2.5 py-1 rounded-xl border border-emerald-600 transition cursor-pointer"
+                                  title="Send Bill to WhatsApp"
+                                >
+                                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                                  <span>WhatsApp</span>
                                 </button>
                                 <span className={`text-xs sm:text-sm font-black px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 ${urgency.color}`}>
                                   ⏱️ {urgency.label}
@@ -1455,10 +1514,21 @@ export default function AdminDashboard({
                             <button
                               onClick={() => setPrintingOrder(order)}
                               className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white font-black text-xs px-3 py-1.5 rounded-xl border border-slate-700 transition cursor-pointer shadow-2xs"
-                              title="Print Thermal KOT & Customer Bill"
+                              title="Print Customer Bill & Tax Invoice"
                             >
-                              <Printer className="w-3.5 h-3.5 text-cyan-400" />
-                              <span>Print KOT</span>
+                              <Receipt className="w-3.5 h-3.5 text-cyan-400" />
+                              <span>Print Bill</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                const msg = generateWhatsAppOrderMessage(order);
+                                openWhatsApp(order.customerPhone, msg);
+                              }}
+                              className="flex items-center gap-1.5 bg-emerald-950/90 hover:bg-emerald-800 text-emerald-300 hover:text-white font-black text-xs px-2.5 py-1.5 rounded-xl border border-emerald-600 transition cursor-pointer shadow-2xs"
+                              title="Send Bill to WhatsApp"
+                            >
+                              <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>WhatsApp</span>
                             </button>
                             <span className={`text-xs sm:text-sm font-extrabold px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 ${urgency.color}`}>
                               ⏱️ {urgency.label}
@@ -2759,17 +2829,17 @@ export default function AdminDashboard({
       )}
 
       {/* =========================================================================
-          THERMAL KITCHEN ORDER TICKET (KOT) & GUEST BILL PRINT MODAL
+          CUSTOMER BILL & TAX INVOICE PRINT & WHATSAPP MODAL
       ========================================================================= */}
       {printingOrder && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white text-slate-900 rounded-3xl max-w-md w-full shadow-2xl border-4 border-slate-900 overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white text-slate-900 rounded-3xl max-w-lg w-full shadow-2xl border-4 border-slate-900 overflow-hidden animate-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
             {/* Modal Top Bar (Hidden in Print) */}
-            <div className="p-4 bg-slate-950 text-white flex items-center justify-between print:hidden">
+            <div className="p-4 bg-slate-950 text-white flex items-center justify-between print:hidden shrink-0">
               <div className="flex items-center gap-2">
-                <Printer className="w-5 h-5 text-cyan-400" />
+                <Receipt className="w-5 h-5 text-cyan-400" />
                 <span className="font-black text-sm uppercase tracking-wider font-pos">
-                  Thermal KOT &amp; Bill Preview
+                  Customer Bill &amp; Tax Invoice
                 </span>
               </div>
               <button
@@ -2780,107 +2850,315 @@ export default function AdminDashboard({
               </button>
             </div>
 
-            {/* Printable Thermal Receipt Slip (Targeted by @media print) */}
-            <div id="kot-receipt-print" className="p-6 font-mono text-xs text-slate-950 bg-white select-text">
-              {/* Restaurant Header */}
-              <div className="text-center pb-3 border-b-2 border-dashed border-slate-400 space-y-1">
-                <div className="text-base font-black tracking-wider uppercase font-sans">
-                  ★ BIKANER EXPRESS FOODS ★
-                </div>
-                <div className="text-[11px] font-bold text-slate-700">
-                  Aman International Mall • Rooftop Dining
-                </div>
-                <div className="text-[10px] text-slate-600">
-                  Radha Raman Road, Mainpuri (U.P.) 205001
-                </div>
-                <div className="text-[10px] font-black text-emerald-800 uppercase tracking-widest mt-1">
-                  100% PURE VEGETARIAN DINING
-                </div>
-              </div>
-
-              {/* Order Metadata */}
-              <div className="py-2.5 border-b-2 border-dashed border-slate-400 space-y-1 text-[11px]">
-                <div className="flex justify-between font-black text-sm">
-                  <span>TABLE: {printingOrder.tableNumber || 'WALK-IN'}</span>
-                  <span>TICKET #{printingOrder.id}</span>
-                </div>
-                <div className="flex justify-between text-slate-700">
-                  <span>Guest: {printingOrder.customerName || 'Walk-in Guest'}</span>
-                  <span>{formatTime(printingOrder.createdAt)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Payment Mode:</span>
-                  <span className="font-black uppercase">
-                    {printingOrder.paymentMethod === 'ONLINE' || printingOrder.paymentStatus === 'PAID'
-                      ? '⚡ ONLINE (PAID)'
-                      : '💵 CASH DUE'}
+            {/* Bill & GST Customization Strip (Admin Edit Panel - Hidden in Print) */}
+            <div className="p-4 bg-slate-900 text-white border-b border-slate-800 space-y-3 print:hidden shrink-0">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <Percent className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-200">
+                    GST &amp; Bill Settings (बिल एडिट करें)
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Order Status:</span>
-                  <span className="font-bold uppercase text-slate-900">{printingOrder.status}</span>
-                </div>
+                <label className="flex items-center gap-2 bg-slate-800 px-3 py-1 rounded-xl border border-slate-700 cursor-pointer hover:bg-slate-750 transition">
+                  <input
+                    type="checkbox"
+                    checked={billGstEnabled}
+                    onChange={(e) => setBillGstEnabled(e.target.checked)}
+                    className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                  />
+                  <span className="text-xs font-bold text-amber-300">
+                    {billGstEnabled ? 'GST Applied (चालू)' : '+ Apply GST (लगाएं)'}
+                  </span>
+                </label>
               </div>
 
-              {/* Line Items Table */}
-              <div className="py-3 border-b-2 border-dashed border-slate-400">
-                <div className="grid grid-cols-12 font-black pb-1.5 border-b border-slate-300 text-[11px]">
-                  <div className="col-span-2">QTY</div>
-                  <div className="col-span-6">ITEM</div>
-                  <div className="col-span-2 text-right">RATE</div>
-                  <div className="col-span-2 text-right">AMT</div>
-                </div>
-
-                <div className="pt-2 space-y-2">
-                  {(printingOrder.items || []).map((item, idx) => (
-                    <div key={idx} className="text-[11px] leading-tight">
-                      <div className="grid grid-cols-12">
-                        <div className="col-span-2 font-black">{item.quantity}×</div>
-                        <div className="col-span-6 font-bold truncate pr-1">{item.name}</div>
-                        <div className="col-span-2 text-right text-slate-600">₹{item.price}</div>
-                        <div className="col-span-2 text-right font-black">₹{item.price * item.quantity}</div>
-                      </div>
-                      {item.specialInstructions && (
-                        <div className="text-[10px] text-amber-950 bg-amber-50 border border-amber-200 p-1 rounded mt-0.5 font-sans font-bold">
-                          📝 Chef Note: {item.specialInstructions}
-                        </div>
-                      )}
+              {/* GST Rate Selectors & Discount */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {billGstEnabled ? (
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-slate-400 block mb-1">
+                      GST Rate (CGST + SGST):
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {[0, 5, 12, 18].map((rate) => (
+                        <button
+                          key={rate}
+                          type="button"
+                          onClick={() => setBillGstRate(rate)}
+                          className={`flex-1 py-1 rounded-lg font-black text-xs transition cursor-pointer border ${
+                            billGstRate === rate
+                              ? 'bg-amber-500 text-slate-950 border-amber-400 shadow'
+                              : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                          }`}
+                        >
+                          {rate}%
+                        </button>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center text-[11px] text-slate-400 font-medium bg-slate-800/80 p-2 rounded-xl border border-slate-750">
+                    Standard Retail Cash Memo (No GST Added)
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">
+                    Special Discount (₹ छूट)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={billDiscount || ''}
+                    onChange={(e) => setBillDiscount(Math.max(0, Number(e.target.value) || 0))}
+                    placeholder="0"
+                    className="w-full bg-slate-800 text-amber-300 font-bold text-xs px-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-amber-400"
+                  />
                 </div>
               </div>
 
-              {/* Totals Breakdown */}
-              <div className="py-2.5 border-b-2 border-dashed border-slate-400 space-y-1 text-[11px]">
-                <div className="flex justify-between">
-                  <span>Total Dishes / Items:</span>
-                  <span className="font-black">{(printingOrder.items || []).reduce((s, i) => s + (i.quantity || 1), 0)} items</span>
+              {/* GSTIN & Customer Phone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">
+                    Restaurant GSTIN (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={billGstin}
+                    onChange={(e) => {
+                      setBillGstin(e.target.value);
+                      try { localStorage.setItem('bikaner_restaurant_gstin', e.target.value); } catch {}
+                    }}
+                    placeholder="e.g. 09AABCB1234F1Z5"
+                    className="w-full bg-slate-800 text-white font-mono text-xs px-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-cyan-400 uppercase"
+                  />
                 </div>
-                <div className="flex justify-between text-base font-black pt-1.5 border-t border-slate-300">
-                  <span>GRAND TOTAL:</span>
-                  <span className="text-base font-black">₹{printingOrder.totalAmount}</span>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">
+                    Customer WhatsApp Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={billCustomerPhone}
+                    onChange={(e) => setBillCustomerPhone(e.target.value)}
+                    placeholder="10-digit Mobile No."
+                    className="w-full bg-slate-800 text-emerald-300 font-mono text-xs px-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-emerald-400"
+                  />
                 </div>
               </div>
 
-              {/* Thermal Slip Footer */}
-              <div className="text-center pt-3 text-[10px] text-slate-600 space-y-0.5">
-                <div className="font-bold text-slate-900">Thank You For Dining With Us!</div>
-                <div>Please Visit Again • Rooftop Dining Mainpuri</div>
+              {billSaveNotice && (
+                <div className="text-[11px] font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/50 px-3 py-1.5 rounded-xl flex items-center justify-between">
+                  <span>{billSaveNotice}</span>
+                  <button onClick={() => setBillSaveNotice('')} className="text-emerald-300 hover:text-white">✕</button>
+                </div>
+              )}
+            </div>
+
+            {/* Scrollable Receipt Body */}
+            <div className="overflow-y-auto flex-1">
+              {/* Printable Thermal Receipt Slip (Targeted by @media print) */}
+              <div id="kot-receipt-print" className="p-6 font-mono text-xs text-slate-950 bg-white select-text">
+                {/* Restaurant Header */}
+                <div className="text-center pb-3 border-b-2 border-dashed border-slate-400 space-y-1">
+                  <div className="text-base font-black tracking-wider uppercase font-sans">
+                    ★ BIKANER EXPRESS FOODS ★
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-700">
+                    Aman International Mall • Rooftop Dining
+                  </div>
+                  <div className="text-[10px] text-slate-600">
+                    Radha Raman Road, Mainpuri (U.P.) 205001
+                  </div>
+                  {billGstin && (
+                    <div className="text-[10px] font-mono font-bold text-slate-800">
+                      GSTIN: {billGstin}
+                    </div>
+                  )}
+                  {billFssai && (
+                    <div className="text-[9px] font-mono text-slate-600">
+                      FSSAI Lic: {billFssai}
+                    </div>
+                  )}
+                  <div className="text-[10px] font-black text-emerald-800 uppercase tracking-widest mt-1 border-t border-dotted border-slate-300 pt-1">
+                    {billGstEnabled ? 'TAX INVOICE / GUEST BILL' : 'RETAIL BILL / CASH MEMO'}
+                  </div>
+                </div>
+
+                {/* Order Metadata */}
+                <div className="py-2.5 border-b-2 border-dashed border-slate-400 space-y-1 text-[11px]">
+                  <div className="flex justify-between font-black text-sm">
+                    <span>TABLE: {printingOrder.tableNumber || 'WALK-IN'}</span>
+                    <span>BILL #{printingOrder.id}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-700">
+                    <span>Guest: {printingOrder.customerName || 'Walk-in Guest'}</span>
+                    <span>{formatTime(printingOrder.createdAt)}</span>
+                  </div>
+                  {printingOrder.customerPhone && (
+                    <div className="flex justify-between text-slate-600">
+                      <span>Phone:</span>
+                      <span className="font-mono">{printingOrder.customerPhone}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span>Payment Mode:</span>
+                    <span className="font-black uppercase">
+                      {printingOrder.paymentMethod === 'ONLINE' || printingOrder.paymentStatus === 'PAID'
+                        ? '⚡ ONLINE (PAID)'
+                        : '💵 CASH DUE'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Order Status:</span>
+                    <span className="font-bold uppercase text-slate-900">{printingOrder.status}</span>
+                  </div>
+                </div>
+
+                {/* Line Items Table */}
+                <div className="py-3 border-b-2 border-dashed border-slate-400">
+                  <div className="grid grid-cols-12 font-black pb-1.5 border-b border-slate-300 text-[11px]">
+                    <div className="col-span-2">QTY</div>
+                    <div className="col-span-6">ITEM</div>
+                    <div className="col-span-2 text-right">RATE</div>
+                    <div className="col-span-2 text-right">AMT</div>
+                  </div>
+
+                  <div className="pt-2 space-y-2">
+                    {(printingOrder.items || []).map((item, idx) => (
+                      <div key={idx} className="text-[11px] leading-tight">
+                        <div className="grid grid-cols-12">
+                          <div className="col-span-2 font-black">{item.quantity}×</div>
+                          <div className="col-span-6 font-bold truncate pr-1">{item.name}</div>
+                          <div className="col-span-2 text-right text-slate-600">₹{item.price}</div>
+                          <div className="col-span-2 text-right font-black">₹{item.price * item.quantity}</div>
+                        </div>
+                        {item.specialInstructions && (
+                          <div className="text-[10px] text-amber-950 bg-amber-50 border border-amber-200 p-1 rounded mt-0.5 font-sans font-bold">
+                            📝 Chef Note: {item.specialInstructions}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Totals Breakdown */}
+                <div className="py-2.5 border-b-2 border-dashed border-slate-400 space-y-1 text-[11px]">
+                  <div className="flex justify-between">
+                    <span>Total Dishes / Items:</span>
+                    <span className="font-black">{(printingOrder.items || []).reduce((s, i) => s + (i.quantity || 1), 0)} items</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Item Total (Subtotal):</span>
+                    <span className="font-bold">₹{billComputed.subtotal}</span>
+                  </div>
+
+                  {billComputed.discount > 0 && (
+                    <div className="flex justify-between text-rose-700 font-bold">
+                      <span>Special Discount:</span>
+                      <span>-₹{billComputed.discount}</span>
+                    </div>
+                  )}
+
+                  {billGstEnabled && (
+                    <>
+                      <div className="flex justify-between text-slate-600 pt-1 border-t border-dotted border-slate-300">
+                        <span>Taxable Amount:</span>
+                        <span>₹{billComputed.taxable.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-700">
+                        <span>CGST ({(billComputed.rate / 2).toFixed(1)}%):</span>
+                        <span>₹{billComputed.cgst.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-700">
+                        <span>SGST ({(billComputed.rate / 2).toFixed(1)}%):</span>
+                        <span>₹{billComputed.sgst.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="flex justify-between text-base font-black pt-1.5 border-t-2 border-slate-900 mt-1">
+                    <span>NET AMOUNT PAYABLE:</span>
+                    <span className="text-base font-black">₹{billComputed.grandTotal}</span>
+                  </div>
+                </div>
+
+                {/* Thermal Slip Footer */}
+                <div className="text-center pt-3 text-[10px] text-slate-600 space-y-0.5">
+                  <div className="font-bold text-slate-900">Thank You For Dining With Us!</div>
+                  <div>Please Visit Again • Rooftop Dining Mainpuri</div>
+                </div>
               </div>
             </div>
 
             {/* Modal Bottom Controls (Hidden in Print) */}
-            <div className="p-4 bg-slate-100 border-t border-slate-200 flex gap-2.5 print:hidden">
+            <div className="p-3.5 bg-slate-100 border-t border-slate-200 flex flex-wrap sm:flex-nowrap gap-2 print:hidden shrink-0">
+              {/* WhatsApp Button */}
               <button
+                type="button"
+                onClick={() => {
+                  const targetPhone = billCustomerPhone || printingOrder.customerPhone || '';
+                  const msg = generateWhatsAppOrderMessage(printingOrder, {
+                    gstEnabled: billGstEnabled,
+                    gstRate: billGstRate,
+                    discount: billDiscount,
+                    gstin: billGstin,
+                    fssai: billFssai,
+                  });
+                  openWhatsApp(targetPhone, msg);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 px-3 rounded-2xl flex items-center justify-center gap-1.5 text-xs shadow-md transition active:scale-95 cursor-pointer border border-emerald-500"
+                title="Send Bill to Customer WhatsApp"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>WhatsApp Bill</span>
+              </button>
+
+              {/* Save Bill Amount Button */}
+              <button
+                type="button"
+                disabled={isUpdatingBill}
+                onClick={async () => {
+                  try {
+                    setIsUpdatingBill(true);
+                    await apiService.updateOrderBill(printingOrder.id, {
+                      totalAmount: billComputed.grandTotal,
+                      notes: billGstEnabled
+                        ? `${printingOrder.notes || ''} [GST ${billComputed.rate}% Applied]`.trim()
+                        : printingOrder.notes,
+                    });
+                    printingOrder.totalAmount = billComputed.grandTotal;
+                    setBillSaveNotice(`✅ Bill saved (₹${billComputed.grandTotal})!`);
+                    if (onRefresh) onRefresh();
+                  } catch (e) {
+                    setBillSaveNotice('Notice: Bill total updated in session.');
+                  } finally {
+                    setIsUpdatingBill(false);
+                  }
+                }}
+                className="bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold py-2.5 px-3 rounded-2xl flex items-center justify-center gap-1.5 text-xs border border-slate-700 transition cursor-pointer"
+                title="Save updated Bill Total in Database"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>{isUpdatingBill ? 'Saving...' : `Save (₹${billComputed.grandTotal})`}</span>
+              </button>
+
+              {/* Print Button */}
+              <button
+                type="button"
                 onClick={() => window.print()}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-black py-3 rounded-2xl flex items-center justify-center gap-2 shadow-md transition cursor-pointer"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-black py-2.5 px-3 rounded-2xl flex items-center justify-center gap-2 shadow-md transition active:scale-95 cursor-pointer text-xs sm:text-sm"
               >
                 <Printer className="w-4 h-4" />
-                <span>Print Thermal Slip (Ctrl + P)</span>
+                <span>Print Bill (Ctrl + P)</span>
               </button>
+
               <button
+                type="button"
                 onClick={() => setPrintingOrder(null)}
-                className="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-4 py-3 rounded-2xl transition cursor-pointer"
+                className="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-3 py-2.5 rounded-2xl transition cursor-pointer text-xs"
               >
                 Close
               </button>

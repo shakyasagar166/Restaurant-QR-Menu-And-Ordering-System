@@ -1,6 +1,17 @@
 import React from 'react';
-import { CheckCircle2, Clock, ChefHat, UtensilsCrossed, X, Sparkles, ArrowLeft } from 'lucide-react';
+import {
+  CheckCircle2,
+  Clock,
+  ChefHat,
+  UtensilsCrossed,
+  X,
+  Sparkles,
+  ArrowLeft,
+  MessageCircle,
+  Share2,
+} from 'lucide-react';
 import { formatPrice, formatTime, getTimeAgo } from '../utils/formatters';
+import { generateWhatsAppOrderMessage, openWhatsApp } from '../utils/whatsapp';
 
 export default function LiveOrderTracker({ activeOrder, onClose }) {
   if (!activeOrder) return null;
@@ -14,11 +25,16 @@ export default function LiveOrderTracker({ activeOrder, onClose }) {
 
   const getStepIndex = (status) => {
     switch (status) {
-      case 'PENDING': return 0;
-      case 'ACCEPTED': return 1;
-      case 'PREPARING': return 2;
-      case 'SERVED': return 3;
-      default: return 0;
+      case 'PENDING':
+        return 0;
+      case 'ACCEPTED':
+        return 1;
+      case 'PREPARING':
+        return 2;
+      case 'SERVED':
+        return 3;
+      default:
+        return 0;
     }
   };
 
@@ -160,6 +176,33 @@ export default function LiveOrderTracker({ activeOrder, onClose }) {
           ❌ This order was cancelled. Please contact staff or waiter.
         </div>
       )}
+
+      {/* 📱 Send Order to WhatsApp */}
+      <div className="mt-3 pt-2.5 border-t border-white/10 space-y-2">
+        <button
+          type="button"
+          onClick={() => {
+            const msg = generateWhatsAppOrderMessage(activeOrder);
+            openWhatsApp('9058605348', msg);
+          }}
+          className="w-full bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white font-black py-2.5 px-3 rounded-2xl flex items-center justify-center gap-2 text-xs shadow-lg shadow-emerald-950/60 border border-emerald-400/50 transition active:scale-95 cursor-pointer"
+        >
+          <MessageCircle className="w-4 h-4 text-emerald-200 fill-emerald-200/20" />
+          <span>📱 Send to Restaurant WhatsApp (व्हाट्सएप भेजें)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            const msg = generateWhatsAppOrderMessage(activeOrder);
+            openWhatsApp(activeOrder.customerPhone || '', msg);
+          }}
+          className="w-full bg-white/10 hover:bg-white/20 text-emerald-300 font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-[11px] border border-white/10 transition active:scale-95 cursor-pointer"
+        >
+          <Share2 className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Share Order Receipt with Family / Friends</span>
+        </button>
+      </div>
     </div>
   );
 }

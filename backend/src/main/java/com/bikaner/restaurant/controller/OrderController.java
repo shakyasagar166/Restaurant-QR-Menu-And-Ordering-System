@@ -231,6 +231,33 @@ public class OrderController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @PutMapping("/{id}/bill")
+    public ResponseEntity<Order> updateOrderBill(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> billDetails
+    ) {
+        return orderRepository.findById(id).map(order -> {
+            if (billDetails.containsKey("totalAmount")) {
+                try {
+                    order.setTotalAmount(Double.valueOf(billDetails.get("totalAmount").toString()));
+                } catch (Exception ignored) {}
+            }
+            if (billDetails.containsKey("notes")) {
+                order.setNotes(InputSanitizer.sanitizeText(String.valueOf(billDetails.get("notes")), 250));
+            }
+            order.setUpdatedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
+            Order updated = orderRepository.save(order);
+
+            try {
+                notificationService.notifyStatusChange(updated);
+            } catch (Exception e) {
+                System.err.println("SSE notify bill error: " + e.getMessage());
+            }
+
+            return ResponseEntity.ok(updated);
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamOrders() {
         return notificationService.subscribe();

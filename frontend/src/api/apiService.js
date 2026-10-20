@@ -199,6 +199,26 @@ export const apiService = {
     return updated;
   },
 
+  async updateOrderBill(orderId, billDetails) {
+    const res = await fetchWithTimeout(`${API_BASE}/orders/${orderId}/bill`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify(billDetails),
+    }, DEFAULT_TIMEOUT_MS);
+    if (!res.ok) throw new Error('Failed to update order bill');
+    const updated = await res.json();
+
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('bikaner_pos_events');
+        bc.postMessage({ type: 'ORDER_UPDATED', order: updated });
+        bc.close();
+      }
+    } catch {}
+
+    return updated;
+  },
+
   async updateOrderPayment(orderId, paymentDetails) {
     const res = await fetchWithTimeout(`${API_BASE}/orders/${orderId}/payment`, {
       method: 'PUT',

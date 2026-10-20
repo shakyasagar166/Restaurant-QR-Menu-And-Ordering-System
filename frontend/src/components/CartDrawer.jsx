@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   CreditCard,
   Banknote,
+  MessageCircle,
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatters';
 import DishCustomizationBox from './DishCustomizationBox';
@@ -74,10 +75,10 @@ export default function CartDrawer({
   const grandTotal = subtotal + gst;
 
   const quickInstructions = [
-    '🌶️ Medium Spicy',
-    '🌿 Jain (No Onion/Garlic)',
-    '🧈 Extra Butter',
-    '🍋 Extra Lemon & Onions',
+    'ðŸŒ¶ï¸ Medium Spicy',
+    'ðŸŒ¿ Jain (No Onion/Garlic)',
+    'ðŸ§ˆ Extra Butter',
+    'ðŸ‹ Extra Lemon & Onions',
   ];
 
   const handleAddQuickNote = (note) => {
@@ -108,11 +109,11 @@ export default function CartDrawer({
     if (hasError) {
       setFieldErrors(newFieldErrors);
       if (newFieldErrors.name && newFieldErrors.phone) {
-        setValidationError('⚠️ Kripya apna Naam aur 10-digit Mobile Number daalein (Order ke liye anivarya hai)!');
+        setValidationError('âš ï¸ Kripya apna Naam aur 10-digit Mobile Number daalein (Order ke liye anivarya hai)!');
       } else if (newFieldErrors.name) {
-        setValidationError('⚠️ Kripya apna Naam (Customer Name) darj karein!');
+        setValidationError('âš ï¸ Kripya apna Naam (Customer Name) darj karein!');
       } else {
-        setValidationError('⚠️ Kripya sahi 10-digit Mobile Number daalein (10 anko ka number zaroori hai)!');
+        setValidationError('âš ï¸ Kripya sahi 10-digit Mobile Number daalein (10 anko ka number zaroori hai)!');
       }
       return;
     }
@@ -165,14 +166,14 @@ export default function CartDrawer({
               title="Menu par wapas jayein"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
-              <span>← Back (वापस)</span>
+              <span>â† Back (à¤µà¤¾à¤ªà¤¸)</span>
             </button>
             <div className="border-l border-white/20 pl-2">
               <h3 className="font-brand font-black text-sm sm:text-base text-white tracking-wide">
                 Your Table Tray
               </h3>
               <span className="text-[10px] text-amber-300 font-bold block">
-                {tableNumber} • Rooftop Restaurant
+                {tableNumber} â€¢ Rooftop Restaurant
               </span>
             </div>
           </div>
@@ -189,7 +190,7 @@ export default function CartDrawer({
         {cart.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
             <div className="w-20 h-20 rounded-3xl bg-amber-100/80 text-amber-800 flex items-center justify-center text-4xl mb-4 shadow-inner">
-              🍲
+              ðŸ²
             </div>
             <h4 className="font-brand font-bold text-stone-900 text-lg mb-1">
               Your plate is empty
@@ -201,7 +202,7 @@ export default function CartDrawer({
               onClick={onClose}
               className="bg-red-700 hover:bg-red-800 text-white font-extrabold text-xs px-6 py-3 rounded-2xl shadow-md transition"
             >
-              ← Explore Menu
+              â† Explore Menu
             </button>
           </div>
         ) : (
@@ -228,7 +229,7 @@ export default function CartDrawer({
               </select>
             </div>
 
-            {/* 🔥 HIGH-CONTRAST HIGHLIGHTED COMPULSORY GUEST DETAILS CARD 🔥 */}
+            {/* ðŸ”¥ HIGH-CONTRAST HIGHLIGHTED COMPULSORY GUEST DETAILS CARD ðŸ”¥ */}
             <div
               className={`rounded-2xl sm:rounded-3xl p-4 sm:p-5 border-2 transition-all duration-300 shadow-md ${
                 validationError
@@ -244,7 +245,7 @@ export default function CartDrawer({
                   </div>
                   <div>
                     <span className="font-brand font-black text-xs sm:text-sm text-stone-900 block leading-tight">
-                      Customer Details (अनिवार्य)
+                      Customer Details (à¤…à¤¨à¤¿à¤µà¤¾à¤°à¥à¤¯)
                     </span>
                     <span className="text-[10px] text-stone-600 font-semibold block">
                       Kitchen bill &amp; table service record
@@ -281,7 +282,7 @@ export default function CartDrawer({
                   </div>
                   <input
                     type="text"
-                    placeholder="उदा. Shivam Shakya / Sharma Ji"
+                    placeholder="à¤‰à¤¦à¤¾. Shivam Shakya / Sharma Ji"
                     value={customerName}
                     onChange={(e) => {
                       setCustomerName(e.target.value);
@@ -302,7 +303,7 @@ export default function CartDrawer({
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-[11px] font-black uppercase tracking-wider text-stone-900 flex items-center gap-1 font-brand">
                       <Phone className="w-3.5 h-3.5 text-amber-800" />
-                      <span>Mobile Number (मोबाइल नंबर)</span>
+                      <span>Mobile Number (à¤®à¥‹à¤¬à¤¾à¤‡à¤² à¤¨à¤‚à¤¬à¤°)</span>
                       <span className="text-red-600 text-sm font-black">*</span>
                     </label>
                     <span
@@ -313,7 +314,7 @@ export default function CartDrawer({
                       }`}
                     >
                       {customerPhone.trim().replace(/\D/g, '').length === 10
-                        ? '✓ 10 Digits Done'
+                        ? 'âœ“ 10 Digits Done'
                         : `${customerPhone.trim().replace(/\D/g, '').length}/10 Digits`}
                     </span>
                   </div>
@@ -344,7 +345,7 @@ export default function CartDrawer({
               </div>
 
               <div className="mt-2.5 pt-2 border-t border-amber-200/80 text-[10px] text-stone-700 flex items-center gap-1 font-medium">
-                <span className="text-amber-800 font-bold">🔒 Note:</span>
+                <span className="text-amber-800 font-bold">ðŸ”’ Note:</span>
                 <span>Order submit karne ke liye naam aur 10-digit mobile number anivarya hai.</span>
               </div>
             </div>
@@ -359,7 +360,7 @@ export default function CartDrawer({
                   title="Saari dishes tray se hatayein"
                 >
                   <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                  <span>Clear All (सब हटाएं)</span>
+                  <span>Clear All (à¤¸à¤¬ à¤¹à¤Ÿà¤¾à¤à¤‚)</span>
                 </button>
               </div>
 
@@ -380,7 +381,7 @@ export default function CartDrawer({
                       </div>
                       <div className="flex items-center gap-2 text-[11px] text-stone-500">
                         <span>{formatPrice(item.price)} each</span>
-                        <span className="text-stone-300">•</span>
+                        <span className="text-stone-300">â€¢</span>
                         <span className="font-black text-red-900">
                           {formatPrice(item.price * item.quantity)}
                         </span>
@@ -499,7 +500,7 @@ export default function CartDrawer({
                 <span>Payment Mode:</span>
               </div>
               <div className="flex items-center gap-1 text-[11px] font-black text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-md border border-emerald-300">
-                💵 Pay Cash at Table / Counter
+                ðŸ’µ Pay Cash at Table / Counter
               </div>
             </div>
 
@@ -513,10 +514,15 @@ export default function CartDrawer({
               ) : (
                 <>
                   <Bell className="w-5 h-5 text-amber-300 animate-bounce" />
-                  <span className="tracking-wide uppercase">CONFIRM &amp; PLACE ORDER 🔔</span>
+                  <span className="tracking-wide uppercase">CONFIRM &amp; PLACE ORDER ðŸ””</span>
                 </>
               )}
             </button>
+
+            <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-2.5 flex items-center justify-center gap-1.5 text-[11px] text-emerald-800 font-bold">
+              <MessageCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>📱 Order place hote hi WhatsApp par receipt bhejne ka option aayega</span>
+            </div>
 
             <button
               type="button"
@@ -524,7 +530,7 @@ export default function CartDrawer({
               className="w-full text-center text-xs font-bold text-stone-600 hover:text-stone-900 py-1 flex items-center justify-center gap-1.5 transition"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-stone-500" />
-              <span>← Continue Adding Dishes (और डिश जोड़ें)</span>
+              <span>â† Continue Adding Dishes (à¤”à¤° à¤¡à¤¿à¤¶ à¤œà¥‹à¤¡à¤¼à¥‡à¤‚)</span>
             </button>
 
             <p className="text-[10px] sm:text-[11px] text-center text-stone-500 flex items-center justify-center gap-1">
