@@ -119,9 +119,7 @@ export default function AdminDashboard({
 
   // Function to accept single order with 0ms delay
   const handleAcceptOrder = (orderId) => {
-    // 1. Immediately remove from pending in 0 milliseconds
     setDismissedPendingIds((prev) => new Set(prev).add(orderId));
-    // 2. Trigger instant optimistic update in App.jsx and background API
     onUpdateStatus(orderId, 'ACCEPTED');
   };
 
@@ -192,11 +190,11 @@ export default function AdminDashboard({
     const minutes = Math.floor(diffMs / 60000);
 
     if (minutes < 2) {
-      return { label: `🟢 ${minutes}m ago (Fresh)`, color: 'text-emerald-700', isUrgent: false, minutes };
+      return { label: `🟢 ${minutes}m ago (Fresh)`, color: 'text-emerald-700 font-bold', isUrgent: false, minutes };
     } else if (minutes < 5) {
-      return { label: `🟡 ${minutes}m waiting`, color: 'text-amber-700 font-bold', isUrgent: false, minutes };
+      return { label: `🟡 ${minutes}m waiting`, color: 'text-amber-700 font-extrabold', isUrgent: false, minutes };
     } else {
-      return { label: `🔴 ${minutes}m (OVERDUE!)`, color: 'text-rose-700 font-extrabold animate-pulse', isUrgent: true, minutes };
+      return { label: `🔴 ${minutes}m (OVERDUE!)`, color: 'text-rose-700 font-black animate-pulse', isUrgent: true, minutes };
     }
   };
 
@@ -235,14 +233,12 @@ export default function AdminDashboard({
     setIsAcceptingAll(true);
     const idsToAccept = pendingOrders.map((o) => o.id);
 
-    // 1. Instantly dismiss all from pending notifications in 0ms!
     setDismissedPendingIds((prev) => {
       const next = new Set(prev);
       idsToAccept.forEach((id) => next.add(id));
       return next;
     });
 
-    // 2. Propagate optimistic status to each
     try {
       await Promise.all(
         idsToAccept.map((id) => onUpdateStatus(id, 'ACCEPTED'))
@@ -259,7 +255,6 @@ export default function AdminDashboard({
   // =========================================================================
   const handleToggleDishAvailability = async (dishId, currentStatus) => {
     setTogglingDishId(dishId);
-    // Optimistic UI update
     setLocalMenuItems((prev) =>
       prev.map((item) =>
         item.id === dishId
@@ -372,31 +367,31 @@ export default function AdminDashboard({
   };
 
   return (
-    <div className="font-pos min-h-screen bg-[#f1f5f9] text-slate-900 flex flex-col md:flex-row select-none antialiased">
+    <div className="font-pos min-h-screen bg-[#eef2f6] text-slate-900 flex flex-col md:flex-row select-none antialiased">
       {/* =========================================================================
-          1. CLEAN EXECUTIVE SIDEBAR
-          Rich Midnight Navy (#0b1120) with Electric Blue & Cyan Accents
+          1. 5-STAR ENTERPRISE RESTAURANT SIDEBAR
+          Rich Deep Midnight Obsidian (#090d16) with Electric Cyan & Royal Blue Highlights
       ========================================================================= */}
-      <aside className="w-full md:w-64 lg:w-72 bg-[#0b1120] text-slate-200 border-r border-slate-800/90 flex flex-col justify-between shrink-0 z-30 shadow-xl">
+      <aside className="w-full md:w-64 lg:w-72 bg-[#090d16] text-slate-200 border-r border-slate-800/90 flex flex-col justify-between shrink-0 z-30 shadow-2xl">
         <div>
           {/* Brand Header */}
-          <div className="p-4 sm:p-5 border-b border-slate-800/80 bg-[#0f172a]/70">
+          <div className="p-5 border-b border-slate-800/80 bg-[#0d1322]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white flex items-center justify-center font-black shadow-lg shadow-blue-500/25">
-                  <Utensils className="w-5 h-5" />
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-400 text-white flex items-center justify-center font-black shadow-lg shadow-blue-500/30">
+                  <Utensils className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <h1 className="font-black text-base text-white tracking-wide leading-none">
+                    <h1 className="font-black text-lg text-white tracking-wide leading-none">
                       BIKANER<span className="text-cyan-400">POS</span>
                     </h1>
-                    <span className="text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-400/40 px-1.5 py-0.5 rounded-md">
-                      PRO
+                    <span className="text-[10px] font-black bg-blue-500/20 text-cyan-300 border border-cyan-400/40 px-2 py-0.5 rounded-md">
+                      LUXURY
                     </span>
                   </div>
-                  <span className="text-xs text-slate-400 font-medium block mt-1">
-                    Kitchen Terminal &amp; Orders
+                  <span className="text-xs text-slate-400 font-semibold block mt-1">
+                    Aman Mall Rooftop Console
                   </span>
                 </div>
               </div>
@@ -404,26 +399,26 @@ export default function AdminDashboard({
               {/* Mobile Menu Toggle Button */}
               <button
                 onClick={() => setIsSidebarOpenMobile(!isSidebarOpenMobile)}
-                className="md:hidden p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+                className="md:hidden p-2.5 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
               >
-                <SlidersHorizontal className="w-4 h-4" />
+                <SlidersHorizontal className="w-5 h-5" />
               </button>
             </div>
 
             {/* Live SSE Status Pill */}
-            <div className="mt-3 pt-2.5 border-t border-slate-800 flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1.5 text-emerald-400 font-bold bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-500/40">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                SSE Stream Live
+            <div className="mt-3.5 pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+              <span className="flex items-center gap-2 text-emerald-400 font-black bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-500/40">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                SSE Terminal Live
               </span>
-              <span className="text-slate-400 text-xs font-semibold">
+              <span className="text-slate-400 text-xs font-bold">
                 Port 8080 • IST
               </span>
             </div>
           </div>
 
           {/* Navigation Links */}
-          <nav className={`p-3 space-y-1.5 ${isSidebarOpenMobile ? 'block' : 'hidden md:block'}`}>
+          <nav className={`p-3.5 space-y-2 ${isSidebarOpenMobile ? 'block' : 'hidden md:block'}`}>
             <div className="text-[11px] font-black uppercase tracking-wider text-slate-400 px-3 py-1">
               Management Modules
             </div>
@@ -434,18 +429,18 @@ export default function AdminDashboard({
                 setAdminSection('orders');
                 setIsSidebarOpenMobile(false);
               }}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-bold transition-all group cursor-pointer ${
+              className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-extrabold transition-all group cursor-pointer ${
                 adminSection === 'orders'
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-black'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 font-black'
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <ChefHat className={`w-5 h-5 ${adminSection === 'orders' ? 'text-white' : 'text-slate-400 group-hover:text-cyan-400'}`} />
                 <span>Live Orders &amp; KOT</span>
               </div>
               {pendingCount > 0 && (
-                <span className="bg-rose-500 text-white text-xs font-black px-2.5 py-0.5 rounded-full shadow-md animate-bounce">
+                <span className="bg-rose-500 text-white text-xs font-black px-2.5 py-1 rounded-full shadow-md animate-bounce">
                   {pendingCount}
                 </span>
               )}
@@ -457,15 +452,15 @@ export default function AdminDashboard({
                 setAdminSection('menu');
                 setIsSidebarOpenMobile(false);
               }}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-bold transition-all group cursor-pointer ${
+              className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-extrabold transition-all group cursor-pointer ${
                 adminSection === 'menu'
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-black'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 font-black'
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <Utensils className={`w-5 h-5 ${adminSection === 'menu' ? 'text-white' : 'text-slate-400 group-hover:text-cyan-400'}`} />
-                <span>Menu &amp; Catalog Edit</span>
+                <span>Menu &amp; Catalog</span>
               </div>
               <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
                 adminSection === 'menu' ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-300'
@@ -480,13 +475,13 @@ export default function AdminDashboard({
                 setAdminSection('analytics');
                 setIsSidebarOpenMobile(false);
               }}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-bold transition-all group cursor-pointer ${
+              className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-extrabold transition-all group cursor-pointer ${
                 adminSection === 'analytics'
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-black'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 font-black'
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <BarChart3 className={`w-5 h-5 ${adminSection === 'analytics' ? 'text-white' : 'text-slate-400 group-hover:text-cyan-400'}`} />
                 <span>Sales &amp; Analytics</span>
               </div>
@@ -501,13 +496,13 @@ export default function AdminDashboard({
                 setAdminSection('tables');
                 setIsSidebarOpenMobile(false);
               }}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-bold transition-all group cursor-pointer ${
+              className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-extrabold transition-all group cursor-pointer ${
                 adminSection === 'tables'
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-black'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 font-black'
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <TableProperties className={`w-5 h-5 ${adminSection === 'tables' ? 'text-white' : 'text-slate-400 group-hover:text-cyan-400'}`} />
                 <span>Floor &amp; Tables</span>
               </div>
@@ -519,26 +514,26 @@ export default function AdminDashboard({
         </div>
 
         {/* Sidebar Bottom: Customer Preview & Staff Profile */}
-        <div className={`p-4 border-t border-slate-800/90 bg-[#0f172a]/60 space-y-3 ${isSidebarOpenMobile ? 'block' : 'hidden md:block'}`}>
+        <div className={`p-4 border-t border-slate-800/90 bg-[#0d1322] space-y-3.5 ${isSidebarOpenMobile ? 'block' : 'hidden md:block'}`}>
           <button
             onClick={onBackToMenu}
-            className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-2.5 px-3 rounded-xl border border-slate-700 transition active:scale-95 cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs sm:text-sm py-2.5 px-3.5 rounded-xl border border-slate-700 transition active:scale-95 cursor-pointer shadow-xs"
             title="Preview Customer Dining Website"
           >
             <span>Customer Menu View</span>
-            <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
+            <ExternalLink className="w-4 h-4 text-cyan-400" />
           </button>
 
-          <div className="bg-[#0f172a] rounded-xl p-3 border border-slate-800 flex items-center justify-between shadow-sm">
-            <div className="flex items-center gap-2.5 truncate">
-              <div className="w-9 h-9 rounded-lg bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0">
+          <div className="bg-[#090d16] rounded-2xl p-3 border border-slate-800 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3 truncate">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shrink-0">
                 ADM
               </div>
               <div className="truncate">
-                <span className="font-extrabold text-white text-xs block truncate leading-tight">
+                <span className="font-black text-white text-sm block truncate leading-tight">
                   {adminUser?.name || 'Shivam Shakya'}
                 </span>
-                <span className="text-[11px] text-cyan-400 font-bold block mt-0.5">
+                <span className="text-xs text-cyan-400 font-bold block mt-0.5">
                   +91 {adminUser?.phone || '9058605348'}
                 </span>
               </div>
@@ -546,7 +541,7 @@ export default function AdminDashboard({
 
             <button
               onClick={onLogout}
-              className="p-2 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/40 transition shrink-0 ml-1 cursor-pointer"
+              className="p-2.5 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/40 transition shrink-0 ml-1 cursor-pointer"
               title="Logout Session"
             >
               <LogOut className="w-4 h-4" />
@@ -556,25 +551,25 @@ export default function AdminDashboard({
       </aside>
 
       {/* =========================================================================
-          2. MAIN CONTENT AREA (High Clarity Canvas & Large Typography)
+          2. MAIN CONTENT AREA (Luxury High-Contrast Dining Terminal)
       ========================================================================= */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#f1f5f9]">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#eef2f6]">
         {/* Top Control Header Strip */}
-        <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-300 px-4 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+        <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-300 px-5 sm:px-8 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3.5 shadow-sm">
           {/* Left: Global Search */}
           <div className="relative w-full sm:w-96">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search table, guest name, phone, dish..."
+              placeholder="Search table, customer name, dish, phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-100 border border-slate-300 rounded-xl pl-10 pr-8 py-2 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"
+              className="w-full bg-slate-100 border border-slate-300 rounded-2xl pl-11 pr-8 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition shadow-inner"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-700 font-bold"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-800 font-bold"
               >
                 ✕
               </button>
@@ -582,20 +577,20 @@ export default function AdminDashboard({
           </div>
 
           {/* Right: Sound Alert Actions & Live Digital Clock */}
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
             {/* Live Clock */}
-            <div className="flex items-center gap-1.5 bg-slate-100 px-3.5 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold text-slate-800">
+            <div className="flex items-center gap-2 bg-slate-100 px-4 py-2.5 rounded-2xl border border-slate-300 text-xs sm:text-sm font-black text-slate-900 shadow-2xs">
               <Clock className="w-4 h-4 text-blue-600" />
               <span>
                 {currentTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
-              <span className="text-[11px] text-slate-500 font-medium">IST</span>
+              <span className="text-[11px] text-slate-500 font-bold">IST</span>
             </div>
 
             {/* Test Bell Sound */}
             <button
               onClick={handleTestBell}
-              className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl border border-blue-200 transition active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 font-black text-xs sm:text-sm px-4 py-2.5 rounded-2xl border border-blue-200 transition active:scale-95 cursor-pointer shadow-2xs"
               title="Test Kitchen Bell Sound"
             >
               <Bell className="w-4 h-4 text-blue-600 animate-bell" />
@@ -605,7 +600,7 @@ export default function AdminDashboard({
             {/* Sound Mute / Unmute */}
             <button
               onClick={() => setIsBellMuted(!isBellMuted)}
-              className={`p-2.5 rounded-xl border text-xs sm:text-sm font-bold transition cursor-pointer ${
+              className={`p-2.5 rounded-2xl border text-xs sm:text-sm font-bold transition cursor-pointer shadow-2xs ${
                 isBellMuted
                   ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100'
                   : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100'
@@ -618,7 +613,7 @@ export default function AdminDashboard({
             {/* QR Code Standee Modal Trigger */}
             <button
               onClick={openQrModal}
-              className="flex items-center gap-1.5 bg-white hover:bg-slate-100 text-slate-800 text-xs sm:text-sm font-bold px-3.5 py-2 rounded-xl border border-slate-300 shadow-2xs transition cursor-pointer"
+              className="flex items-center gap-1.5 bg-white hover:bg-slate-100 text-slate-800 text-xs sm:text-sm font-black px-4 py-2.5 rounded-2xl border border-slate-300 shadow-2xs transition cursor-pointer"
               title="Generate / Print Table QR Standees"
             >
               <QrCode className="w-4 h-4 text-blue-600" />
@@ -628,7 +623,7 @@ export default function AdminDashboard({
             {/* Refresh */}
             <button
               onClick={onRefresh}
-              className="p-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-950 border border-slate-300 shadow-2xs transition cursor-pointer"
+              className="p-2.5 rounded-2xl bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-950 border border-slate-300 shadow-2xs transition cursor-pointer"
               title="Sync Orders Now"
             >
               <RotateCcw className="w-4 h-4" />
@@ -637,48 +632,48 @@ export default function AdminDashboard({
         </header>
 
         {/* Dynamic Workspace Container */}
-        <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-7 overflow-y-auto">
           {/* =========================================================================
               VIEW 1: LIVE ORDERS & KOT TERMINAL
           ========================================================================= */}
           {adminSection === 'orders' && (
-            <div className="space-y-6">
+            <div className="space-y-7">
               {/* =========================================================================
                   🔴 PERSISTENT INCOMING ORDERS NOTIFICATION HUB
                   Requirements:
                   1. As soon as a customer orders, notification appears immediately.
                   2. IT NEVER REMOVES/DISAPPEARS until the admin clicks "ACCEPT ORDER"!
                   3. If 7 people order, ALL 7 NOTIFICATIONS ARE CLEARLY VISIBLE!
-                  4. Large typography for names, table, and order details!
+                  4. Distinct Boxed Item Chips with Qty & Unit Prices (NO simple white lines!)
               ========================================================================= */}
               {pendingOrders.length > 0 && (
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 rounded-3xl p-5 sm:p-6 shadow-md relative overflow-hidden animate-in fade-in slide-in-from-top-3 duration-300">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-amber-300/80">
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black text-xl shadow-md animate-bounce shrink-0">
-                        <Bell className="w-6 h-6 animate-bell" />
+                <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-2 border-amber-400 rounded-3xl p-6 shadow-lg relative overflow-hidden animate-in fade-in slide-in-from-top-3 duration-300">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-5 border-b-2 border-amber-300/80">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black text-2xl shadow-lg shadow-amber-500/30 animate-bounce shrink-0">
+                        <Bell className="w-7 h-7 animate-bell" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-black text-lg sm:text-xl text-slate-950 tracking-tight">
-                            Incoming Orders Awaiting Acceptance ({pendingOrders.length})
+                        <div className="flex items-center gap-2.5">
+                          <h3 className="font-black text-xl sm:text-2xl text-slate-950 tracking-tight">
+                            Live Orders Awaiting Acceptance ({pendingOrders.length})
                           </h3>
-                          <span className="w-3 h-3 rounded-full bg-rose-600 animate-ping"></span>
+                          <span className="w-3.5 h-3.5 rounded-full bg-rose-600 animate-ping"></span>
                         </div>
-                        <p className="text-xs sm:text-sm text-slate-700 font-medium mt-0.5">
-                          ⚠️ <strong>Action Required:</strong> These orders will stay on screen until accepted. Accept immediately to notify guest!
+                        <p className="text-xs sm:text-sm text-slate-700 font-semibold mt-1">
+                          ⚠️ <strong>Action Required:</strong> Notifications remain visible until accepted. Click "ACCEPT ORDER" to notify customer!
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2.5 shrink-0">
                       {pendingOrders.length > 1 && (
                         <button
                           onClick={handleAcceptAllPending}
                           disabled={isAcceptingAll}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-black px-5 py-2.5 rounded-xl shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-black px-6 py-3 rounded-2xl shadow-md transition active:scale-95 flex items-center gap-2 cursor-pointer disabled:opacity-50"
                         >
-                          <CheckCheck className="w-4 h-4" />
+                          <CheckCheck className="w-5 h-5" />
                           <span>{isAcceptingAll ? 'Accepting...' : `Accept All (${pendingOrders.length} Orders)`}</span>
                         </button>
                       )}
@@ -686,7 +681,7 @@ export default function AdminDashboard({
                   </div>
 
                   {/* All Pending Notification Cards (If 7 people order, all 7 cards stay visible!) */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {pendingOrders.map((order) => {
                       const isOnline = order.paymentMethod === 'ONLINE' || order.paymentStatus === 'PAID';
                       const urgency = getOrderUrgency(order.createdAt);
@@ -694,38 +689,50 @@ export default function AdminDashboard({
                       return (
                         <div
                           key={order.id}
-                          className="bg-white border-2 border-amber-400 rounded-3xl p-5 shadow-sm hover:shadow-lg flex flex-col justify-between transition relative overflow-hidden"
+                          className="bg-white border-2 border-amber-400 rounded-3xl overflow-hidden shadow-md hover:shadow-xl flex flex-col justify-between transition-all duration-200"
                         >
-                          {/* Top: Large Table Badge & Wait Timer */}
+                          {/* Card Top: Distinct Table Header & Elapsed Time */}
                           <div>
-                            <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200">
-                              <div className="flex items-center gap-2">
-                                <span className="bg-slate-950 text-white font-black text-base px-3.5 py-1.5 rounded-xl shadow-sm tracking-wide">
+                            <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <span className="bg-blue-600 text-white font-black text-lg sm:text-xl px-4 py-1.5 rounded-xl shadow-md tracking-wider">
                                   {order.tableNumber}
                                 </span>
-                                <span className="text-sm font-extrabold text-slate-500">
-                                  Ticket #{order.id}
-                                </span>
+                                <div>
+                                  <span className="font-black text-base sm:text-lg block text-white leading-none">
+                                    Ticket #{order.id}
+                                  </span>
+                                  <span className="text-xs text-slate-400 font-semibold mt-1 block">
+                                    Pending Order
+                                  </span>
+                                </div>
                               </div>
-                              <span className={`text-xs font-bold ${urgency.color}`}>
+
+                              <span className={`text-xs sm:text-sm font-black px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 ${urgency.color}`}>
                                 ⏱️ {urgency.label}
                               </span>
                             </div>
 
-                            {/* Guest Details: BIGGER NAME */}
-                            <div className="mb-3.5 bg-slate-50 p-3 rounded-2xl border border-slate-200 flex items-center justify-between">
-                              <div>
-                                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-                                  Customer Name
-                                </span>
-                                <span className="font-black text-base sm:text-lg text-slate-950 block truncate">
-                                  {order.customerName || 'Walk-in Guest'}
-                                </span>
+                            {/* Customer Info Strip */}
+                            <div className="px-5 py-3.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                                  <UserCheck className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                                    Customer Name
+                                  </span>
+                                  <span className="font-black text-base sm:text-lg text-slate-950 block truncate">
+                                    {order.customerName || 'Walk-in Guest'}
+                                  </span>
+                                </div>
                               </div>
+
                               {order.customerPhone && (
                                 <a
                                   href={`tel:${order.customerPhone}`}
-                                  className="text-blue-600 font-extrabold hover:underline flex items-center gap-1 text-xs sm:text-sm bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 shrink-0"
+                                  className="flex items-center gap-1.5 bg-white hover:bg-blue-50 text-blue-700 font-black text-xs sm:text-sm px-3.5 py-1.5 rounded-xl border border-blue-200 shadow-2xs transition"
                                 >
                                   <Phone className="w-3.5 h-3.5" />
                                   <span>{order.customerPhone}</span>
@@ -733,68 +740,93 @@ export default function AdminDashboard({
                               )}
                             </div>
 
-                            {/* Dishes List: BIGGER ORDER DETAILS */}
-                            <div className="space-y-2 mb-4 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200">
-                              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 block mb-1">
-                                Ordered Items ({order.items?.length || 0})
+                            {/* Dishes List with Distinct Boxed Item Chips (NO simple white lines!) */}
+                            <div className="p-4 sm:p-5 space-y-2.5">
+                              <span className="text-xs font-black uppercase tracking-wider text-slate-500 block mb-1">
+                                Dishes Ordered ({order.items?.length || 0})
                               </span>
+
                               {order.items?.map((item, idx) => (
-                                <div key={idx} className="pb-2 border-b border-slate-200/80 last:border-0 last:pb-0">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                      <span className="w-6 h-6 rounded-lg bg-blue-600 text-white font-black text-xs sm:text-sm flex items-center justify-center shrink-0">
+                                <div
+                                  key={idx}
+                                  className="bg-slate-50 hover:bg-slate-100/90 border border-slate-200 rounded-2xl p-3 flex flex-col gap-2 transition shadow-2xs"
+                                >
+                                  <div className="flex items-center justify-between gap-3">
+                                    {/* Left: Quantity Badge + Dish Name + Rate */}
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <div className="w-9 h-9 rounded-xl bg-blue-600 text-white font-black text-sm sm:text-base flex items-center justify-center shrink-0 shadow-xs">
                                         {item.quantity}×
+                                      </div>
+                                      <div className="min-w-0">
+                                        <h5 className="font-black text-sm sm:text-base text-slate-950 truncate leading-snug">
+                                          {item.name}
+                                        </h5>
+                                        <span className="text-xs font-semibold text-slate-500">
+                                          ₹{item.price} × {item.quantity} {item.quantity === 1 ? 'portion' : 'portions'}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Right: Item Total Box */}
+                                    <div className="shrink-0 bg-white border border-slate-300 rounded-xl px-3 py-1 shadow-2xs text-right">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-none">
+                                        Subtotal
                                       </span>
-                                      <span className="font-extrabold text-sm sm:text-base text-slate-950">
-                                        {item.name}
+                                      <span className="font-black text-sm sm:text-base text-slate-950">
+                                        {formatPrice(item.price * item.quantity)}
                                       </span>
                                     </div>
-                                    <span className="font-black text-sm sm:text-base text-slate-800">
-                                      {formatPrice(item.price * item.quantity)}
-                                    </span>
                                   </div>
+
+                                  {/* Custom Chef Note */}
                                   {item.specialInstructions && (
-                                    <div className="ml-8 mt-1 text-xs sm:text-sm font-bold text-amber-950 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300">
-                                      📝 Note: {item.specialInstructions}
+                                    <div className="bg-amber-100 border border-amber-300 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-bold text-amber-950 flex items-center gap-2">
+                                      <span>📝</span>
+                                      <span><strong>Chef Instruction:</strong> {item.specialInstructions}</span>
                                     </div>
                                   )}
                                 </div>
                               ))}
                             </div>
 
-                            {/* Payment Badge & Bill Total */}
-                            <div className="flex items-center justify-between mb-4 pt-1">
-                              <div>
+                            {/* Luxury Receipt Bill Summary Block */}
+                            <div className="mx-4 sm:mx-5 mb-4 bg-slate-950 text-white rounded-2xl p-4 shadow-inner space-y-2.5">
+                              <div className="flex items-center justify-between text-xs text-slate-400 font-semibold border-b border-slate-800 pb-2">
+                                <span>Settlement Mode:</span>
                                 {isOnline ? (
-                                  <span className="inline-flex items-center gap-1.5 font-black text-xs text-white bg-emerald-600 px-3 py-1.5 rounded-xl shadow-xs">
-                                    <CreditCard className="w-4 h-4" />
-                                    <span>⚡ PAID ONLINE (RAZORPAY)</span>
+                                  <span className="text-emerald-400 font-black text-xs">
+                                    ⚡ PAID ONLINE (RAZORPAY)
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1.5 font-black text-xs text-slate-950 bg-amber-400 px-3 py-1.5 rounded-xl shadow-xs">
-                                    <Banknote className="w-4 h-4" />
-                                    <span>💵 CASH TO COLLECT</span>
+                                  <span className="text-amber-400 font-black text-xs">
+                                    💵 CASH ON DELIVERY
                                   </span>
                                 )}
                               </div>
-                              <span className="text-2xl sm:text-3xl font-black text-slate-950">
-                                {formatPrice(order.totalAmount)}
-                              </span>
+
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-300">
+                                  Total Bill Amount:
+                                </span>
+                                <span className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight font-pos">
+                                  {formatPrice(order.totalAmount)}
+                                </span>
+                              </div>
                             </div>
                           </div>
 
                           {/* Action Button: ACCEPT ORDER (Removes notification card only upon acceptance) */}
-                          <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-200">
+                          <div className="p-4 sm:p-5 pt-0 grid grid-cols-4 gap-2.5">
                             <button
                               onClick={() => handleAcceptOrder(order.id)}
-                              className="col-span-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-3.5 rounded-2xl shadow-md transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                              className="col-span-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm sm:text-base py-3.5 rounded-2xl shadow-md transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer border border-emerald-400/40"
                             >
                               <Check className="w-5 h-5" />
                               <span>ACCEPT ORDER</span>
                             </button>
                             <button
                               onClick={() => handleRejectOrder(order.id)}
-                              className="bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-800 font-bold text-xs sm:text-sm py-3.5 rounded-2xl transition border border-slate-300 cursor-pointer text-center"
+                              className="bg-slate-200 hover:bg-rose-100 text-slate-700 hover:text-rose-800 font-bold text-xs sm:text-sm py-3.5 rounded-2xl transition border border-slate-300 cursor-pointer text-center"
                             >
                               Reject
                             </button>
@@ -807,62 +839,62 @@ export default function AdminDashboard({
               )}
 
               {/* Clean Modern KPI Summary Strip */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-                <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-300 shadow-xs relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-amber-500"></div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
+                <div className="bg-white rounded-3xl p-5 border border-slate-300 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 to-orange-500"></div>
                   <span className="text-xs uppercase font-extrabold text-slate-500 block mb-1">
                     Pending Orders
                   </span>
                   <div className="flex items-baseline justify-between">
-                    <span className={`text-2xl sm:text-3xl font-black ${pendingCount > 0 ? 'text-amber-600 animate-pulse' : 'text-slate-900'}`}>
+                    <span className={`text-3xl sm:text-4xl font-black ${pendingCount > 0 ? 'text-amber-600 animate-pulse' : 'text-slate-900'}`}>
                       {pendingCount}
                     </span>
-                    <span className="text-xs text-amber-800 font-extrabold bg-amber-100 px-2.5 py-0.5 rounded-lg border border-amber-300">
+                    <span className="text-xs text-amber-800 font-black bg-amber-100 px-3 py-1 rounded-xl border border-amber-300">
                       Needs Accept
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-300 shadow-xs relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-blue-600"></div>
+                <div className="bg-white rounded-3xl p-5 border border-slate-300 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-cyan-500"></div>
                   <span className="text-xs uppercase font-extrabold text-slate-500 block mb-1">
                     In Kitchen / Cooking
                   </span>
                   <div className="flex items-baseline justify-between">
-                    <span className="text-2xl sm:text-3xl font-black text-blue-700">
+                    <span className="text-3xl sm:text-4xl font-black text-blue-700">
                       {preparingCount + acceptedCount}
                     </span>
-                    <span className="text-xs text-blue-800 font-extrabold bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200">
+                    <span className="text-xs text-blue-800 font-black bg-blue-50 px-3 py-1 rounded-xl border border-blue-200">
                       Active
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-300 shadow-xs relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-emerald-500"></div>
+                <div className="bg-white rounded-3xl p-5 border border-slate-300 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
                   <span className="text-xs uppercase font-extrabold text-slate-500 block mb-1">
                     Paid Online (Razorpay)
                   </span>
                   <div className="flex items-baseline justify-between">
-                    <span className="text-2xl sm:text-3xl font-black text-emerald-700">
+                    <span className="text-3xl sm:text-4xl font-black text-emerald-700">
                       {onlineOrders.length}
                     </span>
-                    <span className="text-xs text-emerald-800 font-extrabold bg-emerald-100 px-2.5 py-0.5 rounded-lg border border-emerald-300">
+                    <span className="text-xs text-emerald-800 font-black bg-emerald-100 px-3 py-1 rounded-xl border border-emerald-300">
                       {formatPrice(onlineTotal)}
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-300 shadow-xs relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-orange-500"></div>
+                <div className="bg-white rounded-3xl p-5 border border-slate-300 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-orange-500 to-amber-500"></div>
                   <span className="text-xs uppercase font-extrabold text-slate-500 block mb-1">
                     Cash to Collect
                   </span>
                   <div className="flex items-baseline justify-between">
-                    <span className="text-2xl sm:text-3xl font-black text-amber-700">
+                    <span className="text-3xl sm:text-4xl font-black text-amber-700">
                       {cashOrders.length}
                     </span>
-                    <span className="text-xs text-amber-900 font-extrabold bg-amber-100 px-2.5 py-0.5 rounded-lg border border-amber-300">
+                    <span className="text-xs text-amber-900 font-black bg-amber-100 px-3 py-1 rounded-xl border border-amber-300">
                       {formatPrice(cashTotal)}
                     </span>
                   </div>
@@ -870,8 +902,8 @@ export default function AdminDashboard({
               </div>
 
               {/* Status & Payment Filter Bar */}
-              <div className="bg-white rounded-2xl p-2.5 border border-slate-300 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar shadow-xs">
-                <div className="flex items-center gap-1.5">
+              <div className="bg-white rounded-3xl p-3 border border-slate-300 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar shadow-sm">
+                <div className="flex items-center gap-2">
                   {[
                     { key: 'ALL', label: `All Orders (${orders.length})` },
                     { key: 'PENDING', label: `🔔 Pending (${pendingCount})`, highlight: pendingCount > 0 },
@@ -885,13 +917,13 @@ export default function AdminDashboard({
                     <button
                       key={tab.key}
                       onClick={() => setActiveFilter(tab.key)}
-                      className={`whitespace-nowrap px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all shrink-0 cursor-pointer ${
+                      className={`whitespace-nowrap px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black transition-all shrink-0 cursor-pointer ${
                         activeFilter === tab.key
                           ? tab.isOnline
-                            ? 'bg-emerald-600 text-white shadow-sm'
+                            ? 'bg-emerald-600 text-white shadow-md'
                             : tab.isCash
-                            ? 'bg-amber-500 text-slate-950 shadow-sm'
-                            : 'bg-blue-600 text-white shadow-sm'
+                            ? 'bg-amber-500 text-slate-950 shadow-md'
+                            : 'bg-blue-600 text-white shadow-md'
                           : tab.highlight
                           ? 'bg-amber-100 text-amber-900 border border-amber-400 animate-pulse'
                           : tab.isOnline
@@ -906,21 +938,21 @@ export default function AdminDashboard({
                   ))}
                 </div>
 
-                <div className="text-xs sm:text-sm text-slate-600 font-bold hidden lg:block shrink-0 px-2">
+                <div className="text-xs sm:text-sm text-slate-600 font-extrabold hidden lg:block shrink-0 px-3">
                   Showing {filteredOrders.length} tickets
                 </div>
               </div>
 
-              {/* Main Orders Display Grid with BIGGER DETAILS */}
+              {/* Main Orders Display Grid with BIGGER DETAILS & NO SIMPLE WHITE LINES */}
               {filteredOrders.length === 0 ? (
-                <div className="bg-white rounded-3xl border border-slate-300 p-12 text-center my-6 shadow-xs">
-                  <div className="w-16 h-16 rounded-2xl bg-slate-100 text-blue-600 flex items-center justify-center text-3xl mx-auto mb-3">
+                <div className="bg-white rounded-3xl border border-slate-300 p-12 text-center my-6 shadow-sm">
+                  <div className="w-18 h-18 rounded-3xl bg-slate-100 text-blue-600 flex items-center justify-center text-4xl mx-auto mb-3.5">
                     📋
                   </div>
-                  <h4 className="text-xl font-black text-slate-900 mb-1">
+                  <h4 className="text-xl sm:text-2xl font-black text-slate-900 mb-1">
                     No Orders in this View
                   </h4>
-                  <p className="text-sm text-slate-600 max-w-sm mx-auto mb-4">
+                  <p className="text-sm text-slate-600 max-w-sm mx-auto mb-4 font-medium">
                     {searchQuery
                       ? `No orders matching query "${searchQuery}".`
                       : activeFilter !== 'ALL'
@@ -933,14 +965,14 @@ export default function AdminDashboard({
                         setSearchQuery('');
                         setActiveFilter('ALL');
                       }}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition cursor-pointer"
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-black px-6 py-3 rounded-2xl transition cursor-pointer shadow-md"
                     >
                       Reset View Filters
                     </button>
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredOrders.map((order) => {
                     const isPending = order.status === 'PENDING';
                     const isAccepted = order.status === 'ACCEPTED';
@@ -953,11 +985,11 @@ export default function AdminDashboard({
                     return (
                       <div
                         key={order.id}
-                        className={`bg-white rounded-3xl border-2 flex flex-col justify-between overflow-hidden transition-all duration-200 shadow-sm hover:shadow-lg ${
+                        className={`bg-white rounded-3xl border-2 flex flex-col justify-between overflow-hidden transition-all duration-300 shadow-md hover:shadow-xl ${
                           isPending
                             ? urgency.isUrgent
-                              ? 'border-rose-500 ring-2 ring-rose-300'
-                              : 'border-amber-400 ring-2 ring-amber-200'
+                              ? 'border-rose-500 ring-4 ring-rose-200'
+                              : 'border-amber-400 ring-4 ring-amber-100'
                             : isOnlinePaid
                             ? 'border-emerald-300 hover:border-emerald-500'
                             : 'border-slate-300 hover:border-slate-400'
@@ -965,75 +997,73 @@ export default function AdminDashboard({
                       >
                         {/* Distinct Payment Highlight Banner */}
                         {isOnlinePaid ? (
-                          <div className="bg-emerald-600 text-white px-4 py-2.5 flex items-center justify-between font-black text-xs sm:text-sm">
+                          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white px-5 py-3 flex items-center justify-between font-black text-xs sm:text-sm shadow-xs">
                             <div className="flex items-center gap-2">
                               <CreditCard className="w-4 h-4" />
                               <span>⚡ PAID ONLINE (RAZORPAY)</span>
                             </div>
-                            <span className="bg-emerald-700/80 px-2.5 py-0.5 rounded-lg text-xs font-bold">
+                            <span className="bg-emerald-800/80 px-3 py-1 rounded-xl text-xs font-black">
                               ✓ DO NOT COLLECT CASH
                             </span>
                           </div>
                         ) : (
-                          <div className="bg-amber-400 text-slate-950 px-4 py-2.5 flex items-center justify-between font-black text-xs sm:text-sm">
+                          <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 px-5 py-3 flex items-center justify-between font-black text-xs sm:text-sm shadow-xs">
                             <div className="flex items-center gap-2">
                               <Banknote className="w-4 h-4" />
                               <span>💵 CASH ON DELIVERY</span>
                             </div>
-                            <span className="bg-amber-500/80 px-2.5 py-0.5 rounded-lg text-xs font-black">
+                            <span className="bg-amber-600/90 text-white px-3 py-1 rounded-xl text-xs font-black">
                               COLLECT {formatPrice(order.totalAmount)}
                             </span>
                           </div>
                         )}
 
-                        {/* Ticket Top Header: BIGGER TABLE NUMBER */}
-                        <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2.5">
-                            <span className="font-black text-base sm:text-lg px-3.5 py-1.5 rounded-xl bg-slate-950 text-white shadow-sm">
+                        {/* Ticket Top Header: Standee Table Badge + Ticket Number + Urgency */}
+                        <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <span className="bg-blue-600 text-white font-black text-lg sm:text-xl px-4 py-2 rounded-2xl shadow-md tracking-wider">
                               {order.tableNumber}
                             </span>
-                            <span className="text-sm text-slate-500 font-extrabold">
-                              Ticket #{order.id}
-                            </span>
+                            <div>
+                              <span className="font-black text-base sm:text-lg block text-white leading-none">
+                                Ticket #{order.id}
+                              </span>
+                              <span className="text-xs text-slate-400 font-semibold mt-1 block">
+                                Rooftop Dining
+                              </span>
+                            </div>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <span className={`text-xs sm:text-sm font-bold ${urgency.color}`}>
-                              {urgency.label}
+                            <span className={`text-xs sm:text-sm font-extrabold px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 ${urgency.color}`}>
+                              ⏱️ {urgency.label}
                             </span>
-                            <span
-                              className={`text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-xl ${
-                                isPending
-                                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                                  : isAccepted
-                                  ? 'bg-blue-100 text-blue-900 border border-blue-300'
-                                  : isPreparing
-                                  ? 'bg-cyan-100 text-cyan-900 border border-cyan-300'
-                                  : isServed
-                                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                                  : 'bg-slate-100 text-slate-700 border border-slate-300'
-                              }`}
-                            >
+                            <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-xl bg-slate-800 text-slate-200 border border-slate-700">
                               {order.status}
                             </span>
                           </div>
                         </div>
 
-                        {/* Customer Info Strip: BIGGER NAME */}
-                        <div className="px-4 sm:px-5 py-3 bg-white border-b border-slate-200 flex items-center justify-between">
-                          <div>
-                            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block">
-                              Guest Details
-                            </span>
-                            <span className="font-black text-base sm:text-lg text-slate-950 flex items-center gap-1.5">
-                              <UserCheck className="w-4 h-4 text-blue-600 shrink-0" />
-                              <span className="truncate">{order.customerName || 'Walk-in Guest'}</span>
-                            </span>
+                        {/* Customer Info Strip */}
+                        <div className="px-5 py-3.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                              <UserCheck className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                                Guest Name
+                              </span>
+                              <span className="font-black text-base sm:text-lg text-slate-900 block truncate">
+                                {order.customerName || 'Walk-in Guest'}
+                              </span>
+                            </div>
                           </div>
+
                           {order.customerPhone && (
                             <a
                               href={`tel:${order.customerPhone}`}
-                              className="text-blue-600 font-black hover:underline flex items-center gap-1 text-xs sm:text-sm bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 shrink-0"
+                              className="flex items-center gap-1.5 bg-white hover:bg-blue-50 text-blue-700 font-black text-xs sm:text-sm px-3.5 py-1.5 rounded-xl border border-blue-200 shadow-2xs transition"
                             >
                               <Phone className="w-3.5 h-3.5" />
                               <span>{order.customerPhone}</span>
@@ -1041,36 +1071,51 @@ export default function AdminDashboard({
                           )}
                         </div>
 
-                        {/* Items List: BIGGER ORDER DETAILS */}
+                        {/* Items List: Distinct Boxed Item Chips (NO simple white lines!) */}
                         <div className="p-4 sm:p-5 flex-1 space-y-3">
-                          <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1">
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-500 block mb-1">
                             Dishes Ordered ({order.items?.length || 0})
                           </span>
+
                           <div className="space-y-2.5">
                             {order.items &&
                               order.items.map((item, idx) => (
                                 <div
                                   key={idx}
-                                  className="pb-2.5 border-b border-slate-200/80 last:border-0 last:pb-0"
+                                  className="bg-slate-50 hover:bg-slate-100/90 border border-slate-200 rounded-2xl p-3.5 flex flex-col gap-2 transition shadow-2xs"
                                 >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2.5">
-                                      <span className="w-7 h-7 rounded-lg bg-blue-600 text-white font-black text-xs sm:text-sm flex items-center justify-center shrink-0">
+                                  <div className="flex items-center justify-between gap-3">
+                                    {/* Left: Quantity Badge + Dish Name + Rate */}
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-black text-sm sm:text-base flex items-center justify-center shrink-0 shadow-xs">
                                         {item.quantity}×
+                                      </div>
+                                      <div className="min-w-0">
+                                        <h5 className="font-black text-sm sm:text-base text-slate-950 truncate leading-snug">
+                                          {item.name}
+                                        </h5>
+                                        <span className="text-xs font-semibold text-slate-500">
+                                          ₹{item.price} × {item.quantity} {item.quantity === 1 ? 'portion' : 'portions'}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Right: Item Total Box */}
+                                    <div className="shrink-0 bg-white border border-slate-300 rounded-xl px-3.5 py-1.5 shadow-2xs text-right">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-none">
+                                        Subtotal
                                       </span>
-                                      <span className="font-extrabold text-sm sm:text-base text-slate-950">
-                                        {item.name}
+                                      <span className="font-black text-base text-slate-950">
+                                        {formatPrice(item.price * item.quantity)}
                                       </span>
                                     </div>
-                                    <span className="font-black text-sm sm:text-base text-slate-800">
-                                      {formatPrice(item.price * item.quantity)}
-                                    </span>
                                   </div>
 
                                   {/* Custom Dish Instructions */}
                                   {item.specialInstructions && (
-                                    <div className="ml-9 mt-1.5 text-xs sm:text-sm font-bold text-amber-950 bg-amber-100 px-3 py-1.5 rounded-xl border border-amber-300">
-                                      <span>📝 Note: {item.specialInstructions}</span>
+                                    <div className="bg-amber-100 border border-amber-300 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-bold text-amber-950 flex items-center gap-2">
+                                      <span>📝</span>
+                                      <span><strong>Chef Instruction:</strong> {item.specialInstructions}</span>
                                     </div>
                                   )}
                                 </div>
@@ -1079,7 +1124,7 @@ export default function AdminDashboard({
 
                           {/* Overall Order Notes */}
                           {order.notes && (
-                            <div className="mt-3 bg-blue-50 border border-blue-200 rounded-2xl p-3 text-xs sm:text-sm text-blue-950">
+                            <div className="mt-3 bg-blue-50 border border-blue-200 rounded-2xl p-3.5 text-xs sm:text-sm text-blue-950">
                               <span className="font-black text-xs text-blue-700 uppercase tracking-wider block mb-0.5">
                                 Order Notes:
                               </span>
@@ -1088,72 +1133,86 @@ export default function AdminDashboard({
                           )}
                         </div>
 
-                        {/* Footer: Bill & Direct "COMPLETE ORDER" Action Workflow */}
-                        <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-200 space-y-3.5">
+                        {/* Luxury Receipt Bill Summary Block */}
+                        <div className="mx-4 sm:mx-5 mb-4 bg-slate-950 text-white rounded-2xl p-4 sm:p-5 shadow-inner space-y-3">
+                          <div className="flex items-center justify-between text-xs sm:text-sm text-slate-400 font-semibold border-b border-slate-800 pb-2.5">
+                            <span>Total Quantity Ordered:</span>
+                            <span className="text-white font-bold">{order.items?.reduce((sum, i) => sum + i.quantity, 0)} Items</span>
+                          </div>
+
                           <div className="flex items-center justify-between">
-                            <span className="text-slate-500 uppercase tracking-wider text-xs font-extrabold">Bill Amount:</span>
-                            <span className="text-2xl sm:text-3xl font-black text-slate-950">
-                              {formatPrice(order.totalAmount)}
-                            </span>
+                            <div>
+                              <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block">
+                                Grand Total Payable
+                              </span>
+                              <span className="text-xs text-emerald-400 font-bold">
+                                {isOnlinePaid ? '✓ Paid Online (Razorpay)' : '⚠️ Cash to Collect'}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight font-pos">
+                                {formatPrice(order.totalAmount)}
+                              </span>
+                            </div>
                           </div>
+                        </div>
 
-                          {/* Action Workflow Buttons */}
-                          <div>
-                            {isPending && (
-                              <div className="grid grid-cols-4 gap-2">
+                        {/* Footer: Direct "COMPLETE ORDER" Action Workflow */}
+                        <div className="p-4 sm:p-5 pt-0">
+                          {isPending && (
+                            <div className="grid grid-cols-4 gap-2.5">
+                              <button
+                                onClick={() => handleAcceptOrder(order.id)}
+                                className="col-span-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-base sm:text-lg py-4 rounded-2xl shadow-md transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer border border-emerald-400/40"
+                              >
+                                <Check className="w-5 h-5" />
+                                <span>ACCEPT ORDER</span>
+                              </button>
+                              <button
+                                onClick={() => handleRejectOrder(order.id)}
+                                className="bg-slate-200 hover:bg-rose-100 text-slate-700 hover:text-rose-800 font-bold text-xs sm:text-sm py-4 rounded-2xl transition border border-slate-300 cursor-pointer"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
+
+                          {(isAccepted || isPreparing) && (
+                            <div className="space-y-2.5">
+                              {/* Primary Big Button: COMPLETE ORDER */}
+                              <button
+                                onClick={() => onUpdateStatus(order.id, 'SERVED')}
+                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-base sm:text-lg py-4 rounded-2xl shadow-lg transition flex items-center justify-center gap-2.5 cursor-pointer active:scale-95 border border-blue-400/40"
+                              >
+                                <CheckCircle className="w-6 h-6" />
+                                <span>COMPLETE ORDER / SERVED</span>
+                              </button>
+
+                              {isAccepted && (
                                 <button
-                                  onClick={() => handleAcceptOrder(order.id)}
-                                  className="col-span-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm sm:text-base py-3.5 rounded-2xl shadow-md transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                                  onClick={() => onUpdateStatus(order.id, 'PREPARING')}
+                                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs sm:text-sm py-2 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200"
                                 >
-                                  <Check className="w-5 h-5" />
-                                  <span>ACCEPT ORDER</span>
+                                  <ChefHat className="w-4 h-4 text-slate-600" />
+                                  <span>Move to Cooking in Kitchen</span>
                                 </button>
-                                <button
-                                  onClick={() => handleRejectOrder(order.id)}
-                                  className="bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-800 font-bold text-xs sm:text-sm py-3.5 rounded-2xl transition border border-slate-300 cursor-pointer"
-                                >
-                                  Reject
-                                </button>
-                              </div>
-                            )}
+                              )}
+                            </div>
+                          )}
 
-                            {(isAccepted || isPreparing) && (
-                              <div className="space-y-2">
-                                {/* Primary Big Button: COMPLETE ORDER */}
-                                <button
-                                  onClick={() => onUpdateStatus(order.id, 'SERVED')}
-                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-sm sm:text-base py-3.5 rounded-2xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                                >
-                                  <CheckCircle className="w-5 h-5" />
-                                  <span>✅ COMPLETE ORDER / SERVED</span>
-                                </button>
+                          {isServed && (
+                            <div className="w-full text-center py-3.5 text-base sm:text-lg text-emerald-800 font-black bg-emerald-100 rounded-2xl border border-emerald-300 flex items-center justify-center gap-2 shadow-xs">
+                              <CheckCircle className="w-6 h-6 text-emerald-600" />
+                              <span>Order Completed &amp; Served</span>
+                            </div>
+                          )}
 
-                                {isAccepted && (
-                                  <button
-                                    onClick={() => onUpdateStatus(order.id, 'PREPARING')}
-                                    className="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs py-2 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
-                                  >
-                                    <ChefHat className="w-4 h-4 text-slate-600" />
-                                    <span>Move to Cooking in Kitchen</span>
-                                  </button>
-                                )}
-                              </div>
-                            )}
-
-                            {isServed && (
-                              <div className="w-full text-center py-3 text-sm sm:text-base text-emerald-800 font-black bg-emerald-100 rounded-2xl border border-emerald-300 flex items-center justify-center gap-2">
-                                <CheckCircle className="w-5 h-5 text-emerald-600" />
-                                <span>Order Completed &amp; Served</span>
-                              </div>
-                            )}
-
-                            {isCancelled && (
-                              <div className="w-full text-center py-3 text-sm sm:text-base text-rose-800 font-black bg-rose-100 rounded-2xl border border-rose-300 flex items-center justify-center gap-2">
-                                <XCircle className="w-5 h-5 text-rose-600" />
-                                <span>Order Cancelled</span>
-                              </div>
-                            )}
-                          </div>
+                          {isCancelled && (
+                            <div className="w-full text-center py-3.5 text-base sm:text-lg text-rose-800 font-black bg-rose-100 rounded-2xl border border-rose-300 flex items-center justify-center gap-2 shadow-xs">
+                              <XCircle className="w-6 h-6 text-rose-600" />
+                              <span>Order Cancelled</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -1169,23 +1228,23 @@ export default function AdminDashboard({
           {adminSection === 'menu' && (
             <div className="space-y-6">
               {/* Top Action Bar: Add New Dish & Inventory Summary */}
-              <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-300 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-black text-xl text-slate-950">
+                    <h3 className="font-black text-xl sm:text-2xl text-slate-950">
                       Menu &amp; Dish Catalog Management
                     </h3>
-                    <span className="text-xs bg-blue-50 text-blue-700 font-bold px-2.5 py-0.5 rounded-lg border border-blue-200">
+                    <span className="text-xs bg-blue-50 text-blue-700 font-black px-3 py-1 rounded-xl border border-blue-200">
                       Live Admin Mode
                     </span>
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  <p className="text-xs sm:text-sm text-slate-600 mt-1 font-medium">
                     Edit dish names, prices in INR, photo URLs, descriptions, and toggle In-Stock / Out-of-Stock instantly.
                   </p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="text-xs sm:text-sm text-slate-600 hidden sm:block text-right font-bold">
+                  <div className="text-xs sm:text-sm text-slate-600 hidden sm:block text-right font-extrabold">
                     <span className="text-emerald-700 block">
                       {localMenuItems.filter((i) => i.isAvailable !== false && i.available !== false).length} In-Stock
                     </span>
@@ -1196,22 +1255,22 @@ export default function AdminDashboard({
 
                   <button
                     onClick={openAddModal}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-md transition active:scale-95 cursor-pointer"
+                    className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm px-6 py-3.5 rounded-2xl shadow-md transition active:scale-95 cursor-pointer"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-5 h-5" />
                     <span>➕ ADD NEW DISH</span>
                   </button>
                 </div>
               </div>
 
               {/* Category Toolbar & Search */}
-              <div className="bg-white rounded-2xl p-3.5 border border-slate-300 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+              <div className="bg-white rounded-3xl p-3.5 border border-slate-300 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
                 <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
                   <button
                     onClick={() => setMenuCatFilter('ALL')}
-                    className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition shrink-0 cursor-pointer ${
+                    className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black transition shrink-0 cursor-pointer ${
                       menuCatFilter === 'ALL'
-                        ? 'bg-blue-600 text-white shadow-sm'
+                        ? 'bg-blue-600 text-white shadow-md'
                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                     }`}
                   >
@@ -1221,9 +1280,9 @@ export default function AdminDashboard({
                     <button
                       key={cat}
                       onClick={() => setMenuCatFilter(cat)}
-                      className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition shrink-0 cursor-pointer ${
+                      className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black transition shrink-0 cursor-pointer ${
                         menuCatFilter === cat
-                          ? 'bg-blue-600 text-white shadow-sm'
+                          ? 'bg-blue-600 text-white shadow-md'
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                       }`}
                     >
@@ -1232,30 +1291,30 @@ export default function AdminDashboard({
                   ))}
                 </div>
 
-                <div className="relative w-full sm:w-72">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <div className="relative w-full sm:w-80">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     placeholder="Search dish name..."
                     value={menuSearch}
                     onChange={(e) => setMenuSearch(e.target.value)}
-                    className="w-full bg-slate-100 border border-slate-300 rounded-xl pl-10 pr-3 py-2 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600"
+                    className="w-full bg-slate-100 border border-slate-300 rounded-2xl pl-11 pr-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600"
                   />
                 </div>
               </div>
 
               {/* Clean Modern Items Table */}
-              <div className="bg-white rounded-3xl border border-slate-300 overflow-hidden shadow-xs">
+              <div className="bg-white rounded-3xl border border-slate-300 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs sm:text-sm">
-                    <thead className="bg-slate-100 text-slate-600 text-xs uppercase font-black tracking-wider border-b border-slate-200">
+                    <thead className="bg-slate-100 text-slate-600 text-xs uppercase font-black tracking-wider border-b border-slate-300">
                       <tr>
-                        <th className="p-4">Dish Photo &amp; Details</th>
-                        <th className="p-4">Category</th>
-                        <th className="p-4">Price (INR)</th>
-                        <th className="p-4">Tag</th>
-                        <th className="p-4">Stock Status (Click to Toggle)</th>
-                        <th className="p-4 text-right">Actions</th>
+                        <th className="p-4 sm:p-5">Dish Photo &amp; Details</th>
+                        <th className="p-4 sm:p-5">Category</th>
+                        <th className="p-4 sm:p-5">Price (INR)</th>
+                        <th className="p-4 sm:p-5">Tag</th>
+                        <th className="p-4 sm:p-5">Stock Status (Click to Toggle)</th>
+                        <th className="p-4 sm:p-5 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
@@ -1275,9 +1334,9 @@ export default function AdminDashboard({
                           return (
                             <tr key={item.id} className="hover:bg-slate-50 transition">
                               {/* Photo + Name + Description */}
-                              <td className="p-4">
-                                <div className="flex items-center gap-3.5">
-                                  <div className="relative w-14 h-14 rounded-2xl overflow-hidden shrink-0 border border-slate-300 bg-slate-100 shadow-2xs">
+                              <td className="p-4 sm:p-5">
+                                <div className="flex items-center gap-4">
+                                  <div className="relative w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-slate-300 bg-slate-100 shadow-2xs">
                                     <img
                                       src={item.imageUrl || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'}
                                       alt={item.name}
@@ -1304,21 +1363,21 @@ export default function AdminDashboard({
                               </td>
 
                               {/* Category */}
-                              <td className="p-4 text-slate-700 font-bold">
-                                <span className="bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg text-xs font-bold">
+                              <td className="p-4 sm:p-5 text-slate-700 font-bold">
+                                <span className="bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold">
                                   {item.category}
                                 </span>
                               </td>
 
                               {/* Price */}
-                              <td className="p-4 font-black text-slate-950 text-base sm:text-lg">
+                              <td className="p-4 sm:p-5 font-black text-slate-950 text-base sm:text-lg">
                                 {formatPrice(item.price)}
                               </td>
 
                               {/* Tag */}
-                              <td className="p-4">
+                              <td className="p-4 sm:p-5">
                                 {item.tag ? (
-                                  <span className="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-black px-2.5 py-1 rounded-full">
+                                  <span className="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-black px-3 py-1 rounded-full">
                                     {item.tag}
                                   </span>
                                 ) : (
@@ -1327,11 +1386,11 @@ export default function AdminDashboard({
                               </td>
 
                               {/* 1-Click Stock Toggle Button */}
-                              <td className="p-4">
+                              <td className="p-4 sm:p-5">
                                 <button
                                   onClick={() => handleToggleDishAvailability(item.id, isAvailable)}
                                   disabled={isToggling}
-                                  className={`inline-flex items-center gap-1.5 text-xs sm:text-sm font-extrabold px-3.5 py-2 rounded-xl border transition active:scale-95 cursor-pointer ${
+                                  className={`inline-flex items-center gap-2 text-xs sm:text-sm font-black px-4 py-2 rounded-2xl border transition active:scale-95 cursor-pointer shadow-2xs ${
                                     isAvailable
                                       ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
                                       : 'bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-100'
@@ -1350,11 +1409,11 @@ export default function AdminDashboard({
                               </td>
 
                               {/* Action Buttons: Edit & Delete */}
-                              <td className="p-4 text-right">
+                              <td className="p-4 sm:p-5 text-right">
                                 <div className="inline-flex items-center gap-2">
                                   <button
                                     onClick={() => openEditModal(item)}
-                                    className="p-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition active:scale-95 cursor-pointer flex items-center gap-1.5 text-xs sm:text-sm font-bold"
+                                    className="p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition active:scale-95 cursor-pointer flex items-center gap-1.5 text-xs sm:text-sm font-black shadow-2xs"
                                     title="Edit Dish Name, Price, Photo, Description"
                                   >
                                     <Edit2 className="w-4 h-4" />
@@ -1363,7 +1422,7 @@ export default function AdminDashboard({
 
                                   <button
                                     onClick={() => handleDeleteDish(item.id, item.name)}
-                                    className="p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition active:scale-95 cursor-pointer"
+                                    className="p-3 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition active:scale-95 cursor-pointer shadow-2xs"
                                     title="Delete Dish from Menu"
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -1385,8 +1444,8 @@ export default function AdminDashboard({
           ========================================================================= */}
           {adminSection === 'analytics' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-xs relative overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-sm relative overflow-hidden">
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-blue-600"></div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs uppercase font-extrabold text-slate-500">
@@ -1402,7 +1461,7 @@ export default function AdminDashboard({
                   </p>
                 </div>
 
-                <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-xs relative overflow-hidden">
+                <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-sm relative overflow-hidden">
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-emerald-500"></div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs uppercase font-extrabold text-slate-500">
@@ -1418,7 +1477,7 @@ export default function AdminDashboard({
                   </p>
                 </div>
 
-                <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-xs relative overflow-hidden">
+                <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-sm relative overflow-hidden">
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-cyan-500"></div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs uppercase font-extrabold text-slate-500">
@@ -1440,13 +1499,13 @@ export default function AdminDashboard({
               </div>
 
               {/* Table Revenue Breakdown */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-xs">
-                <h3 className="font-black text-lg text-slate-950 mb-4 flex items-center gap-2">
+              <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-sm">
+                <h3 className="font-black text-lg sm:text-xl text-slate-950 mb-5 flex items-center gap-2">
                   <TableProperties className="w-5 h-5 text-blue-600" />
                   <span>Table Revenue Distribution (T-1 to T-20)</span>
                 </h3>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3.5">
                   {[...Array(20)].map((_, i) => {
                     const tblKey = `T-${i + 1}`;
                     const tblSales = stats?.tableSales?.[tblKey] || 0;
@@ -1456,22 +1515,22 @@ export default function AdminDashboard({
                     return (
                       <div
                         key={tblKey}
-                        className={`rounded-2xl p-3 border-2 text-center transition ${
+                        className={`rounded-2xl p-3.5 border-2 text-center transition ${
                           isOccupied
-                            ? 'bg-blue-50 border-blue-400 shadow-xs'
+                            ? 'bg-blue-50 border-blue-400 shadow-sm'
                             : tblSales > 0
                             ? 'bg-slate-50 border-slate-300'
                             : 'bg-white border-slate-200 opacity-60'
                         }`}
                       >
-                        <div className="flex items-center justify-center gap-1 mb-1">
+                        <div className="flex items-center justify-center gap-1.5 mb-1">
                           <span className="text-sm font-black text-slate-950">{tblKey}</span>
                           {isOccupied && <span className="w-2 h-2 rounded-full bg-blue-600 animate-ping"></span>}
                         </div>
                         <span className="text-base font-black text-blue-700 block">
                           {formatPrice(tblSales)}
                         </span>
-                        <span className="text-xs text-slate-500 font-semibold block">
+                        <span className="text-xs text-slate-500 font-bold block">
                           {tblOrdersCount} {tblOrdersCount === 1 ? 'order' : 'orders'}
                         </span>
                       </div>
@@ -1487,24 +1546,24 @@ export default function AdminDashboard({
           ========================================================================= */}
           {adminSection === 'tables' && (
             <div className="space-y-6">
-              <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-xs">
+              <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <div>
-                    <h3 className="font-black text-xl text-slate-950">
+                    <h3 className="font-black text-xl sm:text-2xl text-slate-950">
                       Rooftop Dining Floor Plan (20 Tables)
                     </h3>
-                    <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1 font-semibold">
                       Live status monitor of dining tables at Aman International Mall Rooftop.
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs sm:text-sm font-bold">
-                    <span className="flex items-center gap-1.5 text-slate-600">
-                      <span className="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                  <div className="flex items-center gap-4 text-xs sm:text-sm font-black">
+                    <span className="flex items-center gap-2 text-slate-600">
+                      <span className="w-3 h-3 rounded-full bg-slate-300"></span>
                       <span>Vacant</span>
                     </span>
-                    <span className="flex items-center gap-1.5 text-blue-700">
-                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping"></span>
+                    <span className="flex items-center gap-2 text-blue-700">
+                      <span className="w-3 h-3 rounded-full bg-blue-600 animate-ping"></span>
                       <span>Dining / Active Bill</span>
                     </span>
                   </div>
@@ -1519,10 +1578,10 @@ export default function AdminDashboard({
                     return (
                       <div
                         key={tbl}
-                        className={`rounded-2xl p-4 border-2 transition flex flex-col justify-between min-h-[130px] ${
+                        className={`rounded-3xl p-4.5 border-2 transition flex flex-col justify-between min-h-[140px] shadow-2xs ${
                           tblActiveOrder
-                            ? 'bg-blue-50/80 border-blue-500 shadow-sm'
-                            : 'bg-slate-50/70 border-slate-300 hover:border-slate-400'
+                            ? 'bg-blue-50/90 border-blue-500 shadow-sm'
+                            : 'bg-slate-50/80 border-slate-300 hover:border-slate-400'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -1530,7 +1589,7 @@ export default function AdminDashboard({
                             Table {i + 1}
                           </span>
                           <span
-                            className={`w-2.5 h-2.5 rounded-full ${
+                            className={`w-3 h-3 rounded-full ${
                               tblActiveOrder ? 'bg-blue-600 animate-pulse' : 'bg-slate-300'
                             }`}
                           ></span>
@@ -1541,10 +1600,10 @@ export default function AdminDashboard({
                             <span className="text-xs sm:text-sm font-black text-blue-900 block truncate">
                               {tblActiveOrder.customerName}
                             </span>
-                            <span className="text-sm sm:text-base font-black text-slate-950 block">
+                            <span className="text-base font-black text-slate-950 block">
                               {formatPrice(tblActiveOrder.totalAmount)}
                             </span>
-                            <span className="text-xs text-slate-500 block mt-0.5 font-bold">
+                            <span className="text-xs text-slate-600 block mt-0.5 font-bold">
                               Status: <strong className="text-blue-700">{tblActiveOrder.status}</strong>
                             </span>
                           </div>
@@ -1556,7 +1615,7 @@ export default function AdminDashboard({
 
                         <button
                           onClick={openQrModal}
-                          className="mt-1 w-full bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold py-1.5 rounded-xl border border-slate-300 transition cursor-pointer shadow-2xs"
+                          className="mt-1 w-full bg-white hover:bg-slate-100 text-slate-800 text-xs font-black py-2 rounded-xl border border-slate-300 transition cursor-pointer shadow-2xs"
                         >
                           Print QR
                         </button>
@@ -1579,11 +1638,11 @@ export default function AdminDashboard({
             {/* Modal Header */}
             <div className="p-5 sm:p-6 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center font-bold">
+                <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center font-bold">
                   {editingDish ? <Edit2 className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
                 </div>
                 <div>
-                  <h3 className="font-black text-slate-950 text-lg">
+                  <h3 className="font-black text-slate-950 text-lg sm:text-xl">
                     {editingDish ? 'Edit Dish Details' : 'Add New Dish to Menu'}
                   </h3>
                   <span className="text-xs text-slate-500 font-medium">
@@ -1597,9 +1656,9 @@ export default function AdminDashboard({
                   setEditingDish(null);
                   setIsAddDishOpen(false);
                 }}
-                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer"
+                className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
