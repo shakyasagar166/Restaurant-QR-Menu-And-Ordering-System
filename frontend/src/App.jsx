@@ -406,23 +406,23 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#faf7f2] flex flex-col text-stone-900 select-none">
-      {/* Toast Alert for Incoming Order - Only shown for Admin Staff */}
-      {adminUser && newOrderAlert && (
-        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-red-900 to-stone-950 text-white px-5 py-3.5 rounded-3xl shadow-2xl flex items-center gap-3 border-2 border-amber-400 animate-bounce">
-          <Bell className="w-5 h-5 text-amber-300 animate-bell" />
+      {/* Persistent Alert for Incoming Orders - Visible to Admin until all orders are accepted */}
+      {adminUser && pendingOrdersCount > 0 && (
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-amber-400 animate-bounce">
+          <Bell className="w-5 h-5 text-amber-300 animate-bell shrink-0" />
           <div>
-            <div className="text-[10px] font-black uppercase tracking-widest text-amber-300 font-brand">
-              🔔 NEW ORDER ALERT!
+            <div className="text-[10px] font-black uppercase tracking-wider text-amber-300 font-sans">
+              🔔 {pendingOrdersCount} {pendingOrdersCount === 1 ? 'NEW ORDER WAITING!' : 'NEW ORDERS WAITING!'}
             </div>
-            <div className="text-xs sm:text-sm font-bold">
-              {newOrderAlert.tableNumber} ordered {newOrderAlert.items?.length} items ({formatPrice(newOrderAlert.totalAmount)})
+            <div className="text-xs font-semibold text-slate-200">
+              Orders will remain active until accepted in Admin POS
             </div>
           </div>
           <button
             onClick={() => handleTabSwitch('admin')}
-            className="bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-stone-950 text-xs font-black px-3.5 py-1.5 rounded-2xl ml-2 shadow-sm transition active:scale-95 font-brand"
+            className="bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold px-3.5 py-1.5 rounded-xl ml-2 shadow-sm transition active:scale-95 cursor-pointer font-sans"
           >
-            Open Ticket
+            Review Orders ({pendingOrdersCount}) →
           </button>
         </div>
       )}
