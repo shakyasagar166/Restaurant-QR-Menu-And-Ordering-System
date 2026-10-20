@@ -140,6 +140,19 @@ export default function App() {
     }
   });
 
+  const [isOrderTrackerOpen, setIsOrderTrackerOpen] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bikaner_active_order');
+      if (saved) {
+        const order = JSON.parse(saved);
+        return order && order.status !== 'SERVED';
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  });
+
   // QR Modal
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
 
@@ -561,6 +574,7 @@ export default function App() {
       setCart([]);
       setIsCartOpen(false);
       setActiveCustomerOrder(savedOrder);
+      setIsOrderTrackerOpen(true);
       loadOrdersData();
     } catch (err) {
       console.warn('Order placement notice:', err);
@@ -700,6 +714,8 @@ export default function App() {
         isBellRinging={isBellRinging}
         openQrModal={() => setIsQrModalOpen(true)}
         adminUser={adminUser}
+        activeCustomerOrder={activeCustomerOrder}
+        openOrderTracker={() => setIsOrderTrackerOpen(true)}
       />
 
       {/* Customer Main Content */}
@@ -803,12 +819,71 @@ export default function App() {
         </div>
       )}
 
-      {/* Customer's Live Order Tracker */}
-      {activeCustomerOrder && activeCustomerOrder.status !== 'SERVED' && (
+      {/* Customer's Live Order Tracker Modal */}
+      {activeCustomerOrder && isOrderTrackerOpen && (
         <LiveOrderTracker
           activeOrder={activeCustomerOrder}
-          onClose={() => setActiveCustomerOrder(null)}
+          onClose={() => setIsOrderTrackerOpen(false)}
+          onClearOrder={() => {
+            setActiveCustomerOrder(null);
+            setIsOrderTrackerOpen(false);
+            localStorage.removeItem('bikaner_active_order');
+          }}
         />
+      )}
+
+      {/* Persistent Customer Active Order Quick Floating Bar (Allows diner to return to active order anytime!) */}
+      {activeCustomerOrder && !isOrderTrackerOpen && activeTab === 'menu' && (
+        <aside
+          aria-label="Active Order Quick Bar"
+          className={`fixed left-3 right-3 sm:left-auto sm:right-6 sm:w-auto sm:max-w-md z-40 animate-in slide-in-from-bottom duration-300 ${
+            cartCount > 0 ? 'bottom-20 sm:bottom-24' : 'bottom-3 sm:bottom-5'
+          }`}
+        >
+          <button
+            onClick={() => setIsOrderTrackerOpen(true)}
+            className="w-full sm:w-auto bg-gradient-to-r from-stone-950 via-stone-900 to-red-950 text-white border-2 border-amber-400 rounded-2xl px-3.5 sm:px-4 py-2.5 sm:py-3 shadow-2xl flex items-center justify-between gap-3 hover:scale-[1.02] active:scale-[0.98] transition cursor-pointer group"
+          >
+            <div className="flex items-center gap-2.5 text-left">
+              <div className="relative shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center font-black">
+                  🔔
+                </div>
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 absolute -top-0.5 -right-0.5 animate-ping"></span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 font-brand">
+                    Active Order #{activeCustomerOrder.id} • {activeCustomerOrder.tableNumber}
+                  </span>
+                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                    activeCustomerOrder.status === 'SERVED'
+                      ? 'bg-emerald-500 text-white'
+                      : activeCustomerOrder.status === 'PREPARING'
+                      ? 'bg-blue-500 text-white animate-pulse'
+                      : 'bg-amber-400 text-stone-950 font-bold animate-pulse'
+                  }`}>
+                    {activeCustomerOrder.status === 'PENDING'
+                      ? 'Sent to Kitchen'
+                      : activeCustomerOrder.status === 'ACCEPTED'
+                      ? 'Accepted'
+                      : activeCustomerOrder.status === 'PREPARING'
+                      ? 'Cooking'
+                      : activeCustomerOrder.status === 'SERVED'
+                      ? 'Served'
+                      : activeCustomerOrder.status}
+                  </span>
+                </div>
+                <div className="text-xs font-bold text-stone-200 group-hover:text-amber-300 transition">
+                  Mera Order Dekhein / Track Status →
+                </div>
+              </div>
+            </div>
+            <div className="bg-amber-400 group-hover:bg-amber-300 text-stone-950 font-black text-xs px-3 py-1.5 rounded-xl font-brand shrink-0 shadow-xs">
+              View
+            </div>
+          </button>
+        </aside>
       )}
 
       {/* Cart Drawer */}

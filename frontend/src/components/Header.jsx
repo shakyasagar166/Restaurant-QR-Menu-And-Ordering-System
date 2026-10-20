@@ -26,6 +26,8 @@ export default function Header({
   isBellRinging,
   openQrModal,
   adminUser,
+  activeCustomerOrder,
+  openOrderTracker,
 }) {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-amber-300/70 shadow-sm transition-all w-full max-w-full overflow-hidden">
@@ -135,6 +137,23 @@ export default function Header({
               <ChevronDown className="w-3.5 h-3.5 text-amber-800 pointer-events-none" />
             </div>
 
+            {/* Customer Active Order Quick Button (Desktop) */}
+            {activeCustomerOrder && (
+              <button
+                onClick={openOrderTracker}
+                className="flex items-center gap-2 bg-gradient-to-r from-red-950 via-stone-900 to-red-950 text-amber-300 border border-amber-400 rounded-2xl px-3.5 py-1.5 text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition cursor-pointer"
+                title="Active Order status dekhein"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span className="font-brand font-black text-white text-xs">
+                  Order #{activeCustomerOrder.id}
+                </span>
+                <span className="bg-amber-400 text-stone-950 text-[10px] font-black px-1.5 py-0.5 rounded uppercase">
+                  {activeCustomerOrder.status === 'SERVED' ? 'Served' : 'Track'}
+                </span>
+              </button>
+            )}
+
             {/* If staff is logged in, show discreet kitchen switch button */}
             {adminUser && (
               <button
@@ -219,6 +238,21 @@ export default function Header({
                   <option value="Takeaway">Takeaway</option>
                 </select>
               </div>
+
+              {/* Customer Active Order Button (Mobile) */}
+              {activeCustomerOrder && (
+                <button
+                  onClick={openOrderTracker}
+                  className="flex items-center gap-1 bg-gradient-to-r from-red-950 to-stone-900 border border-amber-400 text-amber-300 rounded-xl px-2 py-1 text-[10px] font-bold shadow-2xs shrink-0 active:scale-95 cursor-pointer"
+                  title="Active order dekhein"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                  <span>#{activeCustomerOrder.id}</span>
+                  <span className="text-[9px] bg-amber-400 text-stone-950 px-1 rounded font-black">
+                    Track
+                  </span>
+                </button>
+              )}
 
               {/* Cart Tray Button */}
               {activeTab === 'menu' && (

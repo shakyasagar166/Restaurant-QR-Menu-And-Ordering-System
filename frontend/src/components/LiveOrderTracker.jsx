@@ -7,13 +7,10 @@ import {
   X,
   Sparkles,
   ArrowLeft,
-  MessageCircle,
-  Share2,
 } from 'lucide-react';
 import { formatPrice, formatTime, getTimeAgo } from '../utils/formatters';
-import { generateWhatsAppOrderMessage, openWhatsApp } from '../utils/whatsapp';
 
-export default function LiveOrderTracker({ activeOrder, onClose }) {
+export default function LiveOrderTracker({ activeOrder, onClose, onClearOrder }) {
   if (!activeOrder) return null;
 
   const steps = [
@@ -177,31 +174,31 @@ export default function LiveOrderTracker({ activeOrder, onClose }) {
         </div>
       )}
 
-      {/* 📱 Send Order to WhatsApp */}
+      {/* Action Buttons: Browse Menu (Minimize) & Done */}
       <div className="mt-3 pt-2.5 border-t border-white/10 space-y-2">
         <button
           type="button"
-          onClick={() => {
-            const msg = generateWhatsAppOrderMessage(activeOrder);
-            openWhatsApp('9058605348', msg);
-          }}
-          className="w-full bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white font-black py-2.5 px-3 rounded-2xl flex items-center justify-center gap-2 text-xs shadow-lg shadow-emerald-950/60 border border-emerald-400/50 transition active:scale-95 cursor-pointer"
+          onClick={onClose}
+          className="w-full bg-white/10 hover:bg-white/20 text-amber-300 hover:text-white font-bold py-2.5 px-3 rounded-2xl flex items-center justify-center gap-2 text-xs border border-white/15 transition active:scale-95 cursor-pointer"
         >
-          <MessageCircle className="w-4 h-4 text-emerald-200 fill-emerald-200/20" />
-          <span>📱 Send to Restaurant WhatsApp (व्हाट्सएप भेजें)</span>
+          <ArrowLeft className="w-3.5 h-3.5 text-amber-400" />
+          <span>← Back to Menu (मेनू देखें / और डिश जोड़ें)</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            const msg = generateWhatsAppOrderMessage(activeOrder);
-            openWhatsApp(activeOrder.customerPhone || '', msg);
-          }}
-          className="w-full bg-white/10 hover:bg-white/20 text-emerald-300 font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-2 text-[11px] border border-white/10 transition active:scale-95 cursor-pointer"
-        >
-          <Share2 className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Share Order Receipt with Family / Friends</span>
-        </button>
+        {activeOrder.status === 'SERVED' || activeOrder.status === 'CANCELLED' ? (
+          <button
+            type="button"
+            onClick={onClearOrder}
+            className="w-full bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white font-black py-2.5 px-3 rounded-2xl flex items-center justify-center gap-2 text-xs shadow-md border border-emerald-400/50 transition active:scale-95 cursor-pointer"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+            <span>Order Complete • Start New Order (नया आर्डर शुरू करें)</span>
+          </button>
+        ) : (
+          <div className="text-center text-[10px] text-stone-300/80 px-1 leading-relaxed">
+            💡 <span className="text-stone-200 font-semibold">Aapka order kitchen me chal raha hai.</span> Menu dekhne ke liye &apos;Back&apos; dabayein. Wapas aane ke liye screen par diye <span className="text-amber-300 font-bold">&quot;Active Order&quot;</span> button par click karein.
+          </div>
+        )}
       </div>
     </div>
   );

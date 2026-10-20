@@ -519,11 +519,6 @@ export default function CartDrawer({
               )}
             </button>
 
-            <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-2.5 flex items-center justify-center gap-1.5 text-[11px] text-emerald-800 font-bold">
-              <MessageCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>📱 Order place hote hi WhatsApp par receipt bhejne ka option aayega</span>
-            </div>
-
             <button
               type="button"
               onClick={onClose}
