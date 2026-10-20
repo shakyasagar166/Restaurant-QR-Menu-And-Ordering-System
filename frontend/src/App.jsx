@@ -680,27 +680,6 @@ export default function App() {
           <span>Connected to Bikaner Express Kitchen</span>
         </div>
       )}
-      {/* Persistent Alert for Incoming Orders - Visible to Admin until all orders are accepted */}
-      {adminUser && pendingOrdersCount > 0 && (
-        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-amber-400 animate-bounce">
-          <Bell className="w-5 h-5 text-amber-300 animate-bell shrink-0" />
-          <div>
-            <div className="text-[10px] font-black uppercase tracking-wider text-amber-300 font-sans">
-              🔔 {pendingOrdersCount} {pendingOrdersCount === 1 ? 'NEW ORDER WAITING!' : 'NEW ORDERS WAITING!'}
-            </div>
-            <div className="text-xs font-semibold text-slate-200">
-              Orders will remain active until accepted in Admin POS
-            </div>
-          </div>
-          <button
-            onClick={() => handleTabSwitch('admin')}
-            className="bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold px-3.5 py-1.5 rounded-xl ml-2 shadow-sm transition active:scale-95 cursor-pointer font-sans"
-          >
-            Review Orders ({pendingOrdersCount}) →
-          </button>
-        </div>
-      )}
-
       {/* Grand Royal Header */}
       <Header
         activeTab={activeTab}
