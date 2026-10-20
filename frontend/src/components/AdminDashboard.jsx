@@ -117,9 +117,6 @@ export default function AdminDashboard({
   const [billGstin, setBillGstin] = useState(() => {
     try { return localStorage.getItem('bikaner_restaurant_gstin') || ''; } catch { return ''; }
   });
-  const [billFssai, setBillFssai] = useState(() => {
-    try { return localStorage.getItem('bikaner_restaurant_fssai') || '22723000001234'; } catch { return '22723000001234'; }
-  });
   const [billCustomerPhone, setBillCustomerPhone] = useState('');
   const [isUpdatingBill, setIsUpdatingBill] = useState(false);
   const [billSaveNotice, setBillSaveNotice] = useState('');
@@ -441,19 +438,34 @@ export default function AdminDashboard({
     };
   }, [pendingCount]);
 
-  // Elapsed Wait Time & Urgency Calculator
-  const getOrderUrgency = (createdAt) => {
-    if (!createdAt) return { label: 'Just now', color: 'text-slate-500', isUrgent: false, minutes: 0 };
+  // Elapsed Wait Time & Urgency Calculator (Overdue ONLY for unaccepted pending orders)
+  const getOrderUrgency = (createdAt, status = 'PENDING') => {
+    if (!createdAt) return { label: 'Just now', color: 'text-slate-400', isUrgent: false, minutes: 0 };
     const orderTime = new Date(createdAt).getTime();
     const diffMs = Date.now() - orderTime;
     const minutes = Math.floor(diffMs / 60000);
 
+    // If order is already accepted, cooking, or served -> Overdue is completely turned OFF!
+    if (status === 'ACCEPTED') {
+      return { label: `👨‍🍳 Order Accepted (${minutes}m)`, color: 'text-blue-400 font-bold', isUrgent: false, minutes };
+    }
+    if (status === 'PREPARING') {
+      return { label: `🔥 Cooking in Kitchen (${minutes}m)`, color: 'text-amber-400 font-bold', isUrgent: false, minutes };
+    }
+    if (status === 'SERVED') {
+      return { label: `✅ Order Served`, color: 'text-emerald-400 font-bold', isUrgent: false, minutes };
+    }
+    if (status === 'CANCELLED') {
+      return { label: `❌ Cancelled`, color: 'text-rose-400 font-bold', isUrgent: false, minutes };
+    }
+
+    // PENDING orders only: show waiting time & alert if not yet accepted by cashier/kitchen
     if (minutes < 2) {
-      return { label: `🟢 ${minutes}m ago (Fresh)`, color: 'text-emerald-700 font-bold', isUrgent: false, minutes };
+      return { label: `🟢 ${minutes}m ago (New)`, color: 'text-emerald-400 font-bold', isUrgent: false, minutes };
     } else if (minutes < 5) {
-      return { label: `🟡 ${minutes}m waiting`, color: 'text-amber-700 font-extrabold', isUrgent: false, minutes };
+      return { label: `🟡 ${minutes}m waiting to accept`, color: 'text-amber-400 font-extrabold', isUrgent: false, minutes };
     } else {
-      return { label: `🔴 ${minutes}m (OVERDUE!)`, color: 'text-rose-700 font-black animate-pulse', isUrgent: true, minutes };
+      return { label: `🔴 ${minutes}m (Needs Accept)`, color: 'text-rose-400 font-black animate-pulse', isUrgent: true, minutes };
     }
   };
 
@@ -467,6 +479,8 @@ export default function AdminDashboard({
       matchesStatus = order.paymentMethod === 'ONLINE' || order.paymentStatus === 'PAID';
     } else if (activeFilter === 'CASH') {
       matchesStatus = order.paymentMethod !== 'ONLINE' && order.paymentStatus !== 'PAID';
+    } else if (activeFilter === 'KITCHEN') {
+      matchesStatus = effectiveStatus === 'PREPARING' || effectiveStatus === 'ACCEPTED';
     } else {
       matchesStatus = effectiveStatus === activeFilter;
     }
@@ -1058,7 +1072,7 @@ export default function AdminDashboard({
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {pendingOrders.map((order) => {
                       const isOnline = order.paymentMethod === 'ONLINE' || order.paymentStatus === 'PAID';
-                      const urgency = getOrderUrgency(order.createdAt);
+                      const urgency = getOrderUrgency(order.createdAt, order.status);
 
                       return (
                         <div
@@ -1249,12 +1263,27 @@ export default function AdminDashboard({
                 </div>
               )}
 
-              {/* Clean Modern KPI Summary Strip */}
+              {/* Clean Modern KPI Summary Strip (Click any card to filter instantly!) */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
-                <div className="bg-white rounded-3xl p-5 border border-slate-300 shadow-sm relative overflow-hidden">
+                {/* 1. Pending Orders Card */}
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter(activeFilter === 'PENDING' ? 'ALL' : 'PENDING')}
+                  className={`bg-white rounded-3xl p-5 border text-left transition-all duration-200 relative overflow-hidden cursor-pointer shadow-sm hover:shadow-md active:scale-98 ${
+                    activeFilter === 'PENDING'
+                      ? 'border-amber-500 ring-4 ring-amber-300/40 bg-amber-50/40 shadow-amber-200'
+                      : 'border-slate-300 hover:border-amber-400'
+                  }`}
+                  title="Click to view all Pending Orders"
+                >
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber-500 to-orange-500"></div>
-                  <span className="text-xs uppercase font-extrabold text-slate-500 block mb-1">
-                    Pending Orders
+                  <span className="text-xs uppercase font-extrabold text-slate-500 mb-1 flex items-center justify-between">
+                    <span>Pending Orders</span>
+                    {activeFilter === 'PENDING' && (
+                      <span className="text-[10px] text-amber-700 font-black bg-amber-200/80 px-1.5 py-0.5 rounded">
+                        SELECTED
+                      </span>
+                    )}
                   </span>
                   <div className="flex items-baseline justify-between">
                     <span className={`text-3xl sm:text-4xl font-black ${pendingCount > 0 ? 'text-amber-600 animate-pulse' : 'text-slate-900'}`}>
@@ -1264,12 +1293,27 @@ export default function AdminDashboard({
                       Needs Accept
                     </span>
                   </div>
-                </div>
+                </button>
 
-                <div className="bg-white rounded-3xl p-5 border border-slate-300 shadow-sm relative overflow-hidden">
+                {/* 2. In Kitchen / Cooking Card */}
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter(activeFilter === 'KITCHEN' ? 'ALL' : 'KITCHEN')}
+                  className={`bg-white rounded-3xl p-5 border text-left transition-all duration-200 relative overflow-hidden cursor-pointer shadow-sm hover:shadow-md active:scale-98 ${
+                    activeFilter === 'KITCHEN'
+                      ? 'border-blue-500 ring-4 ring-blue-300/40 bg-blue-50/40 shadow-blue-200'
+                      : 'border-slate-300 hover:border-blue-400'
+                  }`}
+                  title="Click to view all In-Kitchen / Cooking Orders"
+                >
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 to-cyan-500"></div>
-                  <span className="text-xs uppercase font-extrabold text-slate-500 block mb-1">
-                    In Kitchen / Cooking
+                  <span className="text-xs uppercase font-extrabold text-slate-500 mb-1 flex items-center justify-between">
+                    <span>In Kitchen / Cooking</span>
+                    {activeFilter === 'KITCHEN' && (
+                      <span className="text-[10px] text-blue-700 font-black bg-blue-200/80 px-1.5 py-0.5 rounded">
+                        SELECTED
+                      </span>
+                    )}
                   </span>
                   <div className="flex items-baseline justify-between">
                     <span className="text-3xl sm:text-4xl font-black text-blue-700">
@@ -1279,12 +1323,27 @@ export default function AdminDashboard({
                       Active
                     </span>
                   </div>
-                </div>
+                </button>
 
-                <div className="bg-white rounded-3xl p-5 border border-slate-300 shadow-sm relative overflow-hidden">
+                {/* 3. Paid Online (Razorpay) Card */}
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter(activeFilter === 'ONLINE' ? 'ALL' : 'ONLINE')}
+                  className={`bg-white rounded-3xl p-5 border text-left transition-all duration-200 relative overflow-hidden cursor-pointer shadow-sm hover:shadow-md active:scale-98 ${
+                    activeFilter === 'ONLINE'
+                      ? 'border-emerald-500 ring-4 ring-emerald-300/40 bg-emerald-50/40 shadow-emerald-200'
+                      : 'border-slate-300 hover:border-emerald-400'
+                  }`}
+                  title="Click to view all Paid Online Orders"
+                >
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
-                  <span className="text-xs uppercase font-extrabold text-slate-500 block mb-1">
-                    Paid Online (Razorpay)
+                  <span className="text-xs uppercase font-extrabold text-slate-500 mb-1 flex items-center justify-between">
+                    <span>Paid Online (Razorpay)</span>
+                    {activeFilter === 'ONLINE' && (
+                      <span className="text-[10px] text-emerald-700 font-black bg-emerald-200/80 px-1.5 py-0.5 rounded">
+                        SELECTED
+                      </span>
+                    )}
                   </span>
                   <div className="flex items-baseline justify-between">
                     <span className="text-3xl sm:text-4xl font-black text-emerald-700">
@@ -1294,12 +1353,27 @@ export default function AdminDashboard({
                       {formatPrice(onlineTotal)}
                     </span>
                   </div>
-                </div>
+                </button>
 
-                <div className="bg-white rounded-3xl p-5 border border-slate-300 shadow-sm relative overflow-hidden">
+                {/* 4. Cash to Collect Card */}
+                <button
+                  type="button"
+                  onClick={() => setActiveFilter(activeFilter === 'CASH' ? 'ALL' : 'CASH')}
+                  className={`bg-white rounded-3xl p-5 border text-left transition-all duration-200 relative overflow-hidden cursor-pointer shadow-sm hover:shadow-md active:scale-98 ${
+                    activeFilter === 'CASH'
+                      ? 'border-amber-500 ring-4 ring-amber-300/40 bg-amber-50/40 shadow-amber-200'
+                      : 'border-slate-300 hover:border-amber-400'
+                  }`}
+                  title="Click to view all Cash to Collect Orders"
+                >
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-orange-500 to-amber-500"></div>
-                  <span className="text-xs uppercase font-extrabold text-slate-500 block mb-1">
-                    Cash to Collect
+                  <span className="text-xs uppercase font-extrabold text-slate-500 mb-1 flex items-center justify-between">
+                    <span>Cash to Collect</span>
+                    {activeFilter === 'CASH' && (
+                      <span className="text-[10px] text-amber-700 font-black bg-amber-200/80 px-1.5 py-0.5 rounded">
+                        SELECTED
+                      </span>
+                    )}
                   </span>
                   <div className="flex items-baseline justify-between">
                     <span className="text-3xl sm:text-4xl font-black text-amber-700">
@@ -1309,7 +1383,7 @@ export default function AdminDashboard({
                       {formatPrice(cashTotal)}
                     </span>
                   </div>
-                </div>
+                </button>
               </div>
 
               {/* Status & Payment Filter Bar */}
@@ -1317,11 +1391,10 @@ export default function AdminDashboard({
                 <div className="flex items-center gap-2">
                   {[
                     { key: 'ALL', label: `All Orders (${orders.length})` },
-                    { key: 'ONLINE', label: `🔴 ONLINE PAID (${onlineOrders.length})`, isOnline: true },
-                    { key: 'CASH', label: `💵 CASH ON DELIVERY (${cashOrders.length})`, isCash: true },
                     { key: 'PENDING', label: `🔔 Pending (${pendingCount})`, highlight: pendingCount > 0 },
-                    { key: 'ACCEPTED', label: `Accepted (${acceptedCount})` },
-                    { key: 'PREPARING', label: `In-Kitchen (${preparingCount})` },
+                    { key: 'KITCHEN', label: `👨‍🍳 In-Kitchen (${preparingCount + acceptedCount})` },
+                    { key: 'ONLINE', label: `🔴 ONLINE PAID (${onlineOrders.length})`, isOnline: true },
+                    { key: 'CASH', label: `💵 CASH TO COLLECT (${cashOrders.length})`, isCash: true },
                     { key: 'SERVED', label: `Completed (${servedCount})` },
                     { key: 'CANCELLED', label: `Cancelled (${orders.filter((o) => o.status === 'CANCELLED').length})` },
                   ].map((tab) => (
@@ -1447,7 +1520,7 @@ export default function AdminDashboard({
                     const isServed = order.status === 'SERVED';
                     const isCancelled = order.status === 'CANCELLED';
                     const isOnlinePaid = order.paymentMethod === 'ONLINE' || order.paymentStatus === 'PAID';
-                    const urgency = getOrderUrgency(order.createdAt);
+                    const urgency = getOrderUrgency(order.createdAt, order.status);
 
                     return (
                       <div
@@ -2956,11 +3029,6 @@ export default function AdminDashboard({
                       GSTIN: {billGstin}
                     </div>
                   )}
-                  {billFssai && (
-                    <div className="text-[9px] font-mono text-slate-600">
-                      FSSAI Lic: {billFssai}
-                    </div>
-                  )}
                   <div className="text-[10px] font-black text-emerald-800 uppercase tracking-widest mt-1 border-t border-dotted border-slate-300 pt-1">
                     {billGstEnabled ? 'TAX INVOICE / GUEST BILL' : 'RETAIL BILL / CASH MEMO'}
                   </div>
@@ -3085,7 +3153,6 @@ export default function AdminDashboard({
                     gstRate: billGstRate,
                     discount: billDiscount,
                     gstin: billGstin,
-                    fssai: billFssai,
                   });
                   openWhatsApp(targetPhone, msg);
                 }}

@@ -31,9 +31,6 @@ export function generateWhatsAppOrderMessage(order, options = {}) {
   if (gstin && gstin.trim()) {
     msg += `*GSTIN:* ${gstin.trim()}\n`;
   }
-  if (fssai && fssai.trim()) {
-    msg += `*FSSAI Lic:* ${fssai.trim()}\n`;
-  }
   msg += `------------------------------------\n`;
   msg += `🧾 *${gstEnabled ? 'TAX INVOICE / GUEST BILL' : 'ORDER RECEIPT & BILL'}*\n`;
   msg += `*Order #:* ${order.id || 'NEW'}\n`;
