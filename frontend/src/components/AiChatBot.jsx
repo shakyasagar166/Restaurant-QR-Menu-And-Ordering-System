@@ -11,7 +11,6 @@ import {
   Crown,
   Zap,
   Settings,
-  Key,
   Volume2,
   VolumeX,
   ArrowLeft,
@@ -35,8 +34,6 @@ export default function AiChatBot({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isGroqActive, setIsGroqActive] = useState(false);
-  const [showKeyInput, setShowKeyInput] = useState(false);
-  const [groqKeyInput, setGroqKeyInput] = useState('');
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
@@ -253,30 +250,6 @@ export default function AiChatBot({
       setIsGroqActive(status?.configured || false);
     } catch {
       setIsGroqActive(false);
-    }
-  };
-
-  const handleSaveGroqKey = async (e) => {
-    e.preventDefault();
-    if (!groqKeyInput.trim()) return;
-    try {
-      const res = await apiService.updateGroqKey(groqKeyInput.trim());
-      setIsGroqActive(res?.configured || true);
-      setShowKeyInput(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          sender: 'bot',
-          text: '⚡ **Groq Cloud API Key successfully connected!** Ab Groq AI ultra-fast speed me Hindi aur Hinglish answers dega.',
-          items: [],
-          poweredBy: 'Groq Cloud',
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
-      setGroqKeyInput('');
-    } catch (err) {
-      alert('Could not save Groq key: ' + err.message);
     }
   };
 
@@ -616,8 +589,8 @@ export default function AiChatBot({
           <button
             onClick={handleOpenChat}
             className="sm:hidden relative flex items-center justify-center w-12 h-12 bg-gradient-to-br from-stone-950 via-red-950 to-stone-900 text-white rounded-full shadow-2xl border-2 border-amber-400 active:scale-95 transition-all"
-            title="Ask Groq AI Assistant (दिश की जानकारी व रेट पूछें)"
-            aria-label="Ask Groq AI"
+            title="Ask AI Assistant (दिश की जानकारी व रेट पूछें)"
+            aria-label="Ask AI Assistant"
           >
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-500 text-stone-950 flex items-center justify-center font-bold text-sm shadow-md animate-pulse">
               <Bot className="w-4.5 h-4.5 text-stone-950" />
@@ -638,7 +611,7 @@ export default function AiChatBot({
             <div className="text-left">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-brand font-black text-amber-300">
-                  Ask Groq AI 🎙️
+                  Ask AI Assistant 🎙️
                 </span>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
               </div>
@@ -679,7 +652,7 @@ export default function AiChatBot({
                       Bikaner AI
                     </h4>
                     <span className="text-[8px] sm:text-[9px] bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-black px-1.5 py-0.2 rounded-md shrink-0">
-                      ⚡ Groq
+                      ⚡ Pure Veg AI
                     </span>
                   </div>
                   <p className="text-[9px] sm:text-[10px] text-amber-200 truncate">
@@ -714,13 +687,7 @@ export default function AiChatBot({
                   )}
                 </button>
 
-                <button
-                  onClick={() => setShowKeyInput(!showKeyInput)}
-                  className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-stone-300 hover:text-white flex items-center justify-center transition"
-                  title="Configure Groq API Key"
-                >
-                  <Key className="w-3.5 h-3.5 text-amber-300" />
-                </button>
+                
                 <button
                   onClick={handleCloseChat}
                   className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-stone-300 hover:text-white flex items-center justify-center transition"
@@ -746,27 +713,7 @@ export default function AiChatBot({
               </div>
             )}
 
-            {/* Groq Key Configuration Banner if toggled */}
-            {showKeyInput && (
-              <form
-                onSubmit={handleSaveGroqKey}
-                className="mt-3 pt-3 border-t border-white/10 flex gap-2"
-              >
-                <input
-                  type="password"
-                  placeholder="Paste Groq API Key (gsk_...)"
-                  value={groqKeyInput}
-                  onChange={(e) => setGroqKeyInput(e.target.value)}
-                  className="flex-1 bg-white/15 border border-white/20 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
-                />
-                <button
-                  type="submit"
-                  className="bg-amber-400 hover:bg-amber-500 text-stone-950 font-brand font-black text-xs px-3 py-1.5 rounded-xl transition"
-                >
-                  Save
-                </button>
-              </form>
-            )}
+            
           </div>
 
           {/* Quick Prompts Bar */}
@@ -938,7 +885,7 @@ export default function AiChatBot({
             {isTyping && (
               <div className="flex items-center gap-2 text-stone-500 bg-white border border-stone-200 rounded-2xl px-3 py-2 w-fit">
                 <Bot className="w-3.5 h-3.5 animate-spin text-amber-600" />
-                <span className="text-[11px] font-medium">Groq AI jawab likh rahi hai...</span>
+                <span className="text-[11px] font-medium">AI Assistant javab likh rahi hai...</span>
               </div>
             )}
             <div ref={messagesEndRef} />
