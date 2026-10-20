@@ -26,10 +26,56 @@ export default function App() {
   // Table selection from URL param or default
   const [tableNumber, setTableNumber] = useState('T-1');
 
-  // Menu data from Spring Boot
-  const [menuItems, setMenuItems] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [isLoadingMenu, setIsLoadingMenu] = useState(true);
+  // Menu data from Spring Boot with 0ms Stale-While-Revalidate Caching
+  const [menuItems, setMenuItems] = useState(() => {
+    try {
+      const cached = localStorage.getItem('bikaner_menu_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [categories, setCategories] = useState(() => {
+    try {
+      const cached = localStorage.getItem('bikaner_categories_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isLoadingMenu, setIsLoadingMenu] = useState(() => {
+    try {
+      const cached = localStorage.getItem('bikaner_menu_cache');
+      return !cached || JSON.parse(cached).length === 0;
+    } catch {
+      return true;
+    }
+  });
+
+  // Network Connectivity Resilience
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [showOnlineToast, setShowOnlineToast] = useState(false);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      setShowOnlineToast(true);
+      loadMenuData();
+      loadOrdersData();
+      const t = setTimeout(() => setShowOnlineToast(false), 3500);
+      return () => clearTimeout(t);
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Cart state
   const [cart, setCart] = useState(() => {
@@ -146,16 +192,24 @@ export default function App() {
     }
   }, [activeCustomerOrder]);
 
-  // Fetch Menu and Categories from Spring Boot backend
+  // Fetch Menu and Categories from Spring Boot backend (Stale-While-Revalidate)
   const loadMenuData = async () => {
     try {
-      setIsLoadingMenu(true);
+      if (menuItems.length === 0) {
+        setIsLoadingMenu(true);
+      }
       const [items, cats] = await Promise.all([
         apiService.getMenu(),
         apiService.getCategories(),
       ]);
-      setMenuItems(items);
-      setCategories(cats);
+      if (items && Array.isArray(items) && items.length > 0) {
+        setMenuItems(items);
+        try { localStorage.setItem('bikaner_menu_cache', JSON.stringify(items)); } catch {}
+      }
+      if (cats && Array.isArray(cats) && cats.length > 0) {
+        setCategories(cats);
+        try { localStorage.setItem('bikaner_categories_cache', JSON.stringify(cats)); } catch {}
+      }
     } catch (err) {
       console.warn('Backend menu fetch warning, using fallback menu if offline:', err);
     } finally {
@@ -296,8 +350,12 @@ export default function App() {
     setActiveTab('menu');
   };
 
-  // Cart operations
+  // Cart operations with Tactile Audio & Haptic Feedback
   const handleAddToCart = (item) => {
+    // Tactile Audio & Haptic vibration feedback
+    bellPlayer.playCartAddSound();
+    bellPlayer.triggerHaptic([20]);
+
     setCart((prev) => {
       const existing = prev.find((i) => i.id === item.id);
       if (existing) {
@@ -310,6 +368,7 @@ export default function App() {
   };
 
   const handleRemoveFromCart = (itemId) => {
+    bellPlayer.triggerHaptic([15]);
     setCart((prev) => {
       const existing = prev.find((i) => i.id === itemId);
       if (existing && existing.quantity > 1) {
@@ -322,6 +381,7 @@ export default function App() {
   };
 
   const handleDeleteDish = (itemId) => {
+    bellPlayer.triggerHaptic([25]);
     setCart((prev) => prev.filter((i) => i.id !== itemId));
   };
 
@@ -343,7 +403,10 @@ export default function App() {
       setIsPlacingOrder(true);
       const savedOrder = await apiService.placeOrder(orderPayload);
 
-      // Trigger celebration confetti
+      // Trigger victory sound & celebration confetti
+      bellPlayer.playSuccessSound();
+      bellPlayer.triggerHaptic([30, 50, 30]);
+
       confetti({
         particleCount: 120,
         spread: 80,
@@ -446,6 +509,19 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#faf7f2] flex flex-col text-stone-900 select-none">
+      {/* Network Connectivity Status Toast */}
+      {!isOnline && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[100] bg-rose-950/95 text-rose-200 border-2 border-rose-500/80 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-2 text-xs font-bold backdrop-blur-md animate-pulse">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+          <span>Offline Mode Active • Viewing Cached Menu • Orders will sync upon reconnection</span>
+        </div>
+      )}
+      {showOnlineToast && isOnline && (
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 z-[100] bg-emerald-950/95 text-emerald-200 border-2 border-emerald-400 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-2 text-xs font-bold backdrop-blur-md animate-in fade-in slide-in-from-top duration-300">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>Connected to Bikaner Express Kitchen</span>
+        </div>
+      )}
       {/* Persistent Alert for Incoming Orders - Visible to Admin until all orders are accepted */}
       {adminUser && pendingOrdersCount > 0 && (
         <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-amber-400 animate-bounce">

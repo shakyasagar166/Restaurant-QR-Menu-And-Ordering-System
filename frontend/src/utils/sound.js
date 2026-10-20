@@ -50,6 +50,76 @@ class BellSoundPlayer {
     }
   }
 
+  // Soft tactile ping when adding item to cart / tray
+  playCartAddSound() {
+    try {
+      const ctx = this.getAudioContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      // High-pitched gentle bubble pop (approx 987.77Hz - B5 up to 1318Hz - E6)
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(987.77, now);
+      osc.frequency.exponentialRampToValueAtTime(1318.51, now + 0.08);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.13);
+    } catch (err) {
+      // Audio is non-critical, swallow silently
+    }
+  }
+
+  // Success completion chord (Grand celebration)
+  playSuccessSound() {
+    try {
+      const ctx = this.getAudioContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      // C-Major chord (C5, E5, G5, C6)
+      [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+        this.createChimeTone(ctx, freq, now + (idx * 0.05), 0.8, 0.15);
+      });
+    } catch (err) {
+      // Audio is non-critical, swallow silently
+    }
+  }
+
+  // Urgent kitchen attention chime for delayed orders (>15 mins)
+  playUrgentAlert() {
+    try {
+      const ctx = this.getAudioContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      this.createChimeTone(ctx, 880, now, 0.25, 0.35); // A5
+      this.createChimeTone(ctx, 880, now + 0.3, 0.25, 0.35); // A5 second pulse
+    } catch (err) {
+      // Non-critical
+    }
+  }
+
+  // Native mobile haptic vibration helper
+  triggerHaptic(pattern = [25]) {
+    try {
+      if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(pattern);
+      }
+    } catch (err) {
+      // Haptics not supported or restricted, ignore
+    }
+  }
+
   createChimeTone(ctx, frequency, startTime, duration, maxGain) {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();

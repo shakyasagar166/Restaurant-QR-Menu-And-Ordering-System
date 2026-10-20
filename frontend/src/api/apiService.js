@@ -1,6 +1,23 @@
 const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 const API_BASE = rawBase.endsWith('/api') ? rawBase : `${rawBase.replace(/\/$/, '')}/api`;
 
+// Resilient fetch with automatic timeout to prevent browser UI freezing / hanging
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error(`Request timed out after ${timeoutMs / 1000}s. Please check backend connection.`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export const apiService = {
   // Menu APIs
   async getMenu(category, search) {
@@ -8,60 +25,60 @@ export const apiService = {
     if (category && category !== 'All') params.append('category', category);
     if (search) params.append('search', search);
 
-    const res = await fetch(`${API_BASE}/menu?${params.toString()}`);
+    const res = await fetchWithTimeout(`${API_BASE}/menu?${params.toString()}`, {}, 6000);
     if (!res.ok) throw new Error('Failed to load menu');
     return res.json();
   },
 
   async getCategories() {
-    const res = await fetch(`${API_BASE}/menu/categories`);
+    const res = await fetchWithTimeout(`${API_BASE}/menu/categories`, {}, 6000);
     if (!res.ok) throw new Error('Failed to load categories');
     return res.json();
   },
 
   async toggleDishAvailability(id) {
-    const res = await fetch(`${API_BASE}/menu/${id}/toggle-availability`, {
+    const res = await fetchWithTimeout(`${API_BASE}/menu/${id}/toggle-availability`, {
       method: 'PUT',
-    });
+    }, 6000);
     if (!res.ok) throw new Error('Failed to toggle dish availability');
     return res.json();
   },
 
   async updateMenuItem(id, itemData) {
-    const res = await fetch(`${API_BASE}/menu/${id}`, {
+    const res = await fetchWithTimeout(`${API_BASE}/menu/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(itemData),
-    });
+    }, 8000);
     if (!res.ok) throw new Error('Failed to update dish');
     return res.json();
   },
 
   async createMenuItem(itemData) {
-    const res = await fetch(`${API_BASE}/menu`, {
+    const res = await fetchWithTimeout(`${API_BASE}/menu`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(itemData),
-    });
+    }, 8000);
     if (!res.ok) throw new Error('Failed to add dish');
     return res.json();
   },
 
   async deleteMenuItem(id) {
-    const res = await fetch(`${API_BASE}/menu/${id}`, {
+    const res = await fetchWithTimeout(`${API_BASE}/menu/${id}`, {
       method: 'DELETE',
-    });
+    }, 8000);
     if (!res.ok) throw new Error('Failed to delete dish');
     return true;
   },
 
   // Orders APIs
   async placeOrder(orderData) {
-    const res = await fetch(`${API_BASE}/orders`, {
+    const res = await fetchWithTimeout(`${API_BASE}/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orderData),
-    });
+    }, 10000);
     if (!res.ok) throw new Error('Failed to submit order');
     return res.json();
   },
@@ -71,33 +88,33 @@ export const apiService = {
     if (status) params.append('status', status);
     if (table) params.append('table', table);
 
-    const res = await fetch(`${API_BASE}/orders?${params.toString()}`);
+    const res = await fetchWithTimeout(`${API_BASE}/orders?${params.toString()}`, {}, 6000);
     if (!res.ok) throw new Error('Failed to load orders');
     return res.json();
   },
 
   async updateOrderStatus(orderId, newStatus) {
-    const res = await fetch(`${API_BASE}/orders/${orderId}/status`, {
+    const res = await fetchWithTimeout(`${API_BASE}/orders/${orderId}/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
-    });
+    }, 8000);
     if (!res.ok) throw new Error('Failed to update status');
     return res.json();
   },
 
   async updateOrderPayment(orderId, paymentDetails) {
-    const res = await fetch(`${API_BASE}/orders/${orderId}/payment`, {
+    const res = await fetchWithTimeout(`${API_BASE}/orders/${orderId}/payment`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(paymentDetails),
-    });
+    }, 8000);
     if (!res.ok) throw new Error('Failed to update payment status');
     return res.json();
   },
 
   async getStats() {
-    const res = await fetch(`${API_BASE}/orders/stats`);
+    const res = await fetchWithTimeout(`${API_BASE}/orders/stats`, {}, 6000);
     if (!res.ok) throw new Error('Failed to load stats');
     return res.json();
   },
@@ -138,11 +155,11 @@ export const apiService = {
 
   // Admin Authentication APIs
   async loginAdmin(phone, password) {
-    const res = await fetch(`${API_BASE}/auth/login`, {
+    const res = await fetchWithTimeout(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone, password }),
-    });
+    }, 8000);
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.message || 'Authentication failed');
@@ -151,20 +168,26 @@ export const apiService = {
   },
 
   async verifyAdminSession(token) {
-    const res = await fetch(`${API_BASE}/auth/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    });
-    return res.ok;
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/auth/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      }, 5000);
+      return res.ok;
+    } catch {
+      return false;
+    }
   },
 
   async logoutAdmin(token) {
-    await fetch(`${API_BASE}/auth/logout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token }),
-    });
+    try {
+      await fetchWithTimeout(`${API_BASE}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      }, 4000);
+    } catch {}
   },
 
   // Real-time Server-Sent Events (SSE) subscriber

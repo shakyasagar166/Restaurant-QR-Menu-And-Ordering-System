@@ -99,6 +99,7 @@ export default function AdminDashboard({
   // Dish Editing & Creation States
   const [editingDish, setEditingDish] = useState(null);
   const [isAddDishOpen, setIsAddDishOpen] = useState(false);
+  const [printingOrder, setPrintingOrder] = useState(null);
   const [dishFormData, setDishFormData] = useState({
     id: null,
     name: '',
@@ -708,9 +709,19 @@ export default function AdminDashboard({
                                 </div>
                               </div>
 
-                              <span className={`text-xs sm:text-sm font-black px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 ${urgency.color}`}>
-                                ⏱️ {urgency.label}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setPrintingOrder(order)}
+                                  className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white font-black text-xs px-2.5 py-1 rounded-xl border border-slate-700 transition cursor-pointer"
+                                  title="Print Kitchen KOT Slip"
+                                >
+                                  <Printer className="w-3.5 h-3.5 text-cyan-400" />
+                                  <span>KOT</span>
+                                </button>
+                                <span className={`text-xs sm:text-sm font-black px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 ${urgency.color}`}>
+                                  ⏱️ {urgency.label}
+                                </span>
+                              </div>
                             </div>
 
                             {/* Customer Info Strip */}
@@ -1035,6 +1046,14 @@ export default function AdminDashboard({
                           </div>
 
                           <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setPrintingOrder(order)}
+                              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white font-black text-xs px-3 py-1.5 rounded-xl border border-slate-700 transition cursor-pointer shadow-2xs"
+                              title="Print Thermal KOT & Customer Bill"
+                            >
+                              <Printer className="w-3.5 h-3.5 text-cyan-400" />
+                              <span>Print KOT</span>
+                            </button>
                             <span className={`text-xs sm:text-sm font-extrabold px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 ${urgency.color}`}>
                               ⏱️ {urgency.label}
                             </span>
@@ -1856,6 +1875,137 @@ export default function AdminDashboard({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          THERMAL KITCHEN ORDER TICKET (KOT) & GUEST BILL PRINT MODAL
+      ========================================================================= */}
+      {printingOrder && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white text-slate-900 rounded-3xl max-w-md w-full shadow-2xl border-4 border-slate-900 overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Modal Top Bar (Hidden in Print) */}
+            <div className="p-4 bg-slate-950 text-white flex items-center justify-between print:hidden">
+              <div className="flex items-center gap-2">
+                <Printer className="w-5 h-5 text-cyan-400" />
+                <span className="font-black text-sm uppercase tracking-wider font-pos">
+                  Thermal KOT &amp; Bill Preview
+                </span>
+              </div>
+              <button
+                onClick={() => setPrintingOrder(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-xl transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Printable Thermal Receipt Slip (Targeted by @media print) */}
+            <div id="kot-receipt-print" className="p-6 font-mono text-xs text-slate-950 bg-white select-text">
+              {/* Restaurant Header */}
+              <div className="text-center pb-3 border-b-2 border-dashed border-slate-400 space-y-1">
+                <div className="text-base font-black tracking-wider uppercase font-sans">
+                  ★ BIKANER EXPRESS FOODS ★
+                </div>
+                <div className="text-[11px] font-bold text-slate-700">
+                  Aman International Mall • Rooftop Dining
+                </div>
+                <div className="text-[10px] text-slate-600">
+                  Radha Raman Road, Mainpuri (U.P.) 205001
+                </div>
+                <div className="text-[10px] font-black text-emerald-800 uppercase tracking-widest mt-1">
+                  100% PURE VEGETARIAN DINING
+                </div>
+              </div>
+
+              {/* Order Metadata */}
+              <div className="py-2.5 border-b-2 border-dashed border-slate-400 space-y-1 text-[11px]">
+                <div className="flex justify-between font-black text-sm">
+                  <span>TABLE: {printingOrder.tableNumber || 'WALK-IN'}</span>
+                  <span>TICKET #{printingOrder.id}</span>
+                </div>
+                <div className="flex justify-between text-slate-700">
+                  <span>Guest: {printingOrder.customerName || 'Walk-in Guest'}</span>
+                  <span>{formatTime(printingOrder.createdAt)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Payment Mode:</span>
+                  <span className="font-black uppercase">
+                    {printingOrder.paymentMethod === 'ONLINE' || printingOrder.paymentStatus === 'PAID'
+                      ? '⚡ ONLINE (PAID)'
+                      : '💵 CASH DUE'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Order Status:</span>
+                  <span className="font-bold uppercase text-slate-900">{printingOrder.status}</span>
+                </div>
+              </div>
+
+              {/* Line Items Table */}
+              <div className="py-3 border-b-2 border-dashed border-slate-400">
+                <div className="grid grid-cols-12 font-black pb-1.5 border-b border-slate-300 text-[11px]">
+                  <div className="col-span-2">QTY</div>
+                  <div className="col-span-6">ITEM</div>
+                  <div className="col-span-2 text-right">RATE</div>
+                  <div className="col-span-2 text-right">AMT</div>
+                </div>
+
+                <div className="pt-2 space-y-2">
+                  {(printingOrder.items || []).map((item, idx) => (
+                    <div key={idx} className="text-[11px] leading-tight">
+                      <div className="grid grid-cols-12">
+                        <div className="col-span-2 font-black">{item.quantity}×</div>
+                        <div className="col-span-6 font-bold truncate pr-1">{item.name}</div>
+                        <div className="col-span-2 text-right text-slate-600">₹{item.price}</div>
+                        <div className="col-span-2 text-right font-black">₹{item.price * item.quantity}</div>
+                      </div>
+                      {item.specialInstructions && (
+                        <div className="text-[10px] text-amber-950 bg-amber-50 border border-amber-200 p-1 rounded mt-0.5 font-sans font-bold">
+                          📝 Chef Note: {item.specialInstructions}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Totals Breakdown */}
+              <div className="py-2.5 border-b-2 border-dashed border-slate-400 space-y-1 text-[11px]">
+                <div className="flex justify-between">
+                  <span>Total Dishes / Items:</span>
+                  <span className="font-black">{(printingOrder.items || []).reduce((s, i) => s + (i.quantity || 1), 0)} items</span>
+                </div>
+                <div className="flex justify-between text-base font-black pt-1.5 border-t border-slate-300">
+                  <span>GRAND TOTAL:</span>
+                  <span className="text-base font-black">₹{printingOrder.totalAmount}</span>
+                </div>
+              </div>
+
+              {/* Thermal Slip Footer */}
+              <div className="text-center pt-3 text-[10px] text-slate-600 space-y-0.5">
+                <div className="font-bold text-slate-900">Thank You For Dining With Us!</div>
+                <div>Please Visit Again • Rooftop Dining Mainpuri</div>
+              </div>
+            </div>
+
+            {/* Modal Bottom Controls (Hidden in Print) */}
+            <div className="p-4 bg-slate-100 border-t border-slate-200 flex gap-2.5 print:hidden">
+              <button
+                onClick={() => window.print()}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-black py-3 rounded-2xl flex items-center justify-center gap-2 shadow-md transition cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Print Thermal Slip (Ctrl + P)</span>
+              </button>
+              <button
+                onClick={() => setPrintingOrder(null)}
+                className="bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-4 py-3 rounded-2xl transition cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

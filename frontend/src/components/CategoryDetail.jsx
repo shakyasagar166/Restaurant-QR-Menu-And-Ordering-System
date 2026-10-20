@@ -1,13 +1,13 @@
-import React from 'react';
-import { ArrowLeft, Sparkles, Filter, Crown } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { ArrowLeft, Sparkles, Filter, Crown, Check, Tag } from 'lucide-react';
 import MenuItemCard from './MenuItemCard';
 import { CATEGORY_METADATA } from './CategoryCards';
 
 export default function CategoryDetail({
   category,
   categories,
-  menuItems,
-  cart,
+  menuItems = [],
+  cart = [],
   onAddToCart,
   onRemoveFromCart,
   onDeleteDish,
@@ -16,6 +16,8 @@ export default function CategoryDetail({
   searchQuery,
   onUpdateItemInstructions,
 }) {
+  const [activeFilterPill, setActiveFilterPill] = useState('ALL'); // 'ALL' | 'IN_STOCK' | 'SPECIAL' | 'BUDGET'
+
   const meta = CATEGORY_METADATA[category] || {
     code: '00',
     title: category,
@@ -25,17 +27,32 @@ export default function CategoryDetail({
     badge: 'Specialty',
   };
 
-  const filteredItems = menuItems.filter((item) => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      return (
-        item.name.toLowerCase().includes(q) ||
-        item.description?.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q)
-      );
-    }
-    return item.category === category;
-  });
+  const filteredItems = useMemo(() => {
+    return menuItems.filter((item) => {
+      // 1. Text Search Filter
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchesQuery =
+          (item.name && item.name.toLowerCase().includes(q)) ||
+          (item.description && item.description.toLowerCase().includes(q)) ||
+          (item.category && item.category.toLowerCase().includes(q));
+        if (!matchesQuery) return false;
+      } else {
+        if (item.category !== category) return false;
+      }
+
+      // 2. Quick Filter Pill
+      if (activeFilterPill === 'IN_STOCK') {
+        if (item.isAvailable === false || item.available === false) return false;
+      } else if (activeFilterPill === 'SPECIAL') {
+        if (!item.tag) return false;
+      } else if (activeFilterPill === 'BUDGET') {
+        if (item.price > 150) return false;
+      }
+
+      return true;
+    });
+  }, [menuItems, category, searchQuery, activeFilterPill]);
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 w-full max-w-full overflow-hidden">
@@ -99,6 +116,57 @@ export default function CategoryDetail({
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Quick Taste & Availability Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-3 mb-2">
+        <button
+          onClick={() => setActiveFilterPill('ALL')}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+            activeFilterPill === 'ALL'
+              ? 'bg-stone-900 text-white shadow-xs'
+              : 'bg-white text-stone-700 border border-stone-200 hover:bg-stone-50'
+          }`}
+        >
+          <span>All Dishes</span>
+          <span className="text-[10px] opacity-75">({menuItems.filter((i) => searchQuery ? true : i.category === category).length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveFilterPill('IN_STOCK')}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+            activeFilterPill === 'IN_STOCK'
+              ? 'bg-emerald-700 text-white shadow-xs'
+              : 'bg-white text-stone-700 border border-stone-200 hover:bg-emerald-50'
+          }`}
+        >
+          <Check className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Available Now</span>
+        </button>
+
+        <button
+          onClick={() => setActiveFilterPill('SPECIAL')}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+            activeFilterPill === 'SPECIAL'
+              ? 'bg-amber-600 text-white shadow-xs'
+              : 'bg-white text-stone-700 border border-stone-200 hover:bg-amber-50'
+          }`}
+        >
+          <Crown className="w-3.5 h-3.5 text-amber-300" />
+          <span>Chef Specials</span>
+        </button>
+
+        <button
+          onClick={() => setActiveFilterPill('BUDGET')}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+            activeFilterPill === 'BUDGET'
+              ? 'bg-blue-700 text-white shadow-xs'
+              : 'bg-white text-stone-700 border border-stone-200 hover:bg-blue-50'
+          }`}
+        >
+          <Tag className="w-3.5 h-3.5 text-blue-300" />
+          <span>Under ₹150</span>
+        </button>
       </div>
 
       {/* Dishes Grid (Mobile-First: 1 column on small phones, 2 on sm, 3 on lg) */}

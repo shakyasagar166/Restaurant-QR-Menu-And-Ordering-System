@@ -70,3 +70,27 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* 80mm Kitchen KOT & Thermal Bill Printing */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #kot-receipt-print, #kot-receipt-print * {
+    visibility: visible !important;
+  }
+  #kot-receipt-print {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 8px !important;
+    font-size: 11px !important;
+    color: #000 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

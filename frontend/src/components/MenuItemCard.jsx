@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Plus, Minus, Sparkles, Crown, Trash2 } from 'lucide-react';
 import { formatPrice } from '../utils/formatters';
 import DishCustomizationBox from './DishCustomizationBox';
 
-export default function MenuItemCard({
+const FALLBACK_DISH_IMG = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80';
+
+function MenuItemCard({
   item,
   cartItem,
   onAddToCart,
@@ -12,6 +14,7 @@ export default function MenuItemCard({
   onUpdateItemInstructions,
 }) {
   const [isCustomizing, setIsCustomizing] = useState(false);
+  const [imgSrc, setImgSrc] = useState(item.imageUrl || FALLBACK_DISH_IMG);
   const quantity = cartItem ? cartItem.quantity : 0;
   const isOutOfStock = item.isAvailable === false || item.available === false;
 
@@ -25,15 +28,18 @@ export default function MenuItemCard({
         {/* Dish Photography Stage */}
         <div className="relative h-52 overflow-hidden bg-stone-900">
           <img
-            src={
-              item.imageUrl ||
-              'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'
-            }
+            src={imgSrc}
             alt={item.name}
+            onError={() => {
+              if (imgSrc !== FALLBACK_DISH_IMG) {
+                setImgSrc(FALLBACK_DISH_IMG);
+              }
+            }}
             className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out opacity-95 group-hover:opacity-100 ${
               isOutOfStock ? 'grayscale contrast-75' : ''
             }`}
             loading="lazy"
+            decoding="async"
           />
 
           {/* Gradient overlay for contrast */}
@@ -190,3 +196,5 @@ export default function MenuItemCard({
     </div>
   );
 }
+
+export default memo(MenuItemCard);
