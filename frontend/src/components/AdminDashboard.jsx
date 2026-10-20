@@ -569,6 +569,23 @@ export default function AdminDashboard({
                 {occupiedTables.size}/20 Active
               </span>
             </button>
+
+            {/* 5. Password & PIN Security Settings */}
+            <button
+              onClick={() => {
+                setIsSecurityModalOpen(true);
+                setIsSidebarOpenMobile(false);
+              }}
+              className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-extrabold text-amber-300 hover:text-white bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-all group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <KeyRound className="w-5 h-5 text-amber-400 group-hover:rotate-12 transition-transform" />
+                <span>Change Password &amp; PIN</span>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-md">
+                SECURITY
+              </span>
+            </button>
           </nav>
         </div>
 
@@ -686,6 +703,17 @@ export default function AdminDashboard({
             >
               <QrCode className="w-4 h-4 text-blue-600" />
               <span className="hidden sm:inline">Table QR</span>
+            </button>
+
+            {/* UNMISSABLE: Change Password & PIN Button */}
+            <button
+              onClick={() => setIsSecurityModalOpen(true)}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-sm hover:shadow-md transition active:scale-95 cursor-pointer border border-amber-300"
+              title="Change Admin Password and 4-Digit Staff PIN"
+            >
+              <KeyRound className="w-4 h-4 text-slate-950" />
+              <span className="hidden sm:inline">Change Password &amp; PIN</span>
+              <span className="sm:hidden">Password</span>
             </button>
 
             {/* Refresh */}
