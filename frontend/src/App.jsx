@@ -12,7 +12,7 @@ import LiveOrderTracker from './components/LiveOrderTracker';
 import QrCodeModal from './components/QrCodeModal';
 import PaymentModal from './components/PaymentModal';
 import AiChatBot from './components/AiChatBot';
-import { apiService } from './api/apiService';
+import { apiService, pingBackend } from './api/apiService';
 import { bellPlayer } from './utils/sound';
 import { formatPrice } from './utils/formatters';
 import { ShoppingBag, Bell, Sparkles, CheckCircle2, Crown, Lock } from 'lucide-react';
@@ -143,6 +143,7 @@ export default function App() {
 
   // Read URL query params on mount (e.g. ?table=T-4, ?admin=true, #admin)
   useEffect(() => {
+    pingBackend();
     const params = new URLSearchParams(window.location.search);
     const tbl = params.get('table');
     if (tbl) {

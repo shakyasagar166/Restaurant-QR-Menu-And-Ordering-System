@@ -26,9 +26,16 @@ const getDynamicApiBase = () => {
 
 const API_BASE = getDynamicApiBase();
 
-// Cloud requests need up to 35s to handle Render free-tier cold-start wake-up
+// Cloud requests need up to 55s to handle Render free-tier cold-start wake-up
 const isCloudEnv = typeof window !== 'undefined' && window.location && window.location.hostname && (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('onrender.com'));
-const DEFAULT_TIMEOUT_MS = isCloudEnv ? 35000 : 10000;
+const DEFAULT_TIMEOUT_MS = isCloudEnv ? 55000 : 10000;
+
+// Lightweight background ping to wake up cloud backend immediately on site load
+export function pingBackend() {
+  try {
+    fetch(`${API_BASE}/ping`, { method: 'GET', mode: 'cors' }).catch(() => {});
+  } catch {}
+}
 
 // Security Token Extraction for Protected Admin Operations
 export function getAuthHeaders() {
@@ -255,13 +262,23 @@ export const apiService = {
     return await res.json();
   },
 
-  // Admin Authentication APIs
+  // Admin Authentication APIs (with resilient auto-retry on cold starts)
   async loginWithPin(pin) {
-    const res = await fetchWithTimeout(`${API_BASE}/auth/pin-login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin }),
-    }, DEFAULT_TIMEOUT_MS);
+    let res;
+    try {
+      res = await fetchWithTimeout(`${API_BASE}/auth/pin-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin }),
+      }, DEFAULT_TIMEOUT_MS);
+    } catch (err) {
+      console.warn('First PIN login notice, retrying:', err);
+      res = await fetchWithTimeout(`${API_BASE}/auth/pin-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin }),
+      }, DEFAULT_TIMEOUT_MS);
+    }
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.message || 'Invalid 4-digit PIN');
@@ -270,11 +287,21 @@ export const apiService = {
   },
 
   async loginAdmin(phone, password) {
-    const res = await fetchWithTimeout(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, password }),
-    }, DEFAULT_TIMEOUT_MS);
+    let res;
+    try {
+      res = await fetchWithTimeout(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password }),
+      }, DEFAULT_TIMEOUT_MS);
+    } catch (err) {
+      console.warn('First admin login notice, retrying:', err);
+      res = await fetchWithTimeout(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, password }),
+      }, DEFAULT_TIMEOUT_MS);
+    }
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.message || 'Authentication failed');
