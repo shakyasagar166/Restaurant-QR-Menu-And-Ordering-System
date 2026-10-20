@@ -55,7 +55,7 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
       ></div>
 
       {/* Modern High-Tech POS Login Modal (Indigo & Slate Dark Console) */}
-      <div className="relative bg-[#0f172a] rounded-3xl max-w-md w-full shadow-2xl border-2 border-indigo-500/40 z-10 overflow-hidden animate-in zoom-in-95 duration-200 text-slate-100 font-sans">
+      <div className="font-pos relative bg-[#0f172a] rounded-3xl max-w-md w-full shadow-2xl border-2 border-indigo-500/40 z-10 overflow-hidden animate-in zoom-in-95 duration-200 text-slate-100">
         {/* Header Ribbon */}
         <div className="bg-[#090d16] p-6 text-center relative border-b border-slate-800">
           <button

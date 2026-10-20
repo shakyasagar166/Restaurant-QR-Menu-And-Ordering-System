@@ -26,6 +26,9 @@
     font-family: 'Cinzel', Georgia, serif;
     letter-spacing: 0.05em;
   }
+  .font-pos {
+    font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
   h1, h2, h3, .font-serif-luxury {
     font-family: 'Playfair Display', Georgia, serif;
   }
