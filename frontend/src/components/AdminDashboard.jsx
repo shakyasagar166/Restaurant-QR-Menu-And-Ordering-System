@@ -120,14 +120,16 @@ export default function AdminDashboard({
   const [billFssai, setBillFssai] = useState(() => {
     try { return localStorage.getItem('bikaner_restaurant_fssai') || '22723000001234'; } catch { return '22723000001234'; }
   });
+  const [billCustomerPhone, setBillCustomerPhone] = useState('');
   const [isUpdatingBill, setIsUpdatingBill] = useState(false);
   const [billSaveNotice, setBillSaveNotice] = useState('');
 
-  // Reset bill discount & notices when opening a new bill
+  // Reset bill discount, phone & notices when opening a new bill
   useEffect(() => {
     if (printingOrder) {
       setBillDiscount(0);
       setBillSaveNotice('');
+      setBillCustomerPhone(printingOrder.customerPhone || '');
     }
   }, [printingOrder]);
 
@@ -1110,22 +1112,11 @@ export default function AdminDashboard({
                               <div className="flex items-center gap-2">
                                 <button
                                   onClick={() => setPrintingOrder(order)}
-                                  className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white font-black text-xs px-2.5 py-1 rounded-xl border border-slate-700 transition cursor-pointer"
-                                  title="Print Customer Bill"
+                                  className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white font-black text-xs px-3 py-1.5 rounded-xl border border-slate-700 transition cursor-pointer shadow-xs"
+                                  title="Edit GST, Print Bill & Send to WhatsApp"
                                 >
                                   <Receipt className="w-3.5 h-3.5 text-cyan-400" />
-                                  <span>Bill</span>
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    const msg = generateWhatsAppOrderMessage(order);
-                                    openWhatsApp(order.customerPhone, msg);
-                                  }}
-                                  className="flex items-center gap-1 bg-emerald-950/90 hover:bg-emerald-800 text-emerald-300 hover:text-white font-black text-xs px-2.5 py-1 rounded-xl border border-emerald-600 transition cursor-pointer"
-                                  title="Send Bill to WhatsApp"
-                                >
-                                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-                                  <span>WhatsApp</span>
+                                  <span>Bill / Print</span>
                                 </button>
                                 <span className={`text-xs sm:text-sm font-black px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 ${urgency.color}`}>
                                   ⏱️ {urgency.label}
@@ -1513,22 +1504,11 @@ export default function AdminDashboard({
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setPrintingOrder(order)}
-                              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white font-black text-xs px-3 py-1.5 rounded-xl border border-slate-700 transition cursor-pointer shadow-2xs"
-                              title="Print Customer Bill & Tax Invoice"
+                              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white font-black text-xs px-3 py-1.5 rounded-xl border border-slate-700 transition cursor-pointer shadow-xs"
+                              title="Edit GST, Print Bill & Send to WhatsApp"
                             >
                               <Receipt className="w-3.5 h-3.5 text-cyan-400" />
                               <span>Print Bill</span>
-                            </button>
-                            <button
-                              onClick={() => {
-                                const msg = generateWhatsAppOrderMessage(order);
-                                openWhatsApp(order.customerPhone, msg);
-                              }}
-                              className="flex items-center gap-1.5 bg-emerald-950/90 hover:bg-emerald-800 text-emerald-300 hover:text-white font-black text-xs px-2.5 py-1.5 rounded-xl border border-emerald-600 transition cursor-pointer shadow-2xs"
-                              title="Send Bill to WhatsApp"
-                            >
-                              <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>WhatsApp</span>
                             </button>
                             <span className={`text-xs sm:text-sm font-extrabold px-3 py-1 rounded-xl bg-slate-800 border border-slate-700 ${urgency.color}`}>
                               ⏱️ {urgency.label}
@@ -3113,7 +3093,7 @@ export default function AdminDashboard({
                 title="Send Bill to Customer WhatsApp"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>WhatsApp Bill</span>
+                <span>📱 Confirm &amp; Send WhatsApp</span>
               </button>
 
               {/* Save Bill Amount Button */}
