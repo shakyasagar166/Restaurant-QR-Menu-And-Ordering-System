@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Bell,
+  Eye,
   Volume2,
   VolumeX,
   CheckCircle,
@@ -947,6 +948,61 @@ export default function AdminDashboard({
             </button>
           </div>
         </header>
+
+        {/* =========================================================================
+            GLOBAL PERSISTENT ALERT BAR ACROSS ALL SECTIONS
+            Never overrides previous orders! Visible across all tabs until accepted.
+        ========================================================================= */}
+        {pendingCount > 0 && (
+          <div className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white px-5 sm:px-8 py-3.5 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b-2 border-amber-300 animate-in fade-in slide-in-from-top-2 sticky top-[69px] z-15">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white text-rose-600 flex items-center justify-center font-black shadow-md shrink-0 animate-bounce">
+                <Bell className="w-5 h-5 animate-bell" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-black text-sm sm:text-base tracking-wide text-white">
+                    🚨 {pendingCount} NEW {pendingCount === 1 ? 'ORDER WAITING' : 'ORDERS WAITING FOR ACCEPTANCE'}!
+                  </span>
+                  <span className="bg-black/40 text-amber-300 text-[10px] font-black px-2 py-0.5 rounded-md uppercase border border-amber-300/40">
+                    Never Overrides
+                  </span>
+                </div>
+                <p className="text-xs text-amber-100 font-semibold mt-0.5">
+                  Tables: {pendingOrders.map((o) => `${o.tableNumber} (₹${o.totalAmount})`).slice(0, 8).join(', ')}
+                  {pendingOrders.length > 8 ? ` aur ${pendingOrders.length - 8} aur...` : ''} • Har order tab tak rahega jab tak aap Accept na karein!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+              {pendingOrders.length > 1 && (
+                <button
+                  type="button"
+                  onClick={handleAcceptAllPending}
+                  disabled={isAcceptingAll}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 border border-emerald-400/40"
+                >
+                  <CheckCheck className="w-4 h-4" />
+                  <span>{isAcceptingAll ? 'Accepting...' : `Accept All (${pendingCount} Orders)`}</span>
+                </button>
+              )}
+              {adminSection !== 'orders' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdminSection('orders');
+                    setActiveFilter('ALL');
+                  }}
+                  className="bg-white hover:bg-slate-100 text-slate-950 text-xs font-black px-4 py-2.5 rounded-xl shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Eye className="w-4 h-4 text-blue-600" />
+                  <span>View All {pendingCount} Cards</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Dynamic Workspace Container */}
         <main className="flex-1 p-4 sm:p-7 overflow-y-auto">
