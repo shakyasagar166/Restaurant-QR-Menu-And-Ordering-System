@@ -16,6 +16,7 @@ import { apiService, pingBackend } from './api/apiService';
 import { bellPlayer } from './utils/sound';
 import { formatPrice } from './utils/formatters';
 import { ShoppingBag, Bell, Sparkles, CheckCircle2, Crown, Lock } from 'lucide-react';
+import { BIKANER_MASTER_MENU } from './data/fullMenuCatalog';
 
 export default function App() {
   // Navigation & view states
@@ -26,31 +27,36 @@ export default function App() {
   // Table selection from URL param or default
   const [tableNumber, setTableNumber] = useState('T-1');
 
-  // Menu data from Spring Boot with 0ms Stale-While-Revalidate Caching
+  // Menu data initialized with full 155+ Bikaner Express physical menu catalog
   const [menuItems, setMenuItems] = useState(() => {
     try {
       const cached = localStorage.getItem('bikaner_menu_cache');
-      return cached ? JSON.parse(cached) : [];
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length >= BIKANER_MASTER_MENU.length) {
+          return parsed;
+        }
+      }
+      return BIKANER_MASTER_MENU;
     } catch {
-      return [];
+      return BIKANER_MASTER_MENU;
     }
   });
   const [categories, setCategories] = useState(() => {
     try {
       const cached = localStorage.getItem('bikaner_categories_cache');
-      return cached ? JSON.parse(cached) : [];
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+      return Array.from(new Set(BIKANER_MASTER_MENU.map((i) => i.category)));
     } catch {
-      return [];
+      return Array.from(new Set(BIKANER_MASTER_MENU.map((i) => i.category)));
     }
   });
-  const [isLoadingMenu, setIsLoadingMenu] = useState(() => {
-    try {
-      const cached = localStorage.getItem('bikaner_menu_cache');
-      return !cached || JSON.parse(cached).length === 0;
-    } catch {
-      return true;
-    }
-  });
+  const [isLoadingMenu, setIsLoadingMenu] = useState(false);
 
   // Network Connectivity Resilience
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
@@ -207,26 +213,55 @@ export default function App() {
     }
   }, [activeCustomerOrder]);
 
-  // Fetch Menu and Categories from Spring Boot backend (Stale-While-Revalidate)
+  // Fetch Menu and Categories from Spring Boot backend (Merged with 155+ item master catalog)
   const loadMenuData = async () => {
     try {
-      if (menuItems.length === 0) {
-        setIsLoadingMenu(true);
-      }
-      const [items, cats] = await Promise.all([
-        apiService.getMenu(),
-        apiService.getCategories(),
+      const [backendItems, backendCats] = await Promise.all([
+        apiService.getMenu().catch(() => null),
+        apiService.getCategories().catch(() => null),
       ]);
-      if (items && Array.isArray(items) && items.length > 0) {
-        setMenuItems(items);
-        try { localStorage.setItem('bikaner_menu_cache', JSON.stringify(items)); } catch {}
+
+      let finalItems = BIKANER_MASTER_MENU;
+
+      if (backendItems && Array.isArray(backendItems) && backendItems.length > 0) {
+        // Map backend items by lowercase name
+        const backendMap = new Map();
+        backendItems.forEach((b) => {
+          if (b.name) backendMap.set(b.name.toLowerCase().trim(), b);
+        });
+
+        // Overlay backend properties (price, availability, custom image) onto master catalog
+        const merged = BIKANER_MASTER_MENU.map((masterItem) => {
+          const match = backendMap.get(masterItem.name.toLowerCase().trim());
+          if (match) {
+            return {
+              ...masterItem,
+              ...match,
+              imageUrl: match.imageUrl || masterItem.imageUrl,
+            };
+          }
+          return masterItem;
+        });
+
+        // Also append any custom dishes added via Admin Dashboard that aren't in master catalog
+        const masterNames = new Set(BIKANER_MASTER_MENU.map((m) => m.name.toLowerCase().trim()));
+        backendItems.forEach((b) => {
+          if (b.name && !masterNames.has(b.name.toLowerCase().trim())) {
+            merged.push(b);
+          }
+        });
+
+        finalItems = merged;
       }
-      if (cats && Array.isArray(cats) && cats.length > 0) {
-        setCategories(cats);
-        try { localStorage.setItem('bikaner_categories_cache', JSON.stringify(cats)); } catch {}
-      }
+
+      setMenuItems(finalItems);
+      try { localStorage.setItem('bikaner_menu_cache', JSON.stringify(finalItems)); } catch {}
+
+      const allCategories = Array.from(new Set(finalItems.map((i) => i.category))).filter(Boolean);
+      setCategories(allCategories);
+      try { localStorage.setItem('bikaner_categories_cache', JSON.stringify(allCategories)); } catch {}
     } catch (err) {
-      console.warn('Backend menu fetch warning, using fallback menu if offline:', err);
+      console.warn('Backend menu fetch notice, using full master catalog:', err);
     } finally {
       setIsLoadingMenu(false);
     }
