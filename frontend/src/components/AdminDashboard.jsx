@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Bell,
   Volume2,
@@ -38,6 +38,8 @@ import {
   SlidersHorizontal,
   ChevronRight,
   Printer,
+  Download,
+  FileSpreadsheet,
   FileText,
   Edit2,
   Plus,
@@ -51,7 +53,7 @@ import {
   KeyRound,
   Zap,
 } from 'lucide-react';
-import { formatPrice, formatTime, getTimeAgo } from '../utils/formatters';
+import { formatPrice, formatTime, getTimeAgo, formatDate, getISODateKey } from '../utils/formatters';
 import { bellPlayer } from '../utils/sound';
 import { apiService } from '../api/apiService';
 
@@ -102,6 +104,135 @@ export default function AdminDashboard({
   const [editingDish, setEditingDish] = useState(null);
   const [isAddDishOpen, setIsAddDishOpen] = useState(false);
   const [printingOrder, setPrintingOrder] = useState(null);
+
+  // Daily Sales Register States
+  const [salesDateFilter, setSalesDateFilter] = useState('TODAY'); // 'TODAY' | 'YESTERDAY' | 'WEEK' | 'ALL' | 'CUSTOM'
+  const [customSalesDate, setCustomSalesDate] = useState(() => {
+    try {
+      return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    } catch {
+      return '';
+    }
+  });
+  const [salesSearchQuery, setSalesSearchQuery] = useState('');
+  const [isDailyReportModalOpen, setIsDailyReportModalOpen] = useState(false);
+
+  const todayDateKey = useMemo(() => {
+    try {
+      return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    } catch {
+      return '';
+    }
+  }, []);
+
+  const yesterdayDateKey = useMemo(() => {
+    try {
+      return new Date(Date.now() - 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    } catch {
+      return '';
+    }
+  }, []);
+
+  const filteredSalesOrders = useMemo(() => {
+    let list = [...orders];
+
+    if (salesDateFilter === 'TODAY') {
+      list = list.filter((o) => getISODateKey(o.createdAt) === todayDateKey);
+    } else if (salesDateFilter === 'YESTERDAY') {
+      list = list.filter((o) => getISODateKey(o.createdAt) === yesterdayDateKey);
+    } else if (salesDateFilter === 'CUSTOM' && customSalesDate) {
+      list = list.filter((o) => getISODateKey(o.createdAt) === customSalesDate);
+    } else if (salesDateFilter === 'WEEK') {
+      const weekAgo = new Date(Date.now() - 7 * 86400000);
+      list = list.filter((o) => {
+        const d = new Date(o.createdAt);
+        return !isNaN(d.getTime()) && d >= weekAgo;
+      });
+    }
+
+    if (salesSearchQuery && salesSearchQuery.trim()) {
+      const q = salesSearchQuery.toLowerCase().trim();
+      list = list.filter((o) => {
+        const matchCustomer = o.customerName?.toLowerCase().includes(q);
+        const matchPhone = o.customerPhone?.includes(q);
+        const matchTable = o.tableNumber?.toLowerCase().includes(q);
+        const matchItems = o.items?.some((i) => i.name?.toLowerCase().includes(q));
+        const matchPayment = o.paymentId?.toLowerCase().includes(q);
+        const matchId = String(o.id).includes(q);
+        return matchCustomer || matchPhone || matchTable || matchItems || matchPayment || matchId;
+      });
+    }
+
+    list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    return list;
+  }, [orders, salesDateFilter, customSalesDate, salesSearchQuery, todayDateKey, yesterdayDateKey]);
+
+  const dailyTotalSales = useMemo(() => {
+    return filteredSalesOrders.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0);
+  }, [filteredSalesOrders]);
+
+  const dailyOnlineOrders = useMemo(() => {
+    return filteredSalesOrders.filter((o) => o.paymentMethod === 'ONLINE' || o.paymentStatus === 'PAID');
+  }, [filteredSalesOrders]);
+
+  const dailyOnlineSales = useMemo(() => {
+    return dailyOnlineOrders.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0);
+  }, [dailyOnlineOrders]);
+
+  const dailyCashOrders = useMemo(() => {
+    return filteredSalesOrders.filter((o) => o.paymentMethod !== 'ONLINE' && o.paymentStatus !== 'PAID');
+  }, [filteredSalesOrders]);
+
+  const dailyCashSales = useMemo(() => {
+    return dailyCashOrders.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0);
+  }, [dailyCashOrders]);
+
+  const dailyDishBreakdown = useMemo(() => {
+    const map = {};
+    filteredSalesOrders.forEach((o) => {
+      (o.items || []).forEach((item) => {
+        const key = item.name || 'Dish';
+        if (!map[key]) {
+          map[key] = { name: key, count: 0, revenue: 0, price: item.price || 0 };
+        }
+        const qty = Number(item.quantity) || 1;
+        map[key].count += qty;
+        map[key].revenue += ((Number(item.price) || 0) * qty);
+      });
+    });
+    return Object.values(map).sort((a, b) => b.count - a.count);
+  }, [filteredSalesOrders]);
+
+  const handleExportSalesCSV = () => {
+    const headers = ['Order ID', 'Date', 'Time (IST)', 'Table', 'Customer Name', 'Customer Phone', 'Payment Method', 'Payment Status', 'Transaction ID', 'Items Ordered', 'Order Status', 'Total Amount (INR)'];
+    const rows = filteredSalesOrders.map((o) => {
+      const itemsList = (o.items || []).map((i) => `${i.quantity}x ${i.name}`).join('; ');
+      return [
+        o.id,
+        formatDate(o.createdAt),
+        formatTime(o.createdAt),
+        o.tableNumber,
+        `"${o.customerName || 'Walk-in Guest'}"`,
+        `"${o.customerPhone || ''}"`,
+        o.paymentMethod || 'CASH',
+        o.paymentStatus || 'PENDING',
+        `"${o.paymentId || ''}"`,
+        `"${itemsList}"`,
+        o.status || 'PENDING',
+        o.totalAmount || 0,
+      ];
+    });
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Bikaner_Sales_${salesDateFilter}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   // Master Online Payment Gateway Switch (Can be turned ON/OFF anytime by Admin)
   const [isOnlinePaymentActive, setIsOnlinePaymentActive] = useState(() => {
@@ -605,7 +736,7 @@ export default function AdminDashboard({
             >
               <div className="flex items-center gap-3">
                 <BarChart3 className={`w-5 h-5 ${adminSection === 'analytics' ? 'text-white' : 'text-slate-400 group-hover:text-cyan-400'}`} />
-                <span>Sales &amp; Analytics</span>
+                <span>Daily Sales &amp; Register (दैनिक बिक्री)</span>
               </div>
               <span className={`text-xs font-bold ${adminSection === 'analytics' ? 'text-blue-100' : 'text-emerald-400'}`}>
                 {formatPrice(stats?.todaySales || stats?.totalSales || 0)}
@@ -1737,61 +1868,446 @@ export default function AdminDashboard({
           ========================================================================= */}
           {adminSection === 'analytics' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-blue-600"></div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs uppercase font-extrabold text-slate-500">
-                      Total Gross Sales
-                    </span>
-                    <TrendingUp className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight">
-                    {formatPrice(stats?.totalSales || 0)}
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1 font-semibold">
-                    Total orders: {stats?.totalOrders || orders.length}
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-emerald-500"></div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs uppercase font-extrabold text-slate-500">
-                      Today's Shift Revenue
-                    </span>
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  </div>
-                  <div className="text-3xl sm:text-4xl font-black text-emerald-700 tracking-tight">
-                    {formatPrice(stats?.todaySales || stats?.totalSales || 0)}
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1 font-semibold">
-                    Average ticket: {formatPrice(stats?.averageOrderValue || 0)}
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-cyan-500"></div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs uppercase font-extrabold text-slate-500">
-                      Payment Mode Split
-                    </span>
-                    <CreditCard className="w-5 h-5 text-cyan-600" />
-                  </div>
-                  <div className="space-y-2.5 mt-2">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-emerald-700 font-extrabold">Online (Razorpay):</span>
-                      <span className="font-black text-slate-950">{formatPrice(onlineTotal)} ({onlineOrders.length})</span>
+              {/* Daily Sales Register Top Header Card */}
+              <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white rounded-3xl p-6 border border-blue-500/30 shadow-xl">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-blue-500/20 text-cyan-300 border border-cyan-400/30 font-brand">
+                        Financial Audit &amp; Daily Register
+                      </span>
+                      <span className="text-xs text-slate-400 font-bold">• IST Timezone</span>
                     </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-amber-700 font-extrabold">Cash on Delivery:</span>
-                      <span className="font-black text-slate-950">{formatPrice(cashTotal)} ({cashOrders.length})</span>
+                    <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2 font-brand">
+                      <BarChart3 className="w-6 h-6 text-cyan-400" />
+                      <span>Daily Sales &amp; Order Register (दैनिक बिक्री रजिस्टर)</span>
+                    </h2>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      Check exact order timing, who ordered what dishes, total revenue, and payment method day-by-day.
+                    </p>
+                  </div>
+
+                  {/* Actions: Print Day Register & Download CSV */}
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setIsDailyReportModalOpen(true)}
+                      className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs flex items-center gap-2 shadow-md transition active:scale-95 cursor-pointer"
+                    >
+                      <Printer className="w-4 h-4" />
+                      <span>Print Day Summary (दिन का पर्चा)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExportSalesCSV}
+                      className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs flex items-center gap-2 shadow-md transition active:scale-95 cursor-pointer"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Export CSV (Excel)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Date Selection Toolbar */}
+                <div className="mt-5 pt-4 border-t border-slate-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs">
+                  {/* Quick Filters */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setSalesDateFilter('TODAY')}
+                      className={`px-3.5 py-2 rounded-xl font-black transition cursor-pointer flex items-center gap-1.5 ${
+                        salesDateFilter === 'TODAY'
+                          ? 'bg-cyan-500 text-slate-950 shadow-md'
+                          : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300'
+                      }`}
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>📅 Today (आज)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSalesDateFilter('YESTERDAY')}
+                      className={`px-3.5 py-2 rounded-xl font-black transition cursor-pointer flex items-center gap-1.5 ${
+                        salesDateFilter === 'YESTERDAY'
+                          ? 'bg-cyan-500 text-slate-950 shadow-md'
+                          : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300'
+                      }`}
+                    >
+                      <span>Kal (Yesterday)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSalesDateFilter('WEEK')}
+                      className={`px-3.5 py-2 rounded-xl font-black transition cursor-pointer ${
+                        salesDateFilter === 'WEEK'
+                          ? 'bg-cyan-500 text-slate-950 shadow-md'
+                          : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300'
+                      }`}
+                    >
+                      Last 7 Days
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSalesDateFilter('ALL')}
+                      className={`px-3.5 py-2 rounded-xl font-black transition cursor-pointer ${
+                        salesDateFilter === 'ALL'
+                          ? 'bg-cyan-500 text-slate-950 shadow-md'
+                          : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300'
+                      }`}
+                    >
+                      🔄 All Time ({orders.length})
+                    </button>
+                  </div>
+
+                  {/* Custom Date Picker & Search */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+                      <span className="text-[11px] text-slate-400 font-bold">Pick Date:</span>
+                      <input
+                        type="date"
+                        value={customSalesDate}
+                        onChange={(e) => {
+                          setCustomSalesDate(e.target.value);
+                          setSalesDateFilter('CUSTOM');
+                        }}
+                        className="bg-transparent text-white font-bold text-xs focus:outline-none cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search sales..."
+                        value={salesSearchQuery}
+                        onChange={(e) => setSalesSearchQuery(e.target.value)}
+                        className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400 w-36 sm:w-44"
+                      />
+                      {salesSearchQuery && (
+                        <button
+                          onClick={() => setSalesSearchQuery('')}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Table Revenue Breakdown */}
+              {/* 5-Card Key Performance Metric Strip for Selected Date */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+                {/* 1. Total Daily Sales */}
+                <div className="bg-white rounded-2xl p-4 border border-slate-300 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-blue-600"></div>
+                  <span className="text-[11px] uppercase font-black text-slate-500 block">
+                    Total {salesDateFilter === 'TODAY' ? "Today's" : 'Period'} Sale
+                  </span>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight mt-1">
+                    {formatPrice(dailyTotalSales)}
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-bold block mt-0.5">
+                    {filteredSalesOrders.length} {filteredSalesOrders.length === 1 ? 'order' : 'orders'} placed
+                  </span>
+                </div>
+
+                {/* 2. Total Online Paid */}
+                <div className="bg-white rounded-2xl p-4 border-2 border-red-200 bg-red-50/30 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-red-600"></div>
+                  <span className="text-[11px] uppercase font-black text-red-700 flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                    Online Paid (Razorpay)
+                  </span>
+                  <div className="text-2xl sm:text-3xl font-black text-red-700 tracking-tight mt-1">
+                    {formatPrice(dailyOnlineSales)}
+                  </div>
+                  <span className="text-[11px] text-red-600 font-bold block mt-0.5">
+                    🔴 {dailyOnlineOrders.length} online orders (No cash)
+                  </span>
+                </div>
+
+                {/* 3. Total Cash on Delivery */}
+                <div className="bg-white rounded-2xl p-4 border border-amber-300 bg-amber-50/30 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-amber-600"></div>
+                  <span className="text-[11px] uppercase font-black text-amber-800 flex items-center gap-1">
+                    <Banknote className="w-3.5 h-3.5 text-amber-700" />
+                    Cash to Collect (COD)
+                  </span>
+                  <div className="text-2xl sm:text-3xl font-black text-amber-900 tracking-tight mt-1">
+                    {formatPrice(dailyCashSales)}
+                  </div>
+                  <span className="text-[11px] text-amber-700 font-bold block mt-0.5">
+                    💵 {dailyCashOrders.length} orders to collect
+                  </span>
+                </div>
+
+                {/* 4. Average Ticket Size */}
+                <div className="bg-white rounded-2xl p-4 border border-slate-300 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-indigo-500"></div>
+                  <span className="text-[11px] uppercase font-black text-slate-500 block">
+                    Average Bill Value
+                  </span>
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-1">
+                    {formatPrice(filteredSalesOrders.length > 0 ? dailyTotalSales / filteredSalesOrders.length : 0)}
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-bold block mt-0.5">
+                    Per table average
+                  </span>
+                </div>
+
+                {/* 5. Period Active Tables */}
+                <div className="bg-white rounded-2xl p-4 border border-slate-300 shadow-sm relative overflow-hidden col-span-2 sm:col-span-1">
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-cyan-500"></div>
+                  <span className="text-[11px] uppercase font-black text-slate-500 block">
+                    Active Tables Served
+                  </span>
+                  <div className="text-2xl sm:text-3xl font-black text-cyan-800 tracking-tight mt-1">
+                    {new Set(filteredSalesOrders.map((o) => o.tableNumber)).size}
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-bold block mt-0.5">
+                    Tables dining today
+                  </span>
+                </div>
+              </div>
+
+              {/* Today's Dish-Wise Breakdown (आज क्या-क्या बिका) */}
+              {dailyDishBreakdown.length > 0 && (
+                <div className="bg-white rounded-3xl p-5 border border-slate-300 shadow-sm">
+                  <div className="flex items-center justify-between mb-3.5">
+                    <h3 className="font-brand font-black text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4 text-blue-600" />
+                      <span>Today's Dish Breakdown (आज क्या-क्या बिका • कुल {dailyDishBreakdown.length} व्यंजन)</span>
+                    </h3>
+                    <span className="text-xs font-bold text-slate-500">
+                      Total items ordered: {dailyDishBreakdown.reduce((sum, d) => sum + d.count, 0)}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2.5">
+                    {dailyDishBreakdown.map((dish) => (
+                      <div
+                        key={dish.name}
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 hover:border-blue-400 transition"
+                      >
+                        <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-800 font-black text-xs flex items-center justify-center">
+                          {dish.count}x
+                        </span>
+                        <div>
+                          <span className="font-bold text-xs text-slate-800 block leading-tight">
+                            {dish.name}
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-semibold">
+                            {formatPrice(dish.revenue)} (@ {formatPrice(dish.price)})
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Master Chronological Order Register (Kisne Kya Order Kiya, Timing, Payment & Amount) */}
+              <div className="bg-white rounded-3xl border border-slate-300 shadow-sm overflow-hidden">
+                <div className="p-5 border-b border-slate-200 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-brand font-black text-base sm:text-lg text-slate-950 flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-blue-600" />
+                      <span>Order-by-Order Daily Ledger (विस्तृत दैनिक आर्डर लॉग)</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Showing {filteredSalesOrders.length} orders for {salesDateFilter === 'TODAY' ? 'Today' : salesDateFilter === 'YESTERDAY' ? 'Yesterday' : customSalesDate || 'Selected Period'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+                      Grand Total: <b className="text-emerald-700 font-black">{formatPrice(dailyTotalSales)}</b>
+                    </span>
+                  </div>
+                </div>
+
+                {filteredSalesOrders.length === 0 ? (
+                  <div className="p-12 text-center text-slate-400 space-y-3">
+                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+                      <Calendar className="w-8 h-8" />
+                    </div>
+                    <h4 className="font-bold text-base text-slate-700">Is date ka koi order record nahi mila</h4>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                      Aap "🔄 All Time" par click karke sabhi din ke orders dekh sakte hain ya date change kar sakte hain.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setSalesDateFilter('ALL')}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow"
+                    >
+                      Show All Time Orders ({orders.length})
+                    </button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-700">
+                      <thead className="bg-slate-100 text-slate-600 uppercase font-black tracking-wider text-[11px] border-b border-slate-200">
+                        <tr>
+                          <th className="py-3.5 px-4"># Order / Time</th>
+                          <th className="py-3.5 px-4">Table &amp; Customer</th>
+                          <th className="py-3.5 px-4 min-w-[260px]">Items Ordered (किसने क्या आर्डर किया)</th>
+                          <th className="py-3.5 px-4">Payment Mode</th>
+                          <th className="py-3.5 px-4">Kitchen Status</th>
+                          <th className="py-3.5 px-4 text-right">Total Bill</th>
+                          <th className="py-3.5 px-4 text-center">Receipt</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 font-medium">
+                        {filteredSalesOrders.map((order, idx) => {
+                          const isOnline = order.paymentMethod === 'ONLINE' || order.paymentStatus === 'PAID';
+                          const timeStr = formatTime(order.createdAt);
+                          const dateStr = formatDate(order.createdAt);
+                          const timeAgo = getTimeAgo(order.createdAt);
+
+                          return (
+                            <tr
+                              key={order.id}
+                              className={`hover:bg-slate-50/80 transition ${
+                                isOnline ? 'bg-red-50/20' : ''
+                              }`}
+                            >
+                              {/* Order Token & Exact Time */}
+                              <td className="py-3.5 px-4 whitespace-nowrap">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono font-black text-slate-900 bg-slate-200 px-2 py-0.5 rounded text-[11px]">
+                                    #{order.id}
+                                  </span>
+                                  {isOnline && (
+                                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" title="Online Paid"></span>
+                                  )}
+                                </div>
+                                <div className="text-xs font-black text-blue-700 mt-1 flex items-center gap-1">
+                                  <Clock className="w-3 h-3 text-blue-500" />
+                                  <span>{timeStr || 'Recent'}</span>
+                                </div>
+                                <span className="text-[10px] text-slate-400 block">{dateStr} • {timeAgo}</span>
+                              </td>
+
+                              {/* Table & Customer */}
+                              <td className="py-3.5 px-4 whitespace-nowrap">
+                                <span className="font-black text-slate-950 bg-blue-100 text-blue-900 px-2.5 py-1 rounded-lg text-xs inline-block mb-1">
+                                  {order.tableNumber}
+                                </span>
+                                <div className="font-bold text-slate-800 text-xs">
+                                  {order.customerName || 'Walk-in Guest'}
+                                </div>
+                                {order.customerPhone && (
+                                  <span className="text-[11px] text-slate-500 block">
+                                    +91 {order.customerPhone}
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* Items Ordered Breakdown */}
+                              <td className="py-3.5 px-4">
+                                <div className="space-y-1 max-w-sm">
+                                  {(order.items || []).map((item, i) => (
+                                    <div
+                                      key={i}
+                                      className="flex items-center justify-between text-xs bg-white px-2 py-1 rounded-md border border-slate-200 shadow-2xs"
+                                    >
+                                      <div className="flex items-center gap-1.5 truncate">
+                                        <span className="font-black text-blue-700 font-mono text-[11px]">
+                                          {item.quantity}x
+                                        </span>
+                                        <span className="font-bold text-slate-800 truncate">
+                                          {item.name}
+                                        </span>
+                                      </div>
+                                      <span className="text-[11px] font-bold text-slate-600 shrink-0 ml-2">
+                                        {formatPrice((item.price || 0) * (item.quantity || 1))}
+                                      </span>
+                                    </div>
+                                  ))}
+                                  {order.notes && (
+                                    <p className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                      Note: {order.notes}
+                                    </p>
+                                  )}
+                                </div>
+                              </td>
+
+                              {/* Payment Mode */}
+                              <td className="py-3.5 px-4 whitespace-nowrap">
+                                {isOnline ? (
+                                  <div className="space-y-0.5">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-red-600 text-white shadow-xs">
+                                      🔴 ONLINE PAID
+                                    </span>
+                                    <span className="text-[10px] text-red-600 font-mono block">
+                                      NO CASH NEEDED
+                                    </span>
+                                    {order.paymentId && (
+                                      <span className="text-[9px] text-slate-400 font-mono block">
+                                        #{order.paymentId.slice(-8)}
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="space-y-0.5">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                                      💵 CASH ON DELIVERY
+                                    </span>
+                                    <span className="text-[10px] text-amber-800 font-bold block">
+                                      Collect at Table
+                                    </span>
+                                  </div>
+                                )}
+                              </td>
+
+                              {/* Status */}
+                              <td className="py-3.5 px-4 whitespace-nowrap">
+                                <span
+                                  className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase inline-block ${
+                                    order.status === 'SERVED'
+                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                      : order.status === 'PREPARING'
+                                      ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                                      : order.status === 'ACCEPTED'
+                                      ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                                      : 'bg-rose-100 text-rose-800 border border-rose-300'
+                                  }`}
+                                >
+                                  {order.status || 'PENDING'}
+                                </span>
+                              </td>
+
+                              {/* Total Bill */}
+                              <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                                <span className="text-base font-black text-slate-900 font-sans">
+                                  {formatPrice(order.totalAmount)}
+                                </span>
+                              </td>
+
+                              {/* Receipt Print Trigger */}
+                              <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                                <button
+                                  type="button"
+                                  onClick={() => setPrintingOrder(order)}
+                                  className="p-1.5 rounded-lg bg-slate-100 hover:bg-blue-100 text-slate-700 hover:text-blue-700 border border-slate-300 transition"
+                                  title="Print Bill Receipt"
+                                >
+                                  <Printer className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Table Revenue Distribution Grid */}
               <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-sm">
                 <h3 className="font-black text-lg sm:text-xl text-slate-950 mb-5 flex items-center gap-2">
                   <TableProperties className="w-5 h-5 text-blue-600" />
@@ -1834,9 +2350,91 @@ export default function AdminDashboard({
             </div>
           )}
 
-          {/* =========================================================================
-              VIEW 4: FLOOR & TABLES TERMINAL
-          ========================================================================= */}
+          {/* Daily Sales Day-End Summary Print Preview Modal */}
+          {isDailyReportModalOpen && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-in fade-in">
+              <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-300 flex flex-col max-h-[92vh]">
+                <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-cyan-400" />
+                    <div>
+                      <h4 className="font-black text-sm text-white">Daily Day-End Balance Sheet</h4>
+                      <p className="text-[11px] text-slate-300">
+                        {salesDateFilter === 'TODAY' ? 'Today' : salesDateFilter === 'YESTERDAY' ? 'Yesterday' : customSalesDate} • IST
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsDailyReportModalOpen(false)}
+                    className="text-slate-400 hover:text-white p-1"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 overflow-y-auto space-y-4 text-xs font-mono text-slate-800">
+                  <div className="text-center border-b border-dashed border-slate-400 pb-3">
+                    <h3 className="text-base font-black tracking-widest text-slate-950">BIKANER EXPRESS ROOFTOP</h3>
+                    <p className="text-[11px] text-slate-600">Daily Sales Audit Register</p>
+                    <p className="text-[11px] text-slate-500">Date: {salesDateFilter === 'TODAY' ? todayDateKey : customSalesDate} | Printed: {new Date().toLocaleTimeString('en-IN')}</p>
+                  </div>
+
+                  {/* Summary Totals */}
+                  <div className="space-y-1.5 border-b border-dashed border-slate-400 pb-3">
+                    <div className="flex justify-between font-black text-sm text-slate-950">
+                      <span>TOTAL GROSS SALES:</span>
+                      <span className="text-emerald-700">{formatPrice(dailyTotalSales)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-700">
+                      <span>🔴 Online (Razorpay):</span>
+                      <span className="font-bold">{formatPrice(dailyOnlineSales)} ({dailyOnlineOrders.length} orders)</span>
+                    </div>
+                    <div className="flex justify-between text-slate-700">
+                      <span>💵 Cash on Delivery:</span>
+                      <span className="font-bold">{formatPrice(dailyCashSales)} ({dailyCashOrders.length} orders)</span>
+                    </div>
+                    <div className="flex justify-between text-slate-600 text-[11px]">
+                      <span>Total Bills Cut:</span>
+                      <span>{filteredSalesOrders.length} orders</span>
+                    </div>
+                  </div>
+
+                  {/* Top Items Sold */}
+                  <div className="space-y-1 border-b border-dashed border-slate-400 pb-3">
+                    <span className="font-black text-slate-900 block mb-1">DISH-WISE SALES SUMMARY:</span>
+                    {dailyDishBreakdown.map((d) => (
+                      <div key={d.name} className="flex justify-between text-[11px]">
+                        <span className="truncate max-w-[200px]">{d.name} x{d.count}</span>
+                        <span className="font-bold">{formatPrice(d.revenue)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="text-center pt-2 text-[11px] text-slate-500">
+                    <p>*** END OF DAY REPORT ***</p>
+                    <p>Verified by Manager: {adminUser?.name || 'Shivam Shakya'}</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-50 border-t border-slate-200 flex gap-2">
+                  <button
+                    onClick={() => window.print()}
+                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Print Sheet</span>
+                  </button>
+                  <button
+                    onClick={() => setIsDailyReportModalOpen(false)}
+                    className="px-4 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold text-xs"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {adminSection === 'tables' && (
             <div className="space-y-6">
               <div className="bg-white rounded-3xl p-6 border border-slate-300 shadow-sm">

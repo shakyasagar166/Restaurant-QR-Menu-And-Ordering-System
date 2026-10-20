@@ -38,6 +38,31 @@ export function formatTime(isoString) {
   }
 }
 
+export function formatDate(isoString) {
+  try {
+    const date = parseDateRobust(isoString);
+    if (!date) return '';
+    return date.toLocaleDateString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return '';
+  }
+}
+
+export function getISODateKey(isoString) {
+  try {
+    const date = parseDateRobust(isoString);
+    if (!date) return '';
+    return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  } catch {
+    return '';
+  }
+}
+
 export function getTimeAgo(isoString) {
   try {
     const date = parseDateRobust(isoString);
