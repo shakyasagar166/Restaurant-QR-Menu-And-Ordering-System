@@ -486,23 +486,68 @@ export default function AdminDashboard({
             <button
               onClick={() => {
                 setAdminSection('orders');
+                setActiveFilter('ALL');
                 setIsSidebarOpenMobile(false);
               }}
               className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-extrabold transition-all group cursor-pointer ${
-                adminSection === 'orders'
+                adminSection === 'orders' && activeFilter === 'ALL'
                   ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 font-black'
                   : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
               }`}
             >
               <div className="flex items-center gap-3">
-                <ChefHat className={`w-5 h-5 ${adminSection === 'orders' ? 'text-white' : 'text-slate-400 group-hover:text-cyan-400'}`} />
-                <span>Live Orders &amp; KOT</span>
+                <ChefHat className={`w-5 h-5 ${adminSection === 'orders' && activeFilter === 'ALL' ? 'text-white' : 'text-slate-400 group-hover:text-cyan-400'}`} />
+                <span>All Live Orders &amp; KOT</span>
               </div>
               {pendingCount > 0 && (
                 <span className="bg-rose-500 text-white text-xs font-black px-2.5 py-1 rounded-full shadow-md animate-bounce">
                   {pendingCount}
                 </span>
               )}
+            </button>
+
+            {/* 1.1 SEPARATE SECTION: 🔴 ONLINE PAID ORDERS */}
+            <button
+              onClick={() => {
+                setAdminSection('orders');
+                setActiveFilter('ONLINE');
+                setIsSidebarOpenMobile(false);
+              }}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs sm:text-sm font-extrabold transition-all group cursor-pointer ${
+                adminSection === 'orders' && activeFilter === 'ONLINE'
+                  ? 'bg-gradient-to-r from-red-600 to-rose-700 text-white shadow-lg shadow-rose-600/40 font-black border-2 border-red-400'
+                  : 'text-rose-300 hover:bg-rose-950/40 hover:text-white border border-rose-500/30'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <CreditCard className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
+                <span className="font-black">🔴 Online Paid Orders</span>
+              </div>
+              <span className="bg-rose-600 text-white text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-xs">
+                {onlineOrders.length}
+              </span>
+            </button>
+
+            {/* 1.2 SEPARATE SECTION: 💵 CASH ON DELIVERY (COD) */}
+            <button
+              onClick={() => {
+                setAdminSection('orders');
+                setActiveFilter('CASH');
+                setIsSidebarOpenMobile(false);
+              }}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs sm:text-sm font-extrabold transition-all group cursor-pointer ${
+                adminSection === 'orders' && activeFilter === 'CASH'
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-lg shadow-amber-500/40 font-black border-2 border-amber-300'
+                  : 'text-amber-300 hover:bg-amber-950/40 hover:text-white border border-amber-500/30'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Banknote className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span className="font-black">💵 Cash on Delivery</span>
+              </div>
+              <span className="bg-amber-500 text-slate-950 text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-xs">
+                {cashOrders.length}
+              </span>
             </button>
 
             {/* 2. Menu & Dishes */}
@@ -785,8 +830,35 @@ export default function AdminDashboard({
                       return (
                         <div
                           key={order.id}
-                          className="bg-white border-2 border-amber-400 rounded-3xl overflow-hidden shadow-md hover:shadow-xl flex flex-col justify-between transition-all duration-200"
+                          className={`bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-xl flex flex-col justify-between transition-all duration-200 border-2 ${
+                            isOnline
+                              ? 'border-red-500 ring-4 ring-red-200 shadow-red-200'
+                              : 'border-amber-400'
+                          }`}
                         >
+                          {/* DISTINCT PAYMENT HIGHLIGHT: Screaming Red for Online Payment */}
+                          {isOnline ? (
+                            <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white px-4 py-2.5 flex items-center justify-between font-black text-xs shadow-md border-b-2 border-red-400 animate-pulse">
+                              <div className="flex items-center gap-1.5">
+                                <CreditCard className="w-4 h-4 text-white" />
+                                <span>🚨 ONLINE PAID (DO NOT COLLECT CASH!)</span>
+                              </div>
+                              <span className="bg-black/40 text-red-100 text-[10px] px-2 py-0.5 rounded-lg font-black uppercase">
+                                ✓ 100% PREPAID
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 px-4 py-2 flex items-center justify-between font-black text-xs">
+                              <div className="flex items-center gap-1.5">
+                                <Banknote className="w-4 h-4 text-slate-950" />
+                                <span>💵 CASH ON DELIVERY</span>
+                              </div>
+                              <span className="bg-amber-600 text-white text-[10px] px-2 py-0.5 rounded-lg font-black">
+                                COLLECT {formatPrice(order.totalAmount)}
+                              </span>
+                            </div>
+                          )}
+
                           {/* Card Top: Distinct Table Header & Elapsed Time */}
                           <div>
                             <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 to-slate-950 text-white flex items-center justify-between gap-3">
@@ -1012,9 +1084,9 @@ export default function AdminDashboard({
                 <div className="flex items-center gap-2">
                   {[
                     { key: 'ALL', label: `All Orders (${orders.length})` },
+                    { key: 'ONLINE', label: `🔴 ONLINE PAID (${onlineOrders.length})`, isOnline: true },
+                    { key: 'CASH', label: `💵 CASH ON DELIVERY (${cashOrders.length})`, isCash: true },
                     { key: 'PENDING', label: `🔔 Pending (${pendingCount})`, highlight: pendingCount > 0 },
-                    { key: 'ONLINE', label: `⚡ Online Paid (${onlineOrders.length})`, isOnline: true },
-                    { key: 'CASH', label: `💵 Cash on Delivery (${cashOrders.length})`, isCash: true },
                     { key: 'ACCEPTED', label: `Accepted (${acceptedCount})` },
                     { key: 'PREPARING', label: `In-Kitchen (${preparingCount})` },
                     { key: 'SERVED', label: `Completed (${servedCount})` },
@@ -1026,16 +1098,16 @@ export default function AdminDashboard({
                       className={`whitespace-nowrap px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-black transition-all shrink-0 cursor-pointer ${
                         activeFilter === tab.key
                           ? tab.isOnline
-                            ? 'bg-emerald-600 text-white shadow-md'
+                            ? 'bg-gradient-to-r from-red-600 to-rose-700 text-white shadow-lg ring-2 ring-red-400 font-black'
                             : tab.isCash
-                            ? 'bg-amber-500 text-slate-950 shadow-md'
+                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-lg ring-2 ring-amber-400 font-black'
                             : 'bg-blue-600 text-white shadow-md'
                           : tab.highlight
                           ? 'bg-amber-100 text-amber-900 border border-amber-400 animate-pulse'
                           : tab.isOnline
-                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100'
+                          ? 'bg-rose-50 text-rose-700 border-2 border-rose-300 hover:bg-rose-100 font-black'
                           : tab.isCash
-                          ? 'bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100'
+                          ? 'bg-amber-50 text-amber-900 border-2 border-amber-300 hover:bg-amber-100 font-black'
                           : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                       }`}
                     >
@@ -1048,6 +1120,62 @@ export default function AdminDashboard({
                   Showing {filteredOrders.length} tickets
                 </div>
               </div>
+
+              {/* DEDICATED SECTION BANNER: 🔴 ONLINE PAID ORDERS */}
+              {activeFilter === 'ONLINE' && (
+                <div className="bg-gradient-to-r from-red-600 via-rose-700 to-red-600 text-white p-6 rounded-3xl shadow-xl border-2 border-red-400 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in slide-in-from-top duration-300">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-white text-red-700 flex items-center justify-center font-black shadow-lg shrink-0">
+                      <CreditCard className="w-7 h-7 text-red-600" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                          🔴 DEDICATED ONLINE PAID ORDERS SECTION ({onlineOrders.length})
+                        </h3>
+                        <span className="bg-white/20 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                          100% PREPAID
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-red-100 font-semibold mt-1">
+                        🚨 <strong>ATTENTION WAITERS &amp; CASHIER:</strong> All tables shown below have ALREADY paid online via Razorpay/UPI. <strong>DO NOT ASK FOR CASH!</strong>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-black/30 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/20 flex md:flex-col justify-between items-end shrink-0">
+                    <span className="text-[11px] uppercase font-bold text-red-200">Total Online Paid</span>
+                    <span className="text-2xl sm:text-3xl font-black text-white">{formatPrice(onlineTotal)}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* DEDICATED SECTION BANNER: 💵 CASH ON DELIVERY (COD) */}
+              {activeFilter === 'CASH' && (
+                <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 p-6 rounded-3xl shadow-xl border-2 border-amber-300 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in slide-in-from-top duration-300">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-950 text-amber-400 flex items-center justify-center font-black shadow-lg shrink-0">
+                      <Banknote className="w-7 h-7 text-amber-400" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
+                          💵 CASH ON DELIVERY (COD) SECTION ({cashOrders.length})
+                        </h3>
+                        <span className="bg-slate-950 text-amber-300 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                          PAYMENT DUE
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-slate-900 font-semibold mt-1">
+                        💰 <strong>ACTION REQUIRED:</strong> Waiters must collect cash payment for these tables upon serving food.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-slate-950 text-white px-5 py-3 rounded-2xl border border-amber-400/40 flex md:flex-col justify-between items-end shrink-0 shadow-md">
+                    <span className="text-[11px] uppercase font-bold text-amber-300">Total Cash to Collect</span>
+                    <span className="text-2xl sm:text-3xl font-black text-amber-400">{formatPrice(cashTotal)}</span>
+                  </div>
+                </div>
+              )}
 
               {/* Main Orders Display Grid with BIGGER DETAILS & NO SIMPLE WHITE LINES */}
               {filteredOrders.length === 0 ? (
@@ -1097,19 +1225,19 @@ export default function AdminDashboard({
                               ? 'border-rose-500 ring-4 ring-rose-200'
                               : 'border-amber-400 ring-4 ring-amber-100'
                             : isOnlinePaid
-                            ? 'border-emerald-300 hover:border-emerald-500'
+                            ? 'border-2 border-red-500 ring-2 ring-red-200 shadow-red-100'
                             : 'border-slate-300 hover:border-slate-400'
                         }`}
                       >
-                        {/* Distinct Payment Highlight Banner */}
+                        {/* Distinct Payment Highlight Banner: RED NOTIFICATION for Online Payment */}
                         {isOnlinePaid ? (
-                          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white px-5 py-3 flex items-center justify-between font-black text-xs sm:text-sm shadow-xs">
+                          <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white px-5 py-3 flex items-center justify-between font-black text-xs sm:text-sm shadow-md border-b-2 border-red-500 animate-pulse">
                             <div className="flex items-center gap-2">
-                              <CreditCard className="w-4 h-4" />
-                              <span>⚡ PAID ONLINE (RAZORPAY)</span>
+                              <CreditCard className="w-5 h-5 text-white" />
+                              <span className="tracking-wide">🚨 PAID ONLINE (DO NOT COLLECT CASH!)</span>
                             </div>
-                            <span className="bg-emerald-800/80 px-3 py-1 rounded-xl text-xs font-black">
-                              ✓ DO NOT COLLECT CASH
+                            <span className="bg-black/40 text-red-100 border border-white/20 px-3 py-1 rounded-xl text-xs font-black">
+                              ✓ 100% PREPAID
                             </span>
                           </div>
                         ) : (
@@ -1259,8 +1387,14 @@ export default function AdminDashboard({
                               <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block">
                                 Grand Total Payable
                               </span>
-                              <span className="text-xs text-emerald-400 font-bold">
-                                {isOnlinePaid ? '✓ Paid Online (Razorpay)' : '⚠️ Cash to Collect'}
+                              <span className="text-xs font-black">
+                                {isOnlinePaid ? (
+                                  <span className="text-red-400 bg-red-950/80 px-2.5 py-1 rounded-lg border border-red-500/50">
+                                    🚨 PAID ONLINE (NO CASH)
+                                  </span>
+                                ) : (
+                                  <span className="text-amber-400">⚠️ Cash to Collect</span>
+                                )}
                               </span>
                             </div>
                             <div className="text-right">
