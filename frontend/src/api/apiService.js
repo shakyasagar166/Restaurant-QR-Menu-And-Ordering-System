@@ -122,15 +122,30 @@ export const apiService = {
     return true;
   },
 
-  // Orders APIs
+  // Orders APIs (Resilient cloud order dispatch with auto-retry on cold starts)
   async placeOrder(orderData) {
-    const res = await fetchWithTimeout(`${API_BASE}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderData),
-    }, DEFAULT_TIMEOUT_MS);
-    if (!res.ok) throw new Error('Failed to submit order');
-    const savedOrder = await res.json();
+    const ORDER_TIMEOUT_MS = isCloudEnv ? 45000 : 15000;
+    let savedOrder = null;
+
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+      }, ORDER_TIMEOUT_MS);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      savedOrder = await res.json();
+    } catch (firstErr) {
+      console.warn('Initial order dispatch notice, attempting resilient reconnect:', firstErr);
+      // Automatic immediate retry: handles cold-start server wakeups
+      const retryRes = await fetchWithTimeout(`${API_BASE}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+      }, ORDER_TIMEOUT_MS);
+      if (!retryRes.ok) throw new Error('Connection error. Please try again.');
+      savedOrder = await retryRes.json();
+    }
 
     // Instant local broadcast to all open Admin tabs on the device (0ms latency!)
     try {

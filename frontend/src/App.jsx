@@ -527,7 +527,8 @@ export default function App() {
       setActiveCustomerOrder(savedOrder);
       loadOrdersData();
     } catch (err) {
-      alert('Could not submit order: ' + err.message);
+      console.warn('Order placement notice:', err);
+      alert('Server connect hone me samay le raha hai. Kripya 2 second baad dobara "CONFIRM & PLACE ORDER" dabayein.');
     } finally {
       setIsPlacingOrder(false);
     }

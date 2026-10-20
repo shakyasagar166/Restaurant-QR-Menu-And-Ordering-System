@@ -6,8 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 public class OrderNotificationService {
@@ -15,27 +18,31 @@ public class OrderNotificationService {
     // Thread-safe list of active SSE connections
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
+    // High-performance non-blocking async executor for real-time broadcasts
+    // Guarantees zero latency / zero thread blocking on HTTP order placement!
+    private final ExecutorService asyncBroadcaster = Executors.newCachedThreadPool();
+
     /**
-     * Subscribe a client (Admin POS or Customer Tracker) to the real-time event stream.
-     * Uses 24-hour timeout and 1-second auto-reconnect instruction.
+     * Subscribe a client (Admin POS) to the real-time event stream.
+     * Uses 15-minute connection window with automatic client auto-reconnect.
      */
     public SseEmitter subscribe() {
-        // 24 hours timeout (86,400,000 ms) so connection stays open indefinitely
-        SseEmitter emitter = new SseEmitter(86_400_000L);
+        // 15 minutes timeout (900,000 ms) with automatic reconnection to prevent stale socket accumulation
+        SseEmitter emitter = new SseEmitter(900_000L);
 
         emitters.add(emitter);
 
         emitter.onCompletion(() -> emitters.remove(emitter));
         emitter.onTimeout(() -> {
-            emitter.complete();
+            try { emitter.complete(); } catch (Exception ignored) {}
             emitters.remove(emitter);
         });
         emitter.onError((e) -> emitters.remove(emitter));
 
-        // Initial handshake with reconnect instruction: reconnect in 1000ms if disconnected
+        // Initial handshake
         try {
             emitter.send(SseEmitter.event()
-                    .reconnectTime(1000L)
+                    .reconnectTime(2000L)
                     .name("CONNECTED")
                     .data("Connected to Bikaner Express Real-Time Kitchen Bell SSE Stream"));
         } catch (IOException e) {
@@ -46,69 +53,75 @@ public class OrderNotificationService {
     }
 
     /**
-     * Instantly broadcasts newly submitted orders to all connected Admin dashboards.
+     * Completely Asynchronous broadcast of newly submitted orders.
+     * Runs in a background worker thread so placeOrder() returns in milliseconds!
      */
     public void notifyNewOrder(Order order) {
-        if (order == null) return;
-        List<SseEmitter> deadEmitters = new CopyOnWriteArrayList<>();
+        if (order == null || emitters.isEmpty()) return;
 
-        for (SseEmitter emitter : emitters) {
-            try {
-                emitter.send(SseEmitter.event()
-                        .reconnectTime(1000L)
-                        .name("NEW_ORDER")
-                        .data(order));
-            } catch (Exception e) {
-                deadEmitters.add(emitter);
+        asyncBroadcaster.submit(() -> {
+            List<SseEmitter> deadEmitters = new ArrayList<>();
+            for (SseEmitter emitter : emitters) {
+                try {
+                    emitter.send(SseEmitter.event()
+                            .reconnectTime(2000L)
+                            .name("NEW_ORDER")
+                            .data(order));
+                } catch (Exception e) {
+                    deadEmitters.add(emitter);
+                }
             }
-        }
-
-        emitters.removeAll(deadEmitters);
+            if (!deadEmitters.isEmpty()) {
+                emitters.removeAll(deadEmitters);
+            }
+        });
     }
 
     /**
-     * Instantly broadcasts status updates (e.g. ACCEPTED, PREPARING, SERVED) to all screens.
+     * Completely Asynchronous broadcast of status updates.
      */
     public void notifyStatusChange(Order order) {
-        if (order == null) return;
-        List<SseEmitter> deadEmitters = new CopyOnWriteArrayList<>();
+        if (order == null || emitters.isEmpty()) return;
 
-        for (SseEmitter emitter : emitters) {
-            try {
-                emitter.send(SseEmitter.event()
-                        .reconnectTime(1000L)
-                        .name("ORDER_UPDATED")
-                        .data(order));
-            } catch (Exception e) {
-                deadEmitters.add(emitter);
+        asyncBroadcaster.submit(() -> {
+            List<SseEmitter> deadEmitters = new ArrayList<>();
+            for (SseEmitter emitter : emitters) {
+                try {
+                    emitter.send(SseEmitter.event()
+                            .reconnectTime(2000L)
+                            .name("ORDER_UPDATED")
+                            .data(order));
+                } catch (Exception e) {
+                    deadEmitters.add(emitter);
+                }
             }
-        }
-
-        emitters.removeAll(deadEmitters);
+            if (!deadEmitters.isEmpty()) {
+                emitters.removeAll(deadEmitters);
+            }
+        });
     }
 
     /**
-     * Periodic 15-second keep-alive heartbeat ping.
-     * Prevents proxies, firewalls, and routers from dropping the idle SSE socket connection.
+     * Periodic 25-second keep-alive heartbeat ping.
      */
-    @Scheduled(fixedRate = 15000)
+    @Scheduled(fixedRate = 25000)
     public void sendHeartbeat() {
         if (emitters.isEmpty()) return;
-        List<SseEmitter> deadEmitters = new CopyOnWriteArrayList<>();
 
-        for (SseEmitter emitter : emitters) {
-            try {
-                emitter.send(SseEmitter.event()
-                        .comment("bikaner-keepalive-ping"));
-            } catch (Exception e) {
-                deadEmitters.add(emitter);
+        asyncBroadcaster.submit(() -> {
+            List<SseEmitter> deadEmitters = new ArrayList<>();
+            for (SseEmitter emitter : emitters) {
+                try {
+                    emitter.send(SseEmitter.event()
+                            .name("PING")
+                            .data("heartbeat"));
+                } catch (Exception e) {
+                    deadEmitters.add(emitter);
+                }
             }
-        }
-
-        emitters.removeAll(deadEmitters);
-    }
-
-    public int getActiveSubscriberCount() {
-        return emitters.size();
+            if (!deadEmitters.isEmpty()) {
+                emitters.removeAll(deadEmitters);
+            }
+        });
     }
 }

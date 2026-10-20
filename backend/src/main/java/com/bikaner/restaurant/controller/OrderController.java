@@ -119,16 +119,13 @@ public class OrderController {
             }
         }
 
-        Order savedOrder;
-        synchronized (this) {
-            savedOrder = orderRepository.save(order);
-        }
+        Order savedOrder = orderRepository.save(order);
 
-        // Instant Real-Time Server-Sent Events Notification to Kitchen / Admin Bell System
+        // Instant non-blocking async real-time kitchen bell alert
         try {
             notificationService.notifyNewOrder(savedOrder);
         } catch (Exception e) {
-            System.err.println("SSE notify error: " + e.getMessage());
+            System.err.println("Async notify error: " + e.getMessage());
         }
 
         return ResponseEntity.ok(savedOrder);
