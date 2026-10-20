@@ -394,10 +394,10 @@ export default function App() {
       }
     );
 
-    // Fast polling fallback every 2.5s for fail-safe redundancy
+    // Resilient polling fallback every 12s (SSE handles instant 0ms real-time alerts)
     const interval = setInterval(() => {
       loadOrdersData();
-    }, 2500);
+    }, 12000);
 
     return () => {
       if (subscriber && subscriber.close) subscriber.close();

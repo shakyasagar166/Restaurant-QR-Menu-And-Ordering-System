@@ -242,7 +242,7 @@ public class OrderController {
      */
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
-        List<Order> all = orderRepository.findAll();
+        List<Order> all = orderRepository.findAllByOrderByCreatedAtDesc();
         LocalDate today = LocalDate.now();
 
         long pending = all.stream().filter(o -> o.getStatus() == OrderStatus.PENDING).count();
