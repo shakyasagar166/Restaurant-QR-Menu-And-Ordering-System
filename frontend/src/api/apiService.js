@@ -18,6 +18,25 @@ const getDynamicApiBase = () => {
 
 const API_BASE = getDynamicApiBase();
 
+// Security Token Extraction for Protected Admin Operations
+export function getAuthHeaders() {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem('bikaner_admin_auth');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.token) {
+          return {
+            'Authorization': `Bearer ${parsed.token}`,
+            'X-Admin-Token': parsed.token,
+          };
+        }
+      }
+    }
+  } catch {}
+  return {};
+}
+
 // Resilient fetch with automatic timeout to prevent browser UI freezing / hanging
 async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
   const controller = new AbortController();
@@ -56,6 +75,7 @@ export const apiService = {
   async toggleDishAvailability(id) {
     const res = await fetchWithTimeout(`${API_BASE}/menu/${id}/toggle-availability`, {
       method: 'PUT',
+      headers: { ...getAuthHeaders() },
     }, 6000);
     if (!res.ok) throw new Error('Failed to toggle dish availability');
     return res.json();
@@ -64,7 +84,7 @@ export const apiService = {
   async updateMenuItem(id, itemData) {
     const res = await fetchWithTimeout(`${API_BASE}/menu/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(itemData),
     }, 8000);
     if (!res.ok) throw new Error('Failed to update dish');
@@ -74,7 +94,7 @@ export const apiService = {
   async createMenuItem(itemData) {
     const res = await fetchWithTimeout(`${API_BASE}/menu`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(itemData),
     }, 8000);
     if (!res.ok) throw new Error('Failed to add dish');
@@ -84,6 +104,7 @@ export const apiService = {
   async deleteMenuItem(id) {
     const res = await fetchWithTimeout(`${API_BASE}/menu/${id}`, {
       method: 'DELETE',
+      headers: { ...getAuthHeaders() },
     }, 8000);
     if (!res.ok) throw new Error('Failed to delete dish');
     return true;
@@ -116,7 +137,9 @@ export const apiService = {
     if (status) params.append('status', status);
     if (table) params.append('table', table);
 
-    const res = await fetchWithTimeout(`${API_BASE}/orders?${params.toString()}`, {}, 6000);
+    const res = await fetchWithTimeout(`${API_BASE}/orders?${params.toString()}`, {
+      headers: { ...getAuthHeaders() },
+    }, 6000);
     if (!res.ok) throw new Error('Failed to load orders');
     return res.json();
   },
@@ -124,7 +147,7 @@ export const apiService = {
   async updateOrderStatus(orderId, newStatus) {
     const res = await fetchWithTimeout(`${API_BASE}/orders/${orderId}/status`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ status: newStatus }),
     }, 8000);
     if (!res.ok) throw new Error('Failed to update status');
@@ -145,7 +168,7 @@ export const apiService = {
   async updateOrderPayment(orderId, paymentDetails) {
     const res = await fetchWithTimeout(`${API_BASE}/orders/${orderId}/payment`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(paymentDetails),
     }, 8000);
     if (!res.ok) throw new Error('Failed to update payment status');
@@ -164,7 +187,9 @@ export const apiService = {
   },
 
   async getStats() {
-    const res = await fetchWithTimeout(`${API_BASE}/orders/stats`, {}, 6000);
+    const res = await fetchWithTimeout(`${API_BASE}/orders/stats`, {
+      headers: { ...getAuthHeaders() },
+    }, 6000);
     if (!res.ok) throw new Error('Failed to load stats');
     return res.json();
   },
@@ -197,7 +222,7 @@ export const apiService = {
   async updateGroqKey(apiKey) {
     const res = await fetch(`${API_BASE}/chat/groq-key`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ apiKey }),
     });
     return await res.json();
@@ -233,7 +258,7 @@ export const apiService = {
   async changeCredentials(payload) {
     const res = await fetchWithTimeout(`${API_BASE}/auth/change-credentials`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify(payload),
     }, 8000);
     const data = await res.json();

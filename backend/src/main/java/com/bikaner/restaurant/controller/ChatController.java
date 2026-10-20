@@ -6,6 +6,10 @@ import com.bikaner.restaurant.repository.MenuItemRepository;
 import com.bikaner.restaurant.repository.OrderRepository;
 import com.bikaner.restaurant.service.GroqAiService;
 import com.bikaner.restaurant.service.MenuKnowledgeService;
+import com.bikaner.restaurant.security.InputSanitizer;
+import com.bikaner.restaurant.security.RateLimiterService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,21 +25,43 @@ public class ChatController {
     private final OrderRepository orderRepository;
     private final GroqAiService groqAiService;
     private final MenuKnowledgeService menuKnowledgeService;
+    private final RateLimiterService rateLimiterService;
 
     public ChatController(MenuItemRepository menuItemRepository, 
                           OrderRepository orderRepository,
                           GroqAiService groqAiService,
-                          MenuKnowledgeService menuKnowledgeService) {
+                          MenuKnowledgeService menuKnowledgeService,
+                          RateLimiterService rateLimiterService) {
         this.menuItemRepository = menuItemRepository;
         this.orderRepository = orderRepository;
         this.groqAiService = groqAiService;
         this.menuKnowledgeService = menuKnowledgeService;
+        this.rateLimiterService = rateLimiterService;
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String xf = request.getHeader("X-Forwarded-For");
+        if (xf != null && !xf.trim().isEmpty()) {
+            return xf.split(",")[0].trim();
+        }
+        return request.getRemoteAddr() != null ? request.getRemoteAddr() : "127.0.0.1";
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> chat(@RequestBody Map<String, Object> payload) {
-        String query = (String) payload.getOrDefault("message", "");
-        String tableNumber = (String) payload.getOrDefault("tableNumber", "T-1");
+    public ResponseEntity<Map<String, Object>> chat(@RequestBody Map<String, Object> payload, HttpServletRequest request) {
+        String clientIp = getClientIp(request);
+
+        // Anti-DDoS Rate Limiting for AI Chat
+        if (!rateLimiterService.allowChatQuery(clientIp)) {
+            Map<String, Object> rateRes = new HashMap<>();
+            rateRes.put("reply", "Security Notice: Sending messages too quickly. Please pause for a moment.");
+            rateRes.put("poweredBy", "Bikaner AI Concierge Engine");
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(rateRes);
+        }
+
+        String rawQuery = (String) payload.getOrDefault("message", "");
+        String query = InputSanitizer.sanitizeText(rawQuery, 300);
+        String tableNumber = InputSanitizer.sanitizeTable((String) payload.getOrDefault("tableNumber", "T-1"));
         Object orderIdObj = payload.get("activeOrderId");
         Long activeOrderId = orderIdObj != null ? Long.valueOf(orderIdObj.toString()) : null;
 

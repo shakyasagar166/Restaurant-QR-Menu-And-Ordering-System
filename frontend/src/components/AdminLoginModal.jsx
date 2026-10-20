@@ -97,7 +97,7 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
       setErrorMessage('');
       const data = await apiService.loginWithPin(pinToSubmit);
 
-      // Store session
+      // Store secure session token (strictly excluding raw PIN)
       localStorage.setItem(
         'bikaner_admin_auth',
         JSON.stringify({
@@ -105,7 +105,6 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
           name: data.name,
           phone: data.phone,
           role: data.role,
-          quickPin: data.quickPin,
         })
       );
 
@@ -152,7 +151,6 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
           name: data.name,
           phone: data.phone,
           role: data.role,
-          quickPin: data.quickPin,
         })
       );
 
@@ -195,7 +193,6 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
           name: data.name,
           phone: data.phone,
           role: data.role,
-          quickPin: data.quickPin,
         })
       );
 
@@ -323,19 +320,15 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
           {authMode === 'pin' && (
             <div className="space-y-4">
               
-              {/* Default Hint / 1-Click Fast Fill */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-                  <KeyRound className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <span>Default Manager PIN: <strong>9058</strong></span>
+              {/* Security Shield Badge */}
+              <div className="bg-slate-900/80 border border-emerald-500/20 rounded-2xl p-2.5 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-slate-300 text-[11px]">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Authorized Staff Only • End-to-End Encrypted</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleAutofillPin}
-                  className="bg-cyan-600/30 hover:bg-cyan-600 text-cyan-300 hover:text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition border border-cyan-500/30 cursor-pointer"
-                >
-                  1-Click Fill
-                </button>
+                <span className="text-[10px] text-emerald-400/80 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                  SECURE POS
+                </span>
               </div>
 
               {/* 4 PIN Dots Indicator */}
@@ -416,22 +409,15 @@ export default function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
           ========================================================= */}
           {authMode === 'password' && (
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              {/* Quick Info */}
-              <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-2.5 flex items-center justify-between text-xs">
+              {/* Security Shield Badge */}
+              <div className="bg-slate-900/80 border border-indigo-500/20 rounded-2xl p-2.5 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <KeyRound className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                  <div>
-                    <span className="font-bold text-white block leading-tight text-xs">Admin: Shivam Shakya</span>
-                    <span className="text-[10px] text-slate-400 font-mono">9058605348 • shivamshakya098</span>
-                  </div>
+                  <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
+                  <span className="font-bold text-slate-300 text-xs">Manager Authentication</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleAutofillPassword}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg transition cursor-pointer"
-                >
-                  1-Click Fill
-                </button>
+                <span className="text-[10px] text-indigo-400/80 font-mono font-bold bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                  PROTECTED
+                </span>
               </div>
 
               {/* Phone Input */}

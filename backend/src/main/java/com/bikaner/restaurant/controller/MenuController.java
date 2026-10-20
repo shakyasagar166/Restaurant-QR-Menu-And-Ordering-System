@@ -2,10 +2,12 @@ package com.bikaner.restaurant.controller;
 
 import com.bikaner.restaurant.model.MenuItem;
 import com.bikaner.restaurant.repository.MenuItemRepository;
+import com.bikaner.restaurant.security.InputSanitizer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/menu")
@@ -24,10 +26,12 @@ public class MenuController {
             @RequestParam(required = false) String search
     ) {
         if (search != null && !search.trim().isEmpty()) {
-            return menuItemRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search.trim(), search.trim());
+            String sanitizedSearch = InputSanitizer.sanitizeText(search.trim(), 50);
+            return menuItemRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(sanitizedSearch, sanitizedSearch);
         }
         if (category != null && !category.trim().isEmpty() && !category.equalsIgnoreCase("all")) {
-            return menuItemRepository.findByCategoryIgnoreCase(category.trim());
+            String sanitizedCategory = InputSanitizer.sanitizeText(category.trim(), 50);
+            return menuItemRepository.findByCategoryIgnoreCase(sanitizedCategory);
         }
         return menuItemRepository.findAll();
     }
@@ -45,8 +49,22 @@ public class MenuController {
     }
 
     @PostMapping
-    public MenuItem createMenuItem(@RequestBody MenuItem item) {
-        return menuItemRepository.save(item);
+    public ResponseEntity<?> createMenuItem(@RequestBody MenuItem item) {
+        if (item.getName() == null || item.getName().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Dish name is required."));
+        }
+        item.setName(InputSanitizer.sanitizeText(item.getName(), 100));
+        item.setCategory(InputSanitizer.sanitizeText(item.getCategory(), 50));
+        item.setDescription(InputSanitizer.sanitizeText(item.getDescription(), 300));
+        item.setImageUrl(InputSanitizer.sanitizeText(item.getImageUrl(), 255));
+        item.setTag(InputSanitizer.sanitizeText(item.getTag(), 30));
+
+        if (item.getPrice() == null || item.getPrice() < 0) {
+            item.setPrice(0.0);
+        }
+
+        MenuItem saved = menuItemRepository.save(item);
+        return ResponseEntity.ok(saved);
     }
 
     @PutMapping("/{id}/toggle-availability")
@@ -58,25 +76,25 @@ public class MenuController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MenuItem> updateMenuItem(@PathVariable Long id, @RequestBody MenuItem updatedItem) {
+    public ResponseEntity<?> updateMenuItem(@PathVariable Long id, @RequestBody MenuItem updatedItem) {
         return menuItemRepository.findById(id).map(existing -> {
             if (updatedItem.getName() != null && !updatedItem.getName().trim().isEmpty()) {
-                existing.setName(updatedItem.getName().trim());
+                existing.setName(InputSanitizer.sanitizeText(updatedItem.getName(), 100));
             }
             if (updatedItem.getCategory() != null && !updatedItem.getCategory().trim().isEmpty()) {
-                existing.setCategory(updatedItem.getCategory().trim());
+                existing.setCategory(InputSanitizer.sanitizeText(updatedItem.getCategory(), 50));
             }
             if (updatedItem.getPrice() != null && updatedItem.getPrice() >= 0) {
                 existing.setPrice(updatedItem.getPrice());
             }
             if (updatedItem.getDescription() != null) {
-                existing.setDescription(updatedItem.getDescription().trim());
+                existing.setDescription(InputSanitizer.sanitizeText(updatedItem.getDescription(), 300));
             }
             if (updatedItem.getImageUrl() != null && !updatedItem.getImageUrl().trim().isEmpty()) {
-                existing.setImageUrl(updatedItem.getImageUrl().trim());
+                existing.setImageUrl(InputSanitizer.sanitizeText(updatedItem.getImageUrl(), 255));
             }
             if (updatedItem.getTag() != null) {
-                existing.setTag(updatedItem.getTag().trim().isEmpty() ? null : updatedItem.getTag().trim());
+                existing.setTag(InputSanitizer.sanitizeText(updatedItem.getTag(), 30));
             }
             existing.setAvailable(updatedItem.isAvailable());
             existing.setVeg(updatedItem.isVeg());

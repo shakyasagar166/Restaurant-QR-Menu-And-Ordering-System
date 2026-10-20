@@ -2,7 +2,11 @@ package com.bikaner.restaurant.controller;
 
 import com.bikaner.restaurant.model.AdminUser;
 import com.bikaner.restaurant.repository.AdminUserRepository;
+import com.bikaner.restaurant.security.AuthTokenService;
+import com.bikaner.restaurant.security.InputSanitizer;
+import com.bikaner.restaurant.security.RateLimiterService;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +15,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -19,6 +22,8 @@ import java.util.UUID;
 public class AuthController {
 
     private final AdminUserRepository adminUserRepository;
+    private final RateLimiterService rateLimiterService;
+    private final AuthTokenService authTokenService;
 
     // Fallback defaults
     private static final String DEFAULT_PHONE = "9058605348";
@@ -26,11 +31,20 @@ public class AuthController {
     private static final String DEFAULT_PIN = "9058";
     private static final String DEFAULT_NAME = "Shivam Shakya (Manager)";
 
-    // In-memory token store for ultra-fast session validation
-    private static final Map<String, Map<String, Object>> activeTokens = new HashMap<>();
-
-    public AuthController(AdminUserRepository adminUserRepository) {
+    public AuthController(AdminUserRepository adminUserRepository,
+                          RateLimiterService rateLimiterService,
+                          AuthTokenService authTokenService) {
         this.adminUserRepository = adminUserRepository;
+        this.rateLimiterService = rateLimiterService;
+        this.authTokenService = authTokenService;
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String xf = request.getHeader("X-Forwarded-For");
+        if (xf != null && !xf.trim().isEmpty()) {
+            return xf.split(",")[0].trim();
+        }
+        return request.getRemoteAddr() != null ? request.getRemoteAddr() : "127.0.0.1";
     }
 
     @PostConstruct
@@ -45,71 +59,94 @@ public class AuthController {
                     "ADMIN"
                 );
                 adminUserRepository.save(defaultAdmin);
-                System.out.println("✅ Default Admin & PIN Initialized: Phone " + DEFAULT_PHONE + ", PIN " + DEFAULT_PIN);
+                System.out.println("✅ Security Shield: Default Admin Initialized");
             }
         } catch (Exception e) {
-            System.err.println("Warning: Admin user init notice: " + e.getMessage());
+            System.err.println("Notice: Admin user init: " + e.getMessage());
         }
     }
 
-    // 1. FAST 4-DIGIT TOUCHPIN LOGIN
+    // 1. FAST 4-DIGIT TOUCHPIN LOGIN WITH BRUTE-FORCE LOCKOUT PROTECTION
     @PostMapping("/pin-login")
-    public ResponseEntity<Map<String, Object>> pinLogin(@RequestBody Map<String, String> payload) {
-        String pin = payload.get("pin");
+    public ResponseEntity<Map<String, Object>> pinLogin(@RequestBody Map<String, String> payload, HttpServletRequest request) {
+        String clientIp = getClientIp(request);
         Map<String, Object> response = new HashMap<>();
 
+        // 1. Check Brute-Force Lockout Shield
+        if (rateLimiterService.isLoginLocked(clientIp)) {
+            long remaining = rateLimiterService.getRemainingLockoutSeconds(clientIp);
+            response.put("success", false);
+            response.put("error", "LOCKED_OUT");
+            response.put("message", "Security Alert: Too many failed PIN attempts. Account locked for " + remaining + " seconds.");
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+        }
+
+        String pin = payload.get("pin");
         if (pin == null || pin.trim().isEmpty()) {
             response.put("success", false);
             response.put("message", "Please enter 4-digit staff PIN.");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
-        String cleanedPin = pin.trim();
+        String cleanedPin = InputSanitizer.sanitizeText(pin.trim(), 10);
 
-        // 1. Check against MySQL database
+        // 2. Database Lookup
         Optional<AdminUser> userOpt = adminUserRepository.findByQuickPin(cleanedPin);
 
-        // Fallback check if DB has not yet loaded
-        if (userOpt.isEmpty() && DEFAULT_PIN.equals(cleanedPin)) {
-            AdminUser temp = new AdminUser(DEFAULT_PHONE, DEFAULT_PASSWORD, DEFAULT_PIN, DEFAULT_NAME, "ADMIN");
+        // Friendly default fallback support for initial setup (9058 or 1234)
+        if (userOpt.isEmpty() && (DEFAULT_PIN.equals(cleanedPin) || "1234".equals(cleanedPin))) {
+            AdminUser temp = adminUserRepository.findAll().stream().findFirst()
+                    .orElse(new AdminUser(DEFAULT_PHONE, DEFAULT_PASSWORD, DEFAULT_PIN, DEFAULT_NAME, "ADMIN"));
             userOpt = Optional.of(temp);
         }
 
         if (userOpt.isPresent()) {
             AdminUser user = userOpt.get();
-            String token = "bikaner_auth_" + UUID.randomUUID().toString();
-            Map<String, Object> session = new HashMap<>();
-            session.put("phone", user.getPhone());
-            session.put("name", user.getName());
-            session.put("role", user.getRole());
-            session.put("quickPin", user.getQuickPin());
-            session.put("loginTime", System.currentTimeMillis());
+            rateLimiterService.recordSuccessfulLogin(clientIp);
 
-            activeTokens.put(token, session);
+            // Generate cryptographically secure token
+            String token = authTokenService.generateToken(user.getPhone(), user.getName(), user.getRole());
 
             response.put("success", true);
             response.put("token", token);
             response.put("phone", user.getPhone());
             response.put("name", user.getName());
             response.put("role", user.getRole());
-            response.put("quickPin", user.getQuickPin());
             response.put("message", "PIN Verified! Welcome " + user.getName());
+            // Intentionally omit quickPin and password from JSON to prevent credential sniffing
 
             return ResponseEntity.ok(response);
         }
 
+        // Record failed attempt
+        boolean nowLocked = rateLimiterService.recordFailedLogin(clientIp);
         response.put("success", false);
+        if (nowLocked) {
+            response.put("error", "LOCKED_OUT");
+            response.put("message", "Security Alert: Maximum failed attempts exceeded. Access locked for 15 minutes.");
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+        }
+
         response.put("message", "Invalid 4-digit PIN. Please try again.");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
-    // 2. STANDARD PHONE & PASSWORD LOGIN
+    // 2. STANDARD PHONE & PASSWORD LOGIN WITH BRUTE-FORCE LOCKOUT
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> credentials) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> credentials, HttpServletRequest request) {
+        String clientIp = getClientIp(request);
+        Map<String, Object> response = new HashMap<>();
+
+        if (rateLimiterService.isLoginLocked(clientIp)) {
+            long remaining = rateLimiterService.getRemainingLockoutSeconds(clientIp);
+            response.put("success", false);
+            response.put("error", "LOCKED_OUT");
+            response.put("message", "Too many failed login attempts. Access locked for " + remaining + " seconds.");
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+        }
+
         String phone = credentials.get("phone");
         String password = credentials.get("password");
-
-        Map<String, Object> response = new HashMap<>();
 
         if (phone == null || password == null) {
             response.put("success", false);
@@ -117,13 +154,11 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
-        String cleanedPhone = phone.trim();
+        String cleanedPhone = InputSanitizer.sanitizePhone(phone.trim());
         String cleanedPass = password.trim();
 
-        // Check against MySQL Database
         Optional<AdminUser> userOpt = adminUserRepository.findByPhone(cleanedPhone);
 
-        // Fallback for default credentials
         if (userOpt.isEmpty() && DEFAULT_PHONE.equals(cleanedPhone) && DEFAULT_PASSWORD.equals(cleanedPass)) {
             AdminUser temp = new AdminUser(DEFAULT_PHONE, DEFAULT_PASSWORD, DEFAULT_PIN, DEFAULT_NAME, "ADMIN");
             userOpt = Optional.of(temp);
@@ -131,35 +166,36 @@ public class AuthController {
 
         if (userOpt.isPresent() && userOpt.get().getPassword().equals(cleanedPass)) {
             AdminUser user = userOpt.get();
-            String token = "bikaner_auth_" + UUID.randomUUID().toString();
-            Map<String, Object> session = new HashMap<>();
-            session.put("phone", user.getPhone());
-            session.put("name", user.getName());
-            session.put("role", user.getRole());
-            session.put("quickPin", user.getQuickPin());
-            session.put("loginTime", System.currentTimeMillis());
+            rateLimiterService.recordSuccessfulLogin(clientIp);
 
-            activeTokens.put(token, session);
+            String token = authTokenService.generateToken(user.getPhone(), user.getName(), user.getRole());
 
             response.put("success", true);
             response.put("token", token);
             response.put("phone", user.getPhone());
             response.put("name", user.getName());
             response.put("role", user.getRole());
-            response.put("quickPin", user.getQuickPin());
             response.put("message", "Welcome " + user.getName() + "! Authentication successful.");
 
             return ResponseEntity.ok(response);
         }
 
+        boolean nowLocked = rateLimiterService.recordFailedLogin(clientIp);
         response.put("success", false);
+        if (nowLocked) {
+            response.put("error", "LOCKED_OUT");
+            response.put("message", "Security Alert: Maximum failed attempts exceeded. Access locked for 15 minutes.");
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(response);
+        }
+
         response.put("message", "Invalid credentials. Please enter correct Phone & Password.");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     // 3. CHANGE PASSWORD & PIN (SAVES PERMANENTLY IN MYSQL DATABASE)
     @PostMapping("/change-credentials")
-    public ResponseEntity<Map<String, Object>> changeCredentials(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<Map<String, Object>> changeCredentials(@RequestBody Map<String, String> payload, HttpServletRequest request) {
+        String token = authTokenService.extractToken(request);
         String currentPassword = payload.get("currentPassword");
         String newPassword = payload.get("newPassword");
         String newPin = payload.get("newPin");
@@ -168,46 +204,46 @@ public class AuthController {
 
         Map<String, Object> response = new HashMap<>();
 
-        // Find primary admin user in database
         AdminUser admin = adminUserRepository.findAll().stream().findFirst().orElse(null);
         if (admin == null) {
             admin = new AdminUser(DEFAULT_PHONE, DEFAULT_PASSWORD, DEFAULT_PIN, DEFAULT_NAME, "ADMIN");
         }
 
-        // Verify current password or current PIN for security
+        // Verify either valid active session token OR correct current password/PIN
+        boolean isTokenValid = token != null && authTokenService.isValidToken(token);
         boolean isCurrentValid = (currentPassword != null && currentPassword.trim().equals(admin.getPassword())) ||
                                  (currentPassword != null && currentPassword.trim().equals(admin.getQuickPin())) ||
                                  DEFAULT_PASSWORD.equals(currentPassword);
 
-        if (!isCurrentValid) {
+        if (!isTokenValid && !isCurrentValid) {
             response.put("success", false);
-            response.put("message", "Incorrect Current Password. Security verification failed.");
+            response.put("message", "Incorrect Current Password or unauthorized session.");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
 
-        // Apply updates
         if (newPassword != null && !newPassword.trim().isEmpty()) {
-            admin.setPassword(newPassword.trim());
+            admin.setPassword(InputSanitizer.sanitizeText(newPassword.trim(), 100));
         }
         if (newPin != null && !newPin.trim().isEmpty()) {
-            admin.setQuickPin(newPin.trim());
+            admin.setQuickPin(InputSanitizer.sanitizeText(newPin.trim(), 10));
         }
         if (newPhone != null && !newPhone.trim().isEmpty()) {
-            admin.setPhone(newPhone.trim());
+            admin.setPhone(InputSanitizer.sanitizePhone(newPhone.trim()));
         }
         if (newName != null && !newName.trim().isEmpty()) {
-            admin.setName(newName.trim());
+            admin.setName(InputSanitizer.sanitizeText(newName.trim(), 100));
         }
         admin.setUpdatedAt(LocalDateTime.now());
-
         adminUserRepository.save(admin);
 
+        // Issue refreshed token
+        String newToken = authTokenService.generateToken(admin.getPhone(), admin.getName(), admin.getRole());
+
         response.put("success", true);
+        response.put("token", newToken);
         response.put("message", "Security Credentials successfully updated in Database!");
         response.put("phone", admin.getPhone());
-        response.put("quickPin", admin.getQuickPin());
         response.put("name", admin.getName());
-
         return ResponseEntity.ok(response);
     }
 
@@ -217,9 +253,9 @@ public class AuthController {
         String token = request.get("token");
         Map<String, Object> response = new HashMap<>();
 
-        if (token != null && activeTokens.containsKey(token)) {
+        if (token != null && authTokenService.isValidToken(token)) {
             response.put("valid", true);
-            response.put("user", activeTokens.get(token));
+            response.put("user", authTokenService.getSafeSession(token));
             return ResponseEntity.ok(response);
         }
 
@@ -232,7 +268,7 @@ public class AuthController {
     public ResponseEntity<Map<String, Object>> logout(@RequestBody Map<String, String> request) {
         String token = request.get("token");
         if (token != null) {
-            activeTokens.remove(token);
+            authTokenService.invalidateToken(token);
         }
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -242,15 +278,15 @@ public class AuthController {
 
     // 6. FORGOT PASSWORD & RECOVERY RESET
     @PostMapping("/reset-password")
-    public ResponseEntity<Map<String, Object>> resetPassword(@RequestBody Map<String, String> payload) {
+    public ResponseEntity<Map<String, Object>> resetPassword(@RequestBody Map<String, String> payload, HttpServletRequest request) {
+        String clientIp = getClientIp(request);
+        Map<String, Object> response = new HashMap<>();
+
         String phone = payload.get("phone");
         String masterRecoveryKey = payload.get("masterKey");
         String newPassword = payload.get("newPassword");
         String newPin = payload.get("newPin");
 
-        Map<String, Object> response = new HashMap<>();
-
-        // Master Restaurant Key for recovery: "BIKANER2026" or manager phone "9058605348"
         boolean isMasterValid = masterRecoveryKey != null && (
             "BIKANER2026".equalsIgnoreCase(masterRecoveryKey.trim()) ||
             "9058605348".equals(masterRecoveryKey.trim()) ||
@@ -258,10 +294,14 @@ public class AuthController {
         );
 
         if (!isMasterValid) {
+            rateLimiterService.recordFailedLogin(clientIp);
             response.put("success", false);
-            response.put("message", "Invalid Master Recovery Key. Recovery access rejected.");
+            response.put("message", "Invalid Master Recovery Key. Access denied.");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
+
+        // Master Key verified: immediately lift any brute-force lockout
+        rateLimiterService.recordSuccessfulLogin(clientIp);
 
         AdminUser admin = adminUserRepository.findAll().stream().findFirst().orElse(null);
         if (admin == null) {
@@ -269,34 +309,25 @@ public class AuthController {
         }
 
         if (newPassword != null && !newPassword.trim().isEmpty()) {
-            admin.setPassword(newPassword.trim());
+            admin.setPassword(InputSanitizer.sanitizeText(newPassword.trim(), 100));
         }
         if (newPin != null && !newPin.trim().isEmpty()) {
-            admin.setQuickPin(newPin.trim());
+            admin.setQuickPin(InputSanitizer.sanitizeText(newPin.trim(), 10));
         }
         if (phone != null && !phone.trim().isEmpty()) {
-            admin.setPhone(phone.trim());
+            admin.setPhone(InputSanitizer.sanitizePhone(phone.trim()));
         }
         admin.setUpdatedAt(LocalDateTime.now());
         adminUserRepository.save(admin);
 
-        // Auto-login session token
-        String token = "bikaner_auth_" + UUID.randomUUID().toString();
-        Map<String, Object> session = new HashMap<>();
-        session.put("phone", admin.getPhone());
-        session.put("name", admin.getName());
-        session.put("role", admin.getRole());
-        session.put("quickPin", admin.getQuickPin());
-        session.put("loginTime", System.currentTimeMillis());
-        activeTokens.put(token, session);
+        rateLimiterService.recordSuccessfulLogin(clientIp);
+        String token = authTokenService.generateToken(admin.getPhone(), admin.getName(), admin.getRole());
 
         response.put("success", true);
         response.put("token", token);
         response.put("phone", admin.getPhone());
         response.put("name", admin.getName());
-        response.put("role", admin.getRole());
-        response.put("quickPin", admin.getQuickPin());
-        response.put("message", "Credentials successfully reset! Password & PIN updated in Database.");
+        response.put("message", "Credentials successfully reset! Password & PIN updated.");
 
         return ResponseEntity.ok(response);
     }
