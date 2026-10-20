@@ -377,6 +377,7 @@ export default function App() {
           categories={categories}
           onUpdateStatus={handleUpdateStatus}
           onRefresh={loadOrdersData}
+          onRefreshMenu={loadMenuData}
           isBellMuted={isBellMuted}
           setIsBellMuted={setIsBellMuted}
           openQrModal={() => setIsQrModalOpen(true)}

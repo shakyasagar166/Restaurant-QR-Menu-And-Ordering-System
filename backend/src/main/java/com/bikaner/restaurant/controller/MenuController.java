@@ -56,4 +56,40 @@ public class MenuController {
             return ResponseEntity.ok(menuItemRepository.save(item));
         }).orElse(ResponseEntity.notFound().build());
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<MenuItem> updateMenuItem(@PathVariable Long id, @RequestBody MenuItem updatedItem) {
+        return menuItemRepository.findById(id).map(existing -> {
+            if (updatedItem.getName() != null && !updatedItem.getName().trim().isEmpty()) {
+                existing.setName(updatedItem.getName().trim());
+            }
+            if (updatedItem.getCategory() != null && !updatedItem.getCategory().trim().isEmpty()) {
+                existing.setCategory(updatedItem.getCategory().trim());
+            }
+            if (updatedItem.getPrice() != null && updatedItem.getPrice() >= 0) {
+                existing.setPrice(updatedItem.getPrice());
+            }
+            if (updatedItem.getDescription() != null) {
+                existing.setDescription(updatedItem.getDescription().trim());
+            }
+            if (updatedItem.getImageUrl() != null && !updatedItem.getImageUrl().trim().isEmpty()) {
+                existing.setImageUrl(updatedItem.getImageUrl().trim());
+            }
+            if (updatedItem.getTag() != null) {
+                existing.setTag(updatedItem.getTag().trim().isEmpty() ? null : updatedItem.getTag().trim());
+            }
+            existing.setAvailable(updatedItem.isAvailable());
+            existing.setVeg(updatedItem.isVeg());
+            return ResponseEntity.ok(menuItemRepository.save(existing));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMenuItem(@PathVariable Long id) {
+        if (menuItemRepository.existsById(id)) {
+            menuItemRepository.deleteById(id);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
 }

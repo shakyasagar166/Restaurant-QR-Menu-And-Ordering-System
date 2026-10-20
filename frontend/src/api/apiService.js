@@ -19,6 +19,42 @@ export const apiService = {
     return res.json();
   },
 
+  async toggleDishAvailability(id) {
+    const res = await fetch(`${API_BASE}/menu/${id}/toggle-availability`, {
+      method: 'PUT',
+    });
+    if (!res.ok) throw new Error('Failed to toggle dish availability');
+    return res.json();
+  },
+
+  async updateMenuItem(id, itemData) {
+    const res = await fetch(`${API_BASE}/menu/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(itemData),
+    });
+    if (!res.ok) throw new Error('Failed to update dish');
+    return res.json();
+  },
+
+  async createMenuItem(itemData) {
+    const res = await fetch(`${API_BASE}/menu`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(itemData),
+    });
+    if (!res.ok) throw new Error('Failed to add dish');
+    return res.json();
+  },
+
+  async deleteMenuItem(id) {
+    const res = await fetch(`${API_BASE}/menu/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete dish');
+    return true;
+  },
+
   // Orders APIs
   async placeOrder(orderData) {
     const res = await fetch(`${API_BASE}/orders`, {
