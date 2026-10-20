@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ArrowLeft, Sparkles, Filter, Crown, Check, Tag, Search } from 'lucide-react';
 import MenuItemCard from './MenuItemCard';
 import { CATEGORY_METADATA } from './CategoryCards';
+import { aiFilterDishes } from '../utils/aiSearchEngine';
 
 export default function CategoryDetail({
   category,
@@ -28,21 +29,14 @@ export default function CategoryDetail({
     badge: 'Specialty',
   };
 
-  const filteredItems = useMemo(() => {
-    return menuItems.filter((item) => {
-      // 1. Text Search Filter
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        const matchesQuery =
-          (item.name && item.name.toLowerCase().includes(q)) ||
-          (item.description && item.description.toLowerCase().includes(q)) ||
-          (item.category && item.category.toLowerCase().includes(q));
-        if (!matchesQuery) return false;
-      } else {
-        if (item.category !== category) return false;
-      }
+  // AI Smart Fuzzy & Semantic Search Result
+  const aiSearchResult = useMemo(() => {
+    return aiFilterDishes(menuItems, searchQuery, category);
+  }, [menuItems, searchQuery, category]);
 
-      // 2. Quick Filter Pill
+  const filteredItems = useMemo(() => {
+    return aiSearchResult.items.filter((item) => {
+      // Quick Filter Pill
       if (activeFilterPill === 'IN_STOCK') {
         if (item.isAvailable === false || item.available === false) return false;
       } else if (activeFilterPill === 'SPECIAL') {
@@ -53,7 +47,7 @@ export default function CategoryDetail({
 
       return true;
     });
-  }, [menuItems, category, searchQuery, activeFilterPill]);
+  }, [aiSearchResult.items, activeFilterPill]);
 
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 w-full max-w-full overflow-hidden">
@@ -83,14 +77,14 @@ export default function CategoryDetail({
             }`}
           >
             <div className="flex items-center pl-2.5 pr-1.5 py-1.5 shrink-0">
-              <span className="bg-gradient-to-r from-amber-400 to-amber-500 text-stone-950 font-black text-[11px] sm:text-xs px-2.5 py-1 rounded-xl shadow-xs flex items-center gap-1.5 tracking-wide border border-amber-300">
-                <Search className="w-3.5 h-3.5 text-stone-950 stroke-[3]" />
-                <span>SEARCH DISH</span>
+              <span className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-stone-950 font-black text-[11px] sm:text-xs px-2.5 py-1 rounded-xl shadow-xs flex items-center gap-1.5 tracking-wide border border-amber-300">
+                <Sparkles className="w-3.5 h-3.5 text-stone-950 stroke-[2.5]" />
+                <span>AI SEARCH</span>
               </span>
             </div>
             <input
               type="text"
-              placeholder={`Search dishes in ${searchQuery ? 'menu' : category} (Paneer, Naan, Dosa)...`}
+              placeholder={`AI Smart Search: Type dish (e.g. paner, makni, dhosa, cofe)...`}
               value={searchQuery || ''}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-transparent pl-1.5 pr-9 py-2 text-xs sm:text-sm font-bold text-stone-950 placeholder-stone-500 focus:outline-none"
@@ -106,6 +100,37 @@ export default function CategoryDetail({
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* 🤖 AI SMART SEARCH RECOGNITION BANNER */}
+      {searchQuery && aiSearchResult.isAiCorrected && filteredItems.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-2 border-amber-400 rounded-2xl p-3.5 mb-3 shadow-sm flex items-center justify-between gap-3 animate-in fade-in">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-600 text-stone-950 flex items-center justify-center font-black text-sm shrink-0 shadow-xs border border-amber-300">
+              <Sparkles className="w-4 h-4 text-stone-950" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-black uppercase text-amber-950 bg-amber-200/90 border border-amber-300 px-2 py-0.5 rounded font-brand">
+                  ✨ AI Auto-Corrected
+                </span>
+                <span className="text-xs font-bold text-stone-900">
+                  Recognized: <strong>"{aiSearchResult.topSuggestion || 'Dish'}"</strong> (from your input <em>"{searchQuery}"</em>)
+                </span>
+              </div>
+              <p className="text-[11px] text-stone-600 font-semibold mt-0.5">
+                Spelling mistake ko AI ne automatically samajh kar correct menu item dikha diya hai!
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSearchQuery && setSearchQuery('')}
+            className="text-xs font-bold text-stone-700 hover:text-stone-950 bg-white border border-stone-300 px-2.5 py-1 rounded-xl shadow-2xs shrink-0 cursor-pointer"
+          >
+            ✕ Clear
+          </button>
         </div>
       )}
 
@@ -211,15 +236,44 @@ export default function CategoryDetail({
       {filteredItems.length === 0 ? (
         <div className="bg-white rounded-3xl border border-stone-200 p-8 sm:p-12 text-center my-6 shadow-sm">
           <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-800 flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner">
-            🔍
+            🤖
           </div>
-          <h4 className="text-lg font-brand font-bold text-stone-900 mb-1">No dishes found</h4>
-          <p className="text-xs text-stone-500 mb-5 max-w-sm mx-auto">
-            We couldn't find any dish matching your search in this collection.
+          <h4 className="text-lg font-brand font-bold text-stone-900 mb-1">
+            {searchQuery ? `"${searchQuery}" ke liye koi direct dish nahi mili` : 'No dishes found'}
+          </h4>
+          <p className="text-xs text-stone-600 mb-4 max-w-sm mx-auto font-medium">
+            {searchQuery
+              ? 'AI ne check kiya par koi direct match nahi mila. Shayad aap inme se koi dish dhoondh rahe the?'
+              : "We couldn't find any dish matching your filter in this collection."}
           </p>
+
+          {/* AI Smart Fallback Suggestions */}
+          {aiSearchResult.closestAlternatives && aiSearchResult.closestAlternatives.length > 0 && (
+            <div className="mb-6 max-w-md mx-auto">
+              <span className="text-[11px] font-black uppercase text-amber-900 tracking-wider block mb-2.5 font-brand">
+                💡 AI Smart Suggestions (Click to View):
+              </span>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {aiSearchResult.closestAlternatives.map((alt) => (
+                  <button
+                    key={alt}
+                    type="button"
+                    onClick={() => setSearchQuery && setSearchQuery(alt)}
+                    className="bg-amber-100 hover:bg-amber-200 text-amber-950 text-xs font-black px-3.5 py-2 rounded-xl border border-amber-300 transition cursor-pointer shadow-2xs active:scale-95"
+                  >
+                    🍽️ {alt}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button
-            onClick={onBackToCategories}
-            className="bg-red-800 hover:bg-red-900 text-white font-brand font-bold text-xs px-5 py-2.5 rounded-xl shadow-md transition"
+            onClick={() => {
+              if (setSearchQuery) setSearchQuery('');
+              onBackToCategories();
+            }}
+            className="bg-red-800 hover:bg-red-900 text-white font-brand font-bold text-xs px-5 py-2.5 rounded-xl shadow-md transition cursor-pointer"
           >
             ← Back to All Collections
           </button>

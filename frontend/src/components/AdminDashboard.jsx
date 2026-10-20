@@ -61,6 +61,7 @@ import { formatPrice, formatTime, getTimeAgo, formatDate, getISODateKey } from '
 import { bellPlayer } from '../utils/sound';
 import { apiService } from '../api/apiService';
 import { generateWhatsAppOrderMessage, openWhatsApp } from '../utils/whatsapp';
+import { aiMatchDish } from '../utils/aiSearchEngine';
 
 // High-resolution curated Indian food photos for quick 1-click select
 const PHOTO_PRESETS = [
@@ -492,7 +493,7 @@ export default function AdminDashboard({
     const nameMatch = order.customerName?.toLowerCase().includes(q);
     const phoneMatch = order.customerPhone?.toLowerCase().includes(q);
     const idMatch = String(order.id).includes(q);
-    const itemMatch = order.items?.some((i) => i.name.toLowerCase().includes(q));
+    const itemMatch = order.items?.some((i) => i.name?.toLowerCase().includes(q) || aiMatchDish(q, i).matched);
     return tableMatch || nameMatch || phoneMatch || idMatch || itemMatch;
   });
 
@@ -1964,7 +1965,8 @@ export default function AdminDashboard({
                           const matchSearch =
                             !menuSearch ||
                             item.name.toLowerCase().includes(menuSearch.toLowerCase()) ||
-                            item.category.toLowerCase().includes(menuSearch.toLowerCase());
+                            item.category.toLowerCase().includes(menuSearch.toLowerCase()) ||
+                            aiMatchDish(menuSearch, item).matched;
                           return matchCat && matchSearch;
                         })
                         .map((item) => {

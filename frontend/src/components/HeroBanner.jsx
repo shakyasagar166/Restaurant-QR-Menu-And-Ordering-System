@@ -46,7 +46,7 @@ export default function HeroBanner({ searchQuery, setSearchQuery, selectedCatego
                 Indulge in time-honored North Indian curries simmered in pure desi ghee, clay-oven charred tandoori rotis, South Indian dosas, Delhi-6 street chaat, and artisan mocktails. Order straight from your rooftop table with instant kitchen bell notification.
               </p>
 
-              {/* High-Visibility Highlighted Customer Search Bar */}
+              {/* High-Visibility Highlighted Customer AI Smart Search Bar */}
               <div className="relative max-w-xl mb-4 group">
                 {/* Subtle Ambient Golden Glow Behind Search Bar */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 rounded-3xl blur-md opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
@@ -59,16 +59,16 @@ export default function HeroBanner({ searchQuery, setSearchQuery, selectedCatego
                       : 'border-amber-400 hover:border-amber-500 ring-2 ring-amber-100/90 focus-within:border-amber-600 focus-within:ring-4 focus-within:ring-amber-200'
                   }`}
                 >
-                  {/* Eye-Catching Golden Search Badge */}
+                  {/* Eye-Catching Golden AI Search Badge */}
                   <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-stone-950 font-black text-xs sm:text-sm px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-sm shrink-0 border border-amber-300">
-                    <Search className="w-4 h-4 text-stone-950 stroke-[3]" />
-                    <span className="font-brand uppercase tracking-wider hidden xs:inline">Search</span>
+                    <Sparkles className="w-4 h-4 text-stone-950 stroke-[2.5]" />
+                    <span className="font-brand uppercase tracking-wider hidden xs:inline">AI SEARCH</span>
                   </div>
 
                   {/* High Contrast Input */}
                   <input
                     type="text"
-                    placeholder="Search 85+ pure veg dishes (Paneer, Naan, Dosa, Chaat)..."
+                    placeholder="AI Smart Search: (e.g. paner, makni, dhosa, cofe, meetha)..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-transparent pl-2.5 pr-2 py-2 text-xs sm:text-sm font-black text-stone-950 placeholder-stone-500 focus:outline-none"
@@ -90,6 +90,14 @@ export default function HeroBanner({ searchQuery, setSearchQuery, selectedCatego
                       ⚡ 85+ Pure Veg
                     </span>
                   )}
+                </div>
+
+                {/* AI Typo Resilience Tag */}
+                <div className="flex items-center gap-2 mt-2 px-1 text-[11px] font-semibold text-amber-100/90">
+                  <span className="bg-amber-400/25 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider font-brand shrink-0">
+                    ✨ AI Typo Proof
+                  </span>
+                  <span className="truncate">Spelling mistake ya Hinglish hone par bhi AI dish samajh leta hai!</span>
                 </div>
               </div>
 
