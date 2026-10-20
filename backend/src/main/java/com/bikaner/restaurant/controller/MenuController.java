@@ -53,17 +53,27 @@ public class MenuController {
         if (item.getName() == null || item.getName().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Dish name is required."));
         }
-        item.setName(InputSanitizer.sanitizeText(item.getName(), 100));
-        item.setCategory(InputSanitizer.sanitizeText(item.getCategory(), 50));
-        item.setDescription(InputSanitizer.sanitizeText(item.getDescription(), 300));
-        item.setImageUrl(InputSanitizer.sanitizeText(item.getImageUrl(), 255));
-        item.setTag(InputSanitizer.sanitizeText(item.getTag(), 30));
+
+        // Deduplication: if dish already exists by name, update it instead of duplicate
+        String cleanName = InputSanitizer.sanitizeText(item.getName().trim(), 100);
+        List<MenuItem> existingList = menuItemRepository.findByNameIgnoreCase(cleanName);
+        MenuItem target = existingList.isEmpty() ? item : existingList.get(0);
+
+        target.setName(cleanName);
+        target.setCategory(InputSanitizer.sanitizeText(item.getCategory(), 50));
+        target.setDescription(InputSanitizer.sanitizeText(item.getDescription(), 1000));
+        target.setImageUrl(InputSanitizer.sanitizeText(item.getImageUrl(), 4096));
+        target.setTag(InputSanitizer.sanitizeText(item.getTag(), 50));
 
         if (item.getPrice() == null || item.getPrice() < 0) {
-            item.setPrice(0.0);
+            target.setPrice(0.0);
+        } else {
+            target.setPrice(item.getPrice());
         }
+        target.setAvailable(item.isAvailable());
+        target.setVeg(item.isVeg());
 
-        MenuItem saved = menuItemRepository.save(item);
+        MenuItem saved = menuItemRepository.save(target);
         return ResponseEntity.ok(saved);
     }
 
@@ -77,29 +87,45 @@ public class MenuController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateMenuItem(@PathVariable Long id, @RequestBody MenuItem updatedItem) {
-        return menuItemRepository.findById(id).map(existing -> {
-            if (updatedItem.getName() != null && !updatedItem.getName().trim().isEmpty()) {
-                existing.setName(InputSanitizer.sanitizeText(updatedItem.getName(), 100));
+        // 1. Try finding by database ID
+        MenuItem target = menuItemRepository.findById(id).orElse(null);
+
+        // 2. Fallback: If not found by ID (e.g. from frontend catalog ID like 101), look up by dish Name
+        if (target == null && updatedItem.getName() != null && !updatedItem.getName().trim().isEmpty()) {
+            List<MenuItem> byName = menuItemRepository.findByNameIgnoreCase(updatedItem.getName().trim());
+            if (!byName.isEmpty()) {
+                target = byName.get(0);
             }
-            if (updatedItem.getCategory() != null && !updatedItem.getCategory().trim().isEmpty()) {
-                existing.setCategory(InputSanitizer.sanitizeText(updatedItem.getCategory(), 50));
-            }
-            if (updatedItem.getPrice() != null && updatedItem.getPrice() >= 0) {
-                existing.setPrice(updatedItem.getPrice());
-            }
-            if (updatedItem.getDescription() != null) {
-                existing.setDescription(InputSanitizer.sanitizeText(updatedItem.getDescription(), 300));
-            }
-            if (updatedItem.getImageUrl() != null && !updatedItem.getImageUrl().trim().isEmpty()) {
-                existing.setImageUrl(InputSanitizer.sanitizeText(updatedItem.getImageUrl(), 255));
-            }
-            if (updatedItem.getTag() != null) {
-                existing.setTag(InputSanitizer.sanitizeText(updatedItem.getTag(), 30));
-            }
-            existing.setAvailable(updatedItem.isAvailable());
-            existing.setVeg(updatedItem.isVeg());
-            return ResponseEntity.ok(menuItemRepository.save(existing));
-        }).orElse(ResponseEntity.notFound().build());
+        }
+
+        // 3. Fallback: If still not in database, create as a new MenuItem (UPSERT) so edit never fails
+        if (target == null) {
+            target = new MenuItem();
+        }
+
+        if (updatedItem.getName() != null && !updatedItem.getName().trim().isEmpty()) {
+            target.setName(InputSanitizer.sanitizeText(updatedItem.getName(), 100));
+        }
+        if (updatedItem.getCategory() != null && !updatedItem.getCategory().trim().isEmpty()) {
+            target.setCategory(InputSanitizer.sanitizeText(updatedItem.getCategory(), 50));
+        }
+        if (updatedItem.getPrice() != null && updatedItem.getPrice() >= 0) {
+            target.setPrice(updatedItem.getPrice());
+        }
+        if (updatedItem.getDescription() != null) {
+            target.setDescription(InputSanitizer.sanitizeText(updatedItem.getDescription(), 1000));
+        }
+        if (updatedItem.getImageUrl() != null && !updatedItem.getImageUrl().trim().isEmpty()) {
+            target.setImageUrl(InputSanitizer.sanitizeText(updatedItem.getImageUrl(), 4096));
+        }
+        if (updatedItem.getTag() != null) {
+            target.setTag(InputSanitizer.sanitizeText(updatedItem.getTag(), 50));
+        }
+        target.setAvailable(updatedItem.isAvailable());
+        target.setVeg(updatedItem.isVeg());
+
+        MenuItem saved = menuItemRepository.save(target);
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")

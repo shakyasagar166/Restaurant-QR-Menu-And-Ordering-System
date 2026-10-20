@@ -12,7 +12,7 @@ import LiveOrderTracker from './components/LiveOrderTracker';
 import QrCodeModal from './components/QrCodeModal';
 import PaymentModal from './components/PaymentModal';
 import AiChatBot from './components/AiChatBot';
-import { apiService, pingBackend } from './api/apiService';
+import { apiService, pingBackend, getLocalMenuOverrides } from './api/apiService';
 import { bellPlayer } from './utils/sound';
 import { formatPrice } from './utils/formatters';
 import { ShoppingBag, Bell, Sparkles, CheckCircle2, Crown, Lock } from 'lucide-react';
@@ -27,17 +27,23 @@ export default function App() {
   // Table selection from URL param or default
   const [tableNumber, setTableNumber] = useState('T-1');
 
-  // Menu data initialized with full 155+ Bikaner Express physical menu catalog
+  // Menu data initialized with full 155+ catalog + local custom photo/price overrides
   const [menuItems, setMenuItems] = useState(() => {
     try {
+      const overrides = getLocalMenuOverrides();
       const cached = localStorage.getItem('bikaner_menu_cache');
+      let base = BIKANER_MASTER_MENU;
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed) && parsed.length >= BIKANER_MASTER_MENU.length) {
-          return parsed;
+          base = parsed;
         }
       }
-      return BIKANER_MASTER_MENU;
+      return base.map((item) => {
+        const key = item.name.toLowerCase().trim();
+        const o = overrides[key];
+        return o ? { ...item, ...o, imageUrl: o.imageUrl || item.imageUrl } : item;
+      });
     } catch {
       return BIKANER_MASTER_MENU;
     }
@@ -226,7 +232,7 @@ export default function App() {
     }
   }, [activeCustomerOrder]);
 
-  // Fetch Menu and Categories from Spring Boot backend (Merged with 155+ item master catalog)
+  // Fetch Menu and Categories from Spring Boot backend (Merged with 155+ item master catalog + local admin overrides)
   const loadMenuData = async () => {
     try {
       const [backendItems, backendCats] = await Promise.all([
@@ -234,43 +240,66 @@ export default function App() {
         apiService.getCategories().catch(() => null),
       ]);
 
-      let finalItems = BIKANER_MASTER_MENU;
+      const localOverrides = getLocalMenuOverrides();
 
-      if (backendItems && Array.isArray(backendItems) && backendItems.length > 0) {
-        // Map backend items by lowercase name
-        const backendMap = new Map();
+      // Map backend items by lowercase trimmed name
+      const backendMap = new Map();
+      if (backendItems && Array.isArray(backendItems)) {
         backendItems.forEach((b) => {
           if (b.name) backendMap.set(b.name.toLowerCase().trim(), b);
         });
-
-        // Overlay backend properties (price, availability, custom image) onto master catalog
-        const merged = BIKANER_MASTER_MENU.map((masterItem) => {
-          const match = backendMap.get(masterItem.name.toLowerCase().trim());
-          if (match) {
-            return {
-              ...masterItem,
-              ...match,
-              imageUrl: match.imageUrl || masterItem.imageUrl,
-            };
-          }
-          return masterItem;
-        });
-
-        // Also append any custom dishes added via Admin Dashboard that aren't in master catalog
-        const masterNames = new Set(BIKANER_MASTER_MENU.map((m) => m.name.toLowerCase().trim()));
-        backendItems.forEach((b) => {
-          if (b.name && !masterNames.has(b.name.toLowerCase().trim())) {
-            merged.push(b);
-          }
-        });
-
-        finalItems = merged;
       }
 
-      setMenuItems(finalItems);
-      try { localStorage.setItem('bikaner_menu_cache', JSON.stringify(finalItems)); } catch {}
+      // Merge: BIKANER_MASTER_MENU + Backend Items + Local Overrides (Local overrides have highest priority!)
+      const merged = BIKANER_MASTER_MENU.map((masterItem) => {
+        const key = masterItem.name.toLowerCase().trim();
+        const bMatch = backendMap.get(key);
+        const oMatch = localOverrides[key];
 
-      const allCategories = Array.from(new Set(finalItems.map((i) => i.category))).filter(Boolean);
+        let item = { ...masterItem };
+        if (bMatch) {
+          item = {
+            ...item,
+            ...bMatch,
+            imageUrl: bMatch.imageUrl || item.imageUrl,
+          };
+        }
+        if (oMatch) {
+          item = {
+            ...item,
+            ...oMatch,
+            imageUrl: oMatch.imageUrl || item.imageUrl,
+          };
+        }
+        return item;
+      });
+
+      // Also append any newly created custom dishes from backend or local overrides that aren't in master catalog
+      const masterNames = new Set(BIKANER_MASTER_MENU.map((m) => m.name.toLowerCase().trim()));
+
+      if (backendItems && Array.isArray(backendItems)) {
+        backendItems.forEach((b) => {
+          const key = (b.name || '').toLowerCase().trim();
+          if (key && !masterNames.has(key)) {
+            const oMatch = localOverrides[key];
+            merged.push(oMatch ? { ...b, ...oMatch } : b);
+            masterNames.add(key);
+          }
+        });
+      }
+
+      Object.values(localOverrides).forEach((o) => {
+        const key = (o.name || '').toLowerCase().trim();
+        if (key && !masterNames.has(key)) {
+          merged.push(o);
+          masterNames.add(key);
+        }
+      });
+
+      setMenuItems(merged);
+      try { localStorage.setItem('bikaner_menu_cache', JSON.stringify(merged)); } catch {}
+
+      const allCategories = Array.from(new Set(merged.map((i) => i.category))).filter(Boolean);
       setCategories(allCategories);
       try { localStorage.setItem('bikaner_categories_cache', JSON.stringify(allCategories)); } catch {}
     } catch (err) {
