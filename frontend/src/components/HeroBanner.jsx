@@ -46,32 +46,30 @@ export default function HeroBanner({ searchQuery, setSearchQuery, selectedCatego
                 Indulge in time-honored North Indian curries simmered in pure desi ghee, clay-oven charred tandoori rotis, South Indian dosas, Delhi-6 street chaat, and artisan mocktails. Order straight from your rooftop table with instant kitchen bell notification.
               </p>
 
-              {/* High-Visibility Highlighted Customer AI Smart Search Bar */}
-              <div className="relative max-w-xl mb-4 group">
-                {/* Subtle Ambient Golden Glow Behind Search Bar */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 rounded-3xl blur-md opacity-75 group-hover:opacity-100 transition duration-300 animate-pulse"></div>
-
-                {/* Bright Crisp White & Gold Search Container */}
+              {/* Clean & Balanced Customer Search Bar */}
+              <div className="relative max-w-xl mb-3.5">
+                {/* Crisp White Container with subtle border & shadow */}
                 <div
-                  className={`relative flex items-center bg-white rounded-2xl sm:rounded-3xl p-1.5 sm:p-2 border-2 transition-all duration-200 shadow-2xl ${
+                  className={`relative flex items-center bg-white rounded-2xl p-1 sm:p-1.5 border transition-all duration-200 shadow-md ${
                     searchQuery
-                      ? 'border-red-600 ring-4 ring-red-100 shadow-red-500/20'
-                      : 'border-amber-400 hover:border-amber-500 ring-2 ring-amber-100/90 focus-within:border-amber-600 focus-within:ring-4 focus-within:ring-amber-200'
+                      ? 'border-red-500 ring-2 ring-red-100'
+                      : 'border-amber-300/80 hover:border-amber-400 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-200/60'
                   }`}
                 >
-                  {/* Eye-Catching Golden AI Search Badge */}
-                  <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-stone-950 font-black text-xs sm:text-sm px-3.5 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-sm shrink-0 border border-amber-300">
-                    <Sparkles className="w-4 h-4 text-stone-950 stroke-[2.5]" />
-                    <span className="font-brand uppercase tracking-wider hidden xs:inline">AI SEARCH</span>
+                  {/* Subtle Search & AI Tag */}
+                  <div className="flex items-center gap-1.5 text-amber-900 bg-amber-50 border border-amber-200/90 px-2.5 py-1.5 rounded-xl text-xs font-bold shrink-0 ml-0.5">
+                    <Search className="w-4 h-4 text-amber-700" />
+                    <span className="font-brand uppercase tracking-wider text-[11px] hidden xs:inline">Search</span>
+                    <span className="text-[9px] bg-amber-200/80 text-amber-900 px-1 py-0.2 rounded font-black">AI</span>
                   </div>
 
-                  {/* High Contrast Input */}
+                  {/* High Legibility Input */}
                   <input
                     type="text"
-                    placeholder="AI Smart Search: (e.g. paner, makni, dhosa, cofe, meetha)..."
+                    placeholder="Search dishes (e.g. paner, makni, dhosa, cofe)..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-transparent pl-2.5 pr-2 py-2 text-xs sm:text-sm font-black text-stone-950 placeholder-stone-500 focus:outline-none"
+                    className="w-full bg-transparent pl-2.5 pr-2 py-1.5 text-xs sm:text-sm font-semibold text-stone-900 placeholder-stone-400 focus:outline-none"
                   />
 
                   {/* Action Button: Clear or Dish Count Badge */}
@@ -79,25 +77,23 @@ export default function HeroBanner({ searchQuery, setSearchQuery, selectedCatego
                     <button
                       type="button"
                       onClick={() => setSearchQuery('')}
-                      className="flex items-center gap-1 bg-rose-50 hover:bg-rose-500 text-rose-700 hover:text-white border border-rose-300 text-xs font-black px-3 py-1.5 rounded-xl transition cursor-pointer shrink-0 mr-1 shadow-xs"
+                      className="flex items-center gap-1 bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 text-xs font-bold px-2.5 py-1 rounded-xl transition cursor-pointer shrink-0 mr-1 shadow-2xs"
                       title="Clear search"
                     >
                       <span>Clear</span>
-                      <span className="text-sm font-black">✕</span>
+                      <span className="text-xs font-black">✕</span>
                     </button>
                   ) : (
-                    <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-black text-amber-950 bg-amber-100/90 border border-amber-300 px-2.5 py-1 rounded-xl shrink-0 mr-1">
-                      ⚡ 85+ Pure Veg
+                    <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-stone-500 bg-stone-100/90 border border-stone-200 px-2.5 py-0.5 rounded-lg shrink-0 mr-1">
+                      155+ Pure Veg
                     </span>
                   )}
                 </div>
 
-                {/* AI Typo Resilience Tag */}
-                <div className="flex items-center gap-2 mt-2 px-1 text-[11px] font-semibold text-amber-100/90">
-                  <span className="bg-amber-400/25 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider font-brand shrink-0">
-                    ✨ AI Typo Proof
-                  </span>
-                  <span className="truncate">Spelling mistake ya Hinglish hone par bhi AI dish samajh leta hai!</span>
+                {/* Subtle AI Search helper text */}
+                <div className="flex items-center gap-1.5 mt-1.5 px-1 text-[11px] text-stone-300/80">
+                  <span className="text-amber-400 text-xs">✨</span>
+                  <span>AI Smart Search: Spelling mistake ya Hinglish hone par bhi dish samajh leta hai</span>
                 </div>
               </div>
 

@@ -66,28 +66,28 @@ export default function CategoryDetail({
         </span>
       </div>
 
-      {/* High-Visibility Highlighted Dish Search Bar inside Category View */}
+      {/* Clean & Balanced Dish Search Bar inside Category View */}
       {setSearchQuery && (
-        <div className="relative w-full mb-3 group">
+        <div className="relative w-full mb-3">
           <div
-            className={`relative flex items-center bg-white border-2 rounded-2xl transition-all shadow-sm ${
+            className={`relative flex items-center bg-white border rounded-xl transition-all shadow-xs ${
               searchQuery
-                ? 'border-red-600 ring-4 ring-red-100 shadow-red-500/15'
-                : 'border-amber-400 hover:border-amber-500 ring-2 ring-amber-100/80 focus-within:border-red-600 focus-within:ring-4 focus-within:ring-red-100'
+                ? 'border-red-500 ring-2 ring-red-100'
+                : 'border-stone-300 hover:border-amber-400 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-200/60'
             }`}
           >
             <div className="flex items-center pl-2.5 pr-1.5 py-1.5 shrink-0">
-              <span className="bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-stone-950 font-black text-[11px] sm:text-xs px-2.5 py-1 rounded-xl shadow-xs flex items-center gap-1.5 tracking-wide border border-amber-300">
-                <Sparkles className="w-3.5 h-3.5 text-stone-950 stroke-[2.5]" />
-                <span>AI SEARCH</span>
+              <span className="bg-amber-50 text-amber-900 font-bold text-[11px] px-2 py-0.5 rounded-lg flex items-center gap-1 border border-amber-200/80">
+                <Search className="w-3.5 h-3.5 text-amber-700" />
+                <span>Search</span>
               </span>
             </div>
             <input
               type="text"
-              placeholder={`AI Smart Search: Type dish (e.g. paner, makni, dhosa, cofe)...`}
+              placeholder={`Search in ${category} (e.g. paner, makni, thali)...`}
               value={searchQuery || ''}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent pl-1.5 pr-9 py-2 text-xs sm:text-sm font-bold text-stone-950 placeholder-stone-500 focus:outline-none"
+              className="w-full bg-transparent pl-1.5 pr-9 py-2 text-xs sm:text-sm font-medium text-stone-900 placeholder-stone-400 focus:outline-none"
             />
             {searchQuery && (
               <button
