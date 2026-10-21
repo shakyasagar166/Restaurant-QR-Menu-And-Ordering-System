@@ -11,7 +11,9 @@ import {
   Copy,
   Check,
   Layers,
+  FileText,
   Sparkles,
+  Scissors,
 } from 'lucide-react';
 
 // Bulletproof rounded rectangle drawing helper for cross-browser canvas support
@@ -266,7 +268,175 @@ function generateStandeeCardDataUrl(tableId, qrSourceCanvas, logoImg) {
   return canvas.toDataURL('image/png');
 }
 
+// Generate HD A4 Sheet Card containing 4 tables (1654x2339 HD PNG at exact A4 ratio)
+function generateA4SheetDataUrl(pageNumber) {
+  const startT = (pageNumber - 1) * 4 + 1;
+  const tableIds = [
+    `T-${startT}`,
+    `T-${startT + 1}`,
+    `T-${startT + 2}`,
+    `T-${startT + 3}`,
+  ];
+
+  const canvas = document.createElement('canvas');
+  const width = 1654;
+  const height = 2339;
+  const ctx = canvas.getContext('2d');
+
+  // Crisp White Sheet Background
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, width, height);
+
+  // Sheet Top Info Header
+  ctx.fillStyle = '#7f1d1d';
+  ctx.font = '900 28px "Playfair Display", Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(
+    `BIKANER EXPRESS — TABLE QR STANDS (PAGE ${pageNumber} OF 3)`,
+    width / 2,
+    48
+  );
+
+  ctx.fillStyle = '#57534e';
+  ctx.font = 'bold 15px "Plus Jakarta Sans", system-ui, sans-serif';
+  ctx.fillText(
+    `Tables ${startT} to ${startT + 3} • Cut along dotted lines for 4 individual table standees`,
+    width / 2,
+    76
+  );
+
+  // Card Grid Layout (2 columns x 2 rows)
+  const cardW = 735;
+  const cardH = 1080;
+  const gapX = 84;
+  const gapY = 40;
+  const startX = 50;
+  const startY = 102;
+
+  tableIds.forEach((tId, idx) => {
+    const col = idx % 2;
+    const row = Math.floor(idx / 2);
+    const cardX = startX + col * (cardW + gapX);
+    const cardY = startY + row * (cardH + gapY);
+
+    // 1. Dotted Cutting Line
+    ctx.save();
+    ctx.setLineDash([8, 6]);
+    ctx.strokeStyle = '#9ca3af';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cardX, cardY, cardW, cardH);
+    ctx.restore();
+
+    // Scissor label
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '12px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('✂ Cut line', cardX + cardW - 10, cardY + 16);
+
+    // 2. Main Standee Card Container (inset by 12px)
+    const innerX = cardX + 12;
+    const innerY = cardY + 22;
+    const innerW = cardW - 24;
+    const innerH = cardH - 34;
+
+    // Card Background & Gold Frame
+    drawRoundRect(ctx, innerX, innerY, innerW, innerH, 20, '#ffffff', '#d97706', 4);
+
+    ctx.strokeStyle = '#fef3c7';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(innerX + 6, innerY + 6, innerW - 12, innerH - 12);
+
+    // 3. Card Top Header (Maroon)
+    const headerH = 175;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(innerX + 20, innerY);
+    ctx.lineTo(innerX + innerW - 20, innerY);
+    ctx.quadraticCurveTo(innerX + innerW, innerY, innerX + innerW, innerY + 20);
+    ctx.lineTo(innerX + innerW, innerY + headerH);
+    ctx.lineTo(innerX, innerY + headerH);
+    ctx.lineTo(innerX, innerY + 20);
+    ctx.quadraticCurveTo(innerX, innerY, innerX + 20, innerY);
+    ctx.closePath();
+    ctx.fillStyle = '#7f1d1d';
+    ctx.fill();
+    ctx.restore();
+
+    // Header Gold Divider Line
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(innerX, innerY + headerH);
+    ctx.lineTo(innerX + innerW, innerY + headerH);
+    ctx.stroke();
+
+    // Header Texts
+    const cardCenterX = innerX + innerW / 2;
+    ctx.textAlign = 'center';
+
+    ctx.fillStyle = '#34d399';
+    ctx.font = 'bold 16px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.fillText('• 100% PURE VEG RESTAURANT •', cardCenterX, innerY + 36);
+
+    ctx.fillStyle = '#fef08a';
+    ctx.font = '900 36px "Playfair Display", Georgia, serif';
+    ctx.fillText('BIKANER EXPRESS', cardCenterX, innerY + 82);
+
+    ctx.fillStyle = '#fed7aa';
+    ctx.font = 'bold 15px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.fillText('Aman International Mall • Roof Top Mainpuri', cardCenterX, innerY + 115);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '13px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.fillText('Scan with Camera to View Menu & Order', cardCenterX, innerY + 148);
+
+    // 4. White Pod for QR Code
+    const qrPodSize = 510;
+    const qrPodX = cardCenterX - qrPodSize / 2;
+    const qrPodY = innerY + headerH + 28;
+
+    drawRoundRect(ctx, qrPodX, qrPodY, qrPodSize, qrPodSize, 18, '#fafaf9', '#e7e5e4', 2);
+
+    // Draw QR from pre-rendered source canvas
+    const qrSource = document.getElementById(`qr-canvas-source-${tId}`);
+    if (qrSource) {
+      const qrDrawSize = 470;
+      const qrDrawX = cardCenterX - qrDrawSize / 2;
+      const qrDrawY = qrPodY + 20;
+      ctx.drawImage(qrSource, qrDrawX, qrDrawY, qrDrawSize, qrDrawSize);
+    }
+
+    // 5. Table Badge Pill
+    const pillW = 380;
+    const pillH = 75;
+    const pillX = cardCenterX - pillW / 2;
+    const pillY = qrPodY + qrPodSize + 32;
+
+    drawRoundRect(ctx, pillX, pillY, pillW, pillH, 38, '#b45309', '#f59e0b', 3);
+
+    const tableNum = tId.replace('T-', '');
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '900 38px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`TABLE ${tableNum}`, cardCenterX, pillY + 52);
+
+    // 6. Card Footer
+    ctx.fillStyle = '#1c1917';
+    ctx.font = 'bold 18px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.fillText('Instant Kitchen Bell • Fresh Delicacies', cardCenterX, pillY + 115);
+
+    ctx.fillStyle = '#78716c';
+    ctx.font = '14px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.fillText('No App Required • Touch Free Dining', cardCenterX, pillY + 140);
+  });
+
+  return canvas.toDataURL('image/png');
+}
+
 export default function QrCodeModal({ isOpen, onClose }) {
+  // Tabs: 'a4_sheets' (Tables 1-12 across 3 pages) OR 'single' (Tables 1-20 individual)
+  const [viewMode, setViewMode] = useState('a4_sheets');
+  const [activeA4Page, setActiveA4Page] = useState(1);
   const [selectedTable, setSelectedTable] = useState('T-1');
   const [isDownloading, setIsDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -277,8 +447,30 @@ export default function QrCodeModal({ isOpen, onClose }) {
   const currentHost = window.location.origin;
   const qrUrl = `${currentHost}/?table=${selectedTable}`;
 
-  const handlePrint = () => {
+  // Print all 3 A4 Pages with 4 QRs each (Tables 1-12)
+  const handlePrintSheets = () => {
+    document.body.classList.add('print-sheets');
+    document.body.classList.remove('print-single');
+    const cleanup = () => {
+      document.body.classList.remove('print-sheets');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
     window.print();
+    setTimeout(cleanup, 2000);
+  };
+
+  // Print Single Standee Card
+  const handlePrintSingle = () => {
+    document.body.classList.add('print-single');
+    document.body.classList.remove('print-sheets');
+    const cleanup = () => {
+      document.body.classList.remove('print-single');
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    window.print();
+    setTimeout(cleanup, 2000);
   };
 
   const handleCopyLink = () => {
@@ -326,7 +518,52 @@ export default function QrCodeModal({ isOpen, onClose }) {
     }
   };
 
-  // Batch download all 20 tables
+  // Download 1 A4 Page (Containing 4 tables)
+  const handleDownloadA4Page = (pageNum) => {
+    try {
+      setIsDownloading(true);
+      const startT = (pageNum - 1) * 4 + 1;
+      const endT = startT + 3;
+      const dataUrl = generateA4SheetDataUrl(pageNum);
+      triggerDownload(
+        dataUrl,
+        `Bikaner_A4_Sheet_Page_${pageNum}_Tables_${startT}_to_${endT}.png`
+      );
+    } catch (err) {
+      console.error('A4 sheet download error:', err);
+      alert('A4 Sheet download failed. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Download All 3 A4 Sheets in sequence (Tables 1 to 12)
+  const handleDownloadAllA4Sheets = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      for (let p = 1; p <= 3; p++) {
+        const startT = (p - 1) * 4 + 1;
+        const endT = startT + 3;
+        setBatchProgress(`Generating A4 Sheet Page ${p} of 3 (Tables ${startT}-${endT})...`);
+        const dataUrl = generateA4SheetDataUrl(p);
+        triggerDownload(
+          dataUrl,
+          `Bikaner_A4_Sheet_Page_${p}_Tables_${startT}_to_${endT}.png`
+        );
+        await new Promise((r) => setTimeout(r, 400));
+      }
+      setBatchProgress('All 3 A4 Sheets Downloaded! ✓');
+      setTimeout(() => setBatchProgress(''), 3500);
+    } catch (err) {
+      console.error('Batch A4 download error:', err);
+      setBatchProgress('Download interrupted');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Batch download all 20 individual table QRs
   const handleDownloadAllTables = async () => {
     if (isDownloading) return;
     setIsDownloading(true);
@@ -339,7 +576,6 @@ export default function QrCodeModal({ isOpen, onClose }) {
           const dataUrl = generateQrCardDataUrl(tableId, qrSource);
           triggerDownload(dataUrl, `Bikaner_QR_${tableId}.png`);
         }
-        // Small delay to prevent browser download throttling
         await new Promise((r) => setTimeout(r, 260));
       }
       setBatchProgress('All 20 Tables Downloaded! ✓');
@@ -352,9 +588,18 @@ export default function QrCodeModal({ isOpen, onClose }) {
     }
   };
 
+  // Calculate the 4 tables on current A4 page
+  const currentA4Start = (activeA4Page - 1) * 4 + 1;
+  const currentA4Tables = [
+    currentA4Start,
+    currentA4Start + 1,
+    currentA4Start + 2,
+    currentA4Start + 3,
+  ];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      {/* Hidden pre-rendered high-res canvas elements for instant, 100% reliable single & batch exports */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+      {/* Hidden pre-rendered high-res canvas elements for instant exports */}
       <div style={{ display: 'none' }} aria-hidden="true">
         {[...Array(20)].map((_, i) => {
           const t = `T-${i + 1}`;
@@ -372,6 +617,45 @@ export default function QrCodeModal({ isOpen, onClose }) {
         })}
       </div>
 
+      {/* Dedicated 3-Page A4 Sheet Print DOM Container (Only visible during print) */}
+      <div id="qr-multi-page-print" className="qr-print-only-container">
+        {[1, 2, 3].map((pageNum) => {
+          const startT = (pageNum - 1) * 4 + 1;
+          const pageTables = [startT, startT + 1, startT + 2, startT + 3];
+          return (
+            <div key={pageNum} className="a4-sheet-page">
+              {pageTables.map((num) => {
+                const tableId = `T-${num}`;
+                const url = `${currentHost}/?table=${tableId}`;
+                return (
+                  <div key={tableId} className="a4-standee-card">
+                    <div className="a4-card-inner">
+                      <div className="a4-card-header">
+                        <div className="a4-veg-badge">• 100% PURE VEG RESTAURANT •</div>
+                        <h4 className="a4-brand-title">BIKANER EXPRESS</h4>
+                        <p className="a4-location">Aman International Mall • Roof Top Mainpuri</p>
+                      </div>
+
+                      <div className="a4-qr-container">
+                        <QRCodeSVG value={url} size={150} level="H" includeMargin={false} />
+                      </div>
+
+                      <div className="a4-table-pill">
+                        TABLE {num}
+                      </div>
+
+                      <div className="a4-instructions">
+                        Scan with camera to view menu & order!
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -379,9 +663,9 @@ export default function QrCodeModal({ isOpen, onClose }) {
       ></div>
 
       {/* Modal Dialog */}
-      <div className="relative bg-white rounded-3xl max-w-lg w-full p-5 sm:p-7 shadow-2xl z-10 border border-amber-200 my-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-gray-100 gap-2">
+      <div className="relative bg-white rounded-3xl max-w-xl w-full p-4 sm:p-6 shadow-2xl z-10 border border-amber-200 my-auto max-h-[92vh] overflow-y-auto">
+        {/* Top Header */}
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-gray-100 gap-2">
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
@@ -393,7 +677,7 @@ export default function QrCodeModal({ isOpen, onClose }) {
             <div className="flex items-center gap-1.5 truncate">
               <QrCode className="w-4 h-4 text-red-700 shrink-0" />
               <h3 className="text-sm sm:text-base font-black text-gray-900 truncate">
-                Table QR & Standee Generator
+                Restaurant QR Code Generator
               </h3>
             </div>
           </div>
@@ -405,147 +689,313 @@ export default function QrCodeModal({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Table Selector (T-1 to T-20) */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-bold text-gray-700">
-              Select Restaurant Table:
-            </label>
-            <span className="text-[11px] font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
-              Selected: {selectedTable.replace('T-', 'Table ')}
-            </span>
-          </div>
-          <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5 max-h-32 overflow-y-auto p-1.5 border border-stone-200 rounded-xl bg-stone-50/50">
-            {[...Array(20)].map((_, i) => {
-              const t = `T-${i + 1}`;
-              const isSelected = selectedTable === t;
-              return (
-                <button
-                  key={t}
-                  onClick={() => setSelectedTable(t)}
-                  className={`py-1.5 text-xs font-bold rounded-lg transition active:scale-95 ${
-                    isSelected
-                      ? 'bg-red-700 text-white shadow-sm ring-2 ring-red-400'
-                      : 'bg-white hover:bg-amber-100 text-gray-800 border border-gray-200'
-                  }`}
-                >
-                  Table {i + 1}
-                </button>
-              );
-            })}
-          </div>
+        {/* Mode Switcher Tabs */}
+        <div className="flex bg-stone-100 p-1 rounded-2xl mb-4 gap-1">
+          <button
+            onClick={() => setViewMode('a4_sheets')}
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 ${
+              viewMode === 'a4_sheets'
+                ? 'bg-red-700 text-white shadow-xs'
+                : 'text-stone-700 hover:bg-stone-200'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>3 Pages A4 Format (Table 1-12)</span>
+          </button>
+
+          <button
+            onClick={() => setViewMode('single')}
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 ${
+              viewMode === 'single'
+                ? 'bg-red-700 text-white shadow-xs'
+                : 'text-stone-700 hover:bg-stone-200'
+            }`}
+          >
+            <QrCode className="w-3.5 h-3.5" />
+            <span>Single Table QR (1-20)</span>
+          </button>
         </div>
 
-        {/* Live Printable Standee Preview Card */}
-        <div
-          id="qr-standee-print"
-          className="bg-linear-to-b from-red-950 via-stone-900 to-amber-950 text-white rounded-2xl p-5 text-center shadow-lg relative overflow-hidden border-2 border-amber-500/30"
-        >
-          <div className="text-[10px] sm:text-[11px] font-black tracking-widest text-emerald-300 uppercase mb-1">
-            • 100% PURE VEG RESTAURANT •
-          </div>
-          <h4 className="text-xl font-black text-amber-300 tracking-tight mb-0.5">
-            BIKANER EXPRESS
-          </h4>
-          <p className="text-xs text-stone-300 mb-3">
-            Aman International Mall • Roof Top Mainpuri
-          </p>
-
-          {/* Crisp QR Code Container */}
-          <div className="bg-white p-3 rounded-2xl inline-block shadow-md border-4 border-amber-400/40">
-            <QRCodeSVG
-              value={qrUrl}
-              size={165}
-              level="H"
-              includeMargin={false}
-            />
-          </div>
-
-          <div className="mt-3">
-            <span className="inline-block bg-amber-400 text-stone-950 font-black text-xs sm:text-sm px-4 py-1 rounded-full uppercase tracking-wider mb-1.5 shadow-sm">
-              {selectedTable.replace('T-', 'Table ')}
-            </span>
-            <p className="text-[11px] sm:text-xs text-stone-200 font-medium">
-              Scan with phone camera to view menu & order!
-            </p>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="space-y-2 mt-4">
-          {/* Main 2 Download Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button
-              onClick={handleDownloadQrOnly}
-              disabled={isDownloading}
-              className="bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-200 disabled:opacity-50"
-            >
-              <Download className="w-4 h-4 shrink-0" />
-              <span>Download QR (PNG)</span>
-            </button>
-
-            <button
-              onClick={handleDownloadFullStandee}
-              disabled={isDownloading}
-              className="bg-amber-600 hover:bg-amber-700 active:scale-98 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-amber-200 disabled:opacity-50"
-            >
-              <ImageIcon className="w-4 h-4 shrink-0" />
-              <span>Download Standee Card (HD)</span>
-            </button>
-          </div>
-
-          {/* Print, Copy Link, Open Link */}
-          <div className="grid grid-cols-3 gap-2 pt-1">
-            <button
-              onClick={handlePrint}
-              className="bg-stone-800 hover:bg-stone-900 active:scale-98 text-white text-xs font-bold py-2.5 px-2 rounded-xl transition flex items-center justify-center gap-1.5"
-            >
-              <Printer className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-              <span className="truncate">Print Standee</span>
-            </button>
-
-            <button
-              onClick={handleCopyLink}
-              className="bg-stone-100 hover:bg-stone-200 active:scale-98 text-stone-800 text-xs font-bold py-2.5 px-2 rounded-xl transition flex items-center justify-center gap-1.5 border border-stone-200"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span className="text-emerald-700 font-bold truncate">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-stone-600 shrink-0" />
-                  <span className="truncate">Copy Link</span>
-                </>
-              )}
-            </button>
-
-            <a
-              href={qrUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-stone-100 hover:bg-stone-200 active:scale-98 text-stone-800 text-xs font-bold py-2.5 px-2 rounded-xl transition flex items-center justify-center gap-1.5 border border-stone-200 text-center"
-            >
-              <ExternalLink className="w-3.5 h-3.5 text-stone-600 shrink-0" />
-              <span className="truncate">Open Link</span>
-            </a>
-          </div>
-
-          {/* Batch Download All 20 Tables */}
-          <div className="pt-1.5 border-t border-stone-100">
-            <button
-              onClick={handleDownloadAllTables}
-              disabled={isDownloading}
-              className="w-full bg-stone-50 hover:bg-amber-50 active:scale-98 text-stone-700 hover:text-amber-900 border border-stone-200 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              <Layers className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>
-                {batchProgress ? batchProgress : '📦 Download All 20 Table QRs (1-Click)'}
+        {/* TAB 1: 3-PAGE A4 FORMAT (TABLE 1 TO 12 • 4 QRs PER PAGE) */}
+        {viewMode === 'a4_sheets' && (
+          <div>
+            {/* Explanatory Banner */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5 mb-3 text-xs text-amber-900 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>
+                  <strong>12 Tables in 3 A4 Pages:</strong> Har page par 4 QR codes cutting line ke sath hain.
+                </span>
+              </div>
+              <span className="bg-amber-200 text-amber-950 px-2 py-0.5 rounded-md font-black text-[11px] shrink-0">
+                4 QR / Page
               </span>
-            </button>
+            </div>
+
+            {/* Page Switcher Tabs */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {[
+                { page: 1, label: 'Page 1 (Tables 1-4)', tables: 'T-1 to T-4' },
+                { page: 2, label: 'Page 2 (Tables 5-8)', tables: 'T-5 to T-8' },
+                { page: 3, label: 'Page 3 (Tables 9-12)', tables: 'T-9 to T-12' },
+              ].map((p) => {
+                const isActive = activeA4Page === p.page;
+                return (
+                  <button
+                    key={p.page}
+                    onClick={() => setActiveA4Page(p.page)}
+                    className={`py-2 px-1 text-center rounded-xl transition border text-xs font-bold ${
+                      isActive
+                        ? 'bg-red-700 text-white border-red-800 shadow-sm'
+                        : 'bg-white hover:bg-amber-50 text-stone-800 border-stone-200'
+                    }`}
+                  >
+                    <div>{p.label}</div>
+                    <div className={`text-[10px] font-normal ${isActive ? 'text-amber-200' : 'text-stone-500'}`}>
+                      {p.tables}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Live 2x2 Interactive Preview of Selected A4 Page */}
+            <div className="bg-stone-50 border-2 border-stone-200 rounded-2xl p-3 mb-4 shadow-inner">
+              <div className="flex items-center justify-between text-[11px] font-bold text-stone-600 mb-2 px-1">
+                <span className="flex items-center gap-1 text-red-700">
+                  <Scissors className="w-3.5 h-3.5" />
+                  <span>A4 Sheet Preview (Page {activeA4Page} of 3)</span>
+                </span>
+                <span className="text-stone-500">
+                  Cut into 4 Standees
+                </span>
+              </div>
+
+              {/* 2x2 Grid of 4 Table Cards */}
+              <div className="grid grid-cols-2 gap-2.5">
+                {currentA4Tables.map((num) => {
+                  const tId = `T-${num}`;
+                  const tUrl = `${currentHost}/?table=${tId}`;
+                  return (
+                    <div
+                      key={tId}
+                      className="border-2 border-dashed border-stone-300 rounded-xl p-1.5 bg-white relative shadow-xs"
+                    >
+                      <div className="border border-amber-300 rounded-lg p-2 text-center bg-white flex flex-col items-center">
+                        {/* Header */}
+                        <div className="bg-red-900 text-white w-full rounded-md py-1 px-1 mb-1.5">
+                          <div className="text-[7.5px] font-bold text-emerald-300 uppercase tracking-wider">
+                            • 100% PURE VEG •
+                          </div>
+                          <div className="text-[10px] font-black text-amber-300">
+                            BIKANER EXPRESS
+                          </div>
+                        </div>
+
+                        {/* QR Code */}
+                        <div className="bg-white p-1 rounded-md border border-stone-200 inline-block my-0.5">
+                          <QRCodeSVG
+                            value={tUrl}
+                            size={72}
+                            level="H"
+                            includeMargin={false}
+                          />
+                        </div>
+
+                        {/* Table Badge */}
+                        <div className="bg-amber-500 text-stone-950 font-black text-[11px] px-2.5 py-0.5 rounded-full uppercase tracking-wider mt-1">
+                          TABLE {num}
+                        </div>
+                        <div className="text-[8px] text-stone-500 mt-0.5">
+                          Scan to Order
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* A4 Sheet Action Buttons */}
+            <div className="space-y-2">
+              {/* Primary Print All 3 Pages */}
+              <button
+                onClick={handlePrintSheets}
+                className="w-full bg-red-700 hover:bg-red-800 active:scale-98 text-white text-xs font-bold py-3 px-3 rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-red-200"
+              >
+                <Printer className="w-4 h-4 text-amber-300 shrink-0" />
+                <span>🖨️ Print / Save as PDF (All 3 Pages A4)</span>
+              </button>
+
+              {/* Download Current Page & Download All 3 Pages */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  onClick={() => handleDownloadA4Page(activeA4Page)}
+                  disabled={isDownloading}
+                  className="bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-200 disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4 shrink-0" />
+                  <span>Download Page {activeA4Page} (A4 PNG)</span>
+                </button>
+
+                <button
+                  onClick={handleDownloadAllA4Sheets}
+                  disabled={isDownloading}
+                  className="bg-amber-600 hover:bg-amber-700 active:scale-98 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-amber-200 disabled:opacity-50"
+                >
+                  <Layers className="w-4 h-4 shrink-0" />
+                  <span>
+                    {batchProgress ? batchProgress : 'Download All 3 A4 Sheets (PNG)'}
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* TAB 2: SINGLE TABLE QR (1 TO 20) */}
+        {viewMode === 'single' && (
+          <div>
+            {/* Table Selector (T-1 to T-20) */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-gray-700">
+                  Select Restaurant Table:
+                </label>
+                <span className="text-[11px] font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-full border border-red-200">
+                  Selected: {selectedTable.replace('T-', 'Table ')}
+                </span>
+              </div>
+              <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5 max-h-28 overflow-y-auto p-1.5 border border-stone-200 rounded-xl bg-stone-50/50">
+                {[...Array(20)].map((_, i) => {
+                  const t = `T-${i + 1}`;
+                  const isSelected = selectedTable === t;
+                  return (
+                    <button
+                      key={t}
+                      onClick={() => setSelectedTable(t)}
+                      className={`py-1.5 text-xs font-bold rounded-lg transition active:scale-95 ${
+                        isSelected
+                          ? 'bg-red-700 text-white shadow-sm ring-2 ring-red-400'
+                          : 'bg-white hover:bg-amber-100 text-gray-800 border border-gray-200'
+                      }`}
+                    >
+                      Table {i + 1}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Standee Preview Card */}
+            <div
+              id="qr-standee-print"
+              className="bg-linear-to-b from-red-950 via-stone-900 to-amber-950 text-white rounded-2xl p-4 text-center shadow-lg relative overflow-hidden border-2 border-amber-500/30 mb-4"
+            >
+              <div className="text-[10px] font-black tracking-widest text-emerald-300 uppercase mb-0.5">
+                • 100% PURE VEG RESTAURANT •
+              </div>
+              <h4 className="text-lg font-black text-amber-300 tracking-tight mb-0.5">
+                BIKANER EXPRESS
+              </h4>
+              <p className="text-[11px] text-stone-300 mb-2">
+                Aman International Mall • Roof Top Mainpuri
+              </p>
+
+              {/* Crisp QR Code Container */}
+              <div className="bg-white p-2.5 rounded-2xl inline-block shadow-md border-4 border-amber-400/40">
+                <QRCodeSVG
+                  value={qrUrl}
+                  size={145}
+                  level="H"
+                  includeMargin={false}
+                />
+              </div>
+
+              <div className="mt-2.5">
+                <span className="inline-block bg-amber-400 text-stone-950 font-black text-xs px-4 py-1 rounded-full uppercase tracking-wider mb-1 shadow-sm">
+                  {selectedTable.replace('T-', 'Table ')}
+                </span>
+                <p className="text-[11px] text-stone-200 font-medium">
+                  Scan with phone camera to view menu & order!
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  onClick={handleDownloadQrOnly}
+                  disabled={isDownloading}
+                  className="bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-200 disabled:opacity-50"
+                >
+                  <Download className="w-4 h-4 shrink-0" />
+                  <span>Download QR (PNG)</span>
+                </button>
+
+                <button
+                  onClick={handleDownloadFullStandee}
+                  disabled={isDownloading}
+                  className="bg-amber-600 hover:bg-amber-700 active:scale-98 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-amber-200 disabled:opacity-50"
+                >
+                  <ImageIcon className="w-4 h-4 shrink-0" />
+                  <span>Download Standee Card (HD)</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                <button
+                  onClick={handlePrintSingle}
+                  className="bg-stone-800 hover:bg-stone-900 active:scale-98 text-white text-xs font-bold py-2.5 px-2 rounded-xl transition flex items-center justify-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                  <span className="truncate">Print Standee</span>
+                </button>
+
+                <button
+                  onClick={handleCopyLink}
+                  className="bg-stone-100 hover:bg-stone-200 active:scale-98 text-stone-800 text-xs font-bold py-2.5 px-2 rounded-xl transition flex items-center justify-center gap-1.5 border border-stone-200"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="text-emerald-700 font-bold truncate">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-stone-600 shrink-0" />
+                      <span className="truncate">Copy Link</span>
+                    </>
+                  )}
+                </button>
+
+                <a
+                  href={qrUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-stone-100 hover:bg-stone-200 active:scale-98 text-stone-800 text-xs font-bold py-2.5 px-2 rounded-xl transition flex items-center justify-center gap-1.5 border border-stone-200 text-center"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-stone-600 shrink-0" />
+                  <span className="truncate">Open Link</span>
+                </a>
+              </div>
+
+              <div className="pt-1.5 border-t border-stone-100">
+                <button
+                  onClick={handleDownloadAllTables}
+                  disabled={isDownloading}
+                  className="w-full bg-stone-50 hover:bg-amber-50 active:scale-98 text-stone-700 hover:text-amber-900 border border-stone-200 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  <Layers className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>
+                    {batchProgress ? batchProgress : '📦 Download All 20 Table QRs (1-Click)'}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
