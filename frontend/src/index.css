@@ -183,7 +183,7 @@
     background: linear-gradient(to bottom, #4a0404 0%, #1f0003 60%, #120002 100%) !important;
     border: 3px solid #d97706 !important;
     border-radius: 14px !important;
-    padding: 14px 10px !important;
+    padding: 12px 10px !important;
     box-sizing: border-box !important;
     text-align: center !important;
     color: #ffffff !important;
@@ -191,6 +191,18 @@
     flex-direction: column !important;
     align-items: center !important;
     justify-content: space-between !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body.print-sheets .a4-card-logo {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 9999px !important;
+    border: 2px solid #fbbf24 !important;
+    object-fit: cover !important;
+    margin: 0 auto 3px auto !important;
+    display: block !important;
+    background: #ffffff !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
