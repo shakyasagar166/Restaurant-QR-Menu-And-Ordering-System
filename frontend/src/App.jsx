@@ -153,6 +153,12 @@ export default function App() {
 
   // QR Modal
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [qrModalTable, setQrModalTable] = useState('T-1');
+
+  const handleOpenQrModal = (targetTable = 'T-1') => {
+    setQrModalTable(targetTable || 'T-1');
+    setIsQrModalOpen(true);
+  };
 
   // Payment Selection Modal (Standalone top-level, locks background)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -670,7 +676,7 @@ export default function App() {
           onRefreshMenu={loadMenuData}
           isBellMuted={isBellMuted}
           setIsBellMuted={setIsBellMuted}
-          openQrModal={() => setIsQrModalOpen(true)}
+          openQrModal={handleOpenQrModal}
           adminUser={adminUser}
           onLogout={handleAdminLogout}
           onBackToMenu={() => {
@@ -688,6 +694,7 @@ export default function App() {
         {/* Standalone Table QR Code Standee Modal */}
         <QrCodeModal
           isOpen={isQrModalOpen}
+          initialTable={qrModalTable}
           onClose={() => setIsQrModalOpen(false)}
         />
       </div>
@@ -720,7 +727,6 @@ export default function App() {
         setIsCartOpen={setIsCartOpen}
         pendingOrdersCount={pendingOrdersCount}
         isBellRinging={isBellRinging}
-        openQrModal={() => setIsQrModalOpen(true)}
         adminUser={adminUser}
         activeCustomerOrder={activeCustomerOrder}
         openOrderTracker={() => setIsOrderTrackerOpen(true)}
@@ -920,6 +926,7 @@ export default function App() {
       {/* Table QR Code Standee Modal */}
       <QrCodeModal
         isOpen={isQrModalOpen}
+        initialTable={qrModalTable}
         onClose={() => setIsQrModalOpen(false)}
       />
 

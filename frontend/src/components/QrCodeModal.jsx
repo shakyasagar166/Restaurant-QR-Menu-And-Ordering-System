@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QRCodeCanvas, QRCodeSVG } from 'qrcode.react';
+import QRCode from 'qrcode';
 import {
   X,
   Printer,
@@ -94,7 +95,7 @@ function triggerDownload(dataUrl, fileName) {
 }
 
 // Generate single QR code card (800x980 crisp PNG) with Logo
-function generateQrCardDataUrl(tableId, qrSourceCanvas, logoImg) {
+async function generateQrCardDataUrl(tableId, logoImg, hostUrl) {
   const canvas = document.createElement('canvas');
   const size = 800;
   canvas.width = size;
@@ -145,8 +146,21 @@ function generateQrCardDataUrl(tableId, qrSourceCanvas, logoImg) {
   ctx.lineWidth = 2;
   ctx.strokeRect(qrX - 12, qrY - 12, qrSize + 24, qrSize + 24);
 
-  if (qrSourceCanvas) {
-    ctx.drawImage(qrSourceCanvas, qrX, qrY, qrSize, qrSize);
+  // Generate and draw QR code directly for this exact table
+  try {
+    const qrTargetUrl = `${hostUrl}/?table=${tableId}`;
+    const qrDataUrl = await QRCode.toDataURL(qrTargetUrl, {
+      errorCorrectionLevel: 'H',
+      margin: 1,
+      width: qrSize,
+      color: { dark: '#000000', light: '#ffffff' },
+    });
+    const qrImg = await loadLogoImage(qrDataUrl);
+    if (qrImg) {
+      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+    }
+  } catch (err) {
+    console.error('Failed to draw QR for card:', err);
   }
 
   // Table Pill
@@ -176,7 +190,7 @@ function generateQrCardDataUrl(tableId, qrSourceCanvas, logoImg) {
 }
 
 // Generate HD printable standee card (1200x1700 HD PNG) with Logo
-function generateStandeeCardDataUrl(tableId, qrSourceCanvas, logoImg) {
+async function generateStandeeCardDataUrl(tableId, logoImg, hostUrl) {
   const canvas = document.createElement('canvas');
   const width = 1200;
   const height = 1700;
@@ -243,11 +257,24 @@ function generateStandeeCardDataUrl(tableId, qrSourceCanvas, logoImg) {
 
   drawRoundRect(ctx, podX, podY, podW, podH, 36, '#ffffff', '#fbbf24', 6);
 
-  if (qrSourceCanvas) {
-    const qrSize = 620;
-    const qrX = (width - qrSize) / 2;
-    const qrY = podY + 50;
-    ctx.drawImage(qrSourceCanvas, qrX, qrY, qrSize, qrSize);
+  // Generate and draw QR code directly for this exact table
+  const qrSize = 620;
+  const qrX = (width - qrSize) / 2;
+  const qrY = podY + 50;
+  try {
+    const qrTargetUrl = `${hostUrl}/?table=${tableId}`;
+    const qrDataUrl = await QRCode.toDataURL(qrTargetUrl, {
+      errorCorrectionLevel: 'H',
+      margin: 1,
+      width: qrSize,
+      color: { dark: '#000000', light: '#ffffff' },
+    });
+    const qrImg = await loadLogoImage(qrDataUrl);
+    if (qrImg) {
+      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+    }
+  } catch (err) {
+    console.error('Failed to draw QR for standee:', err);
   }
 
   // Table Pill
@@ -287,7 +314,7 @@ function generateStandeeCardDataUrl(tableId, qrSourceCanvas, logoImg) {
 }
 
 // Generate HD A4 Sheet containing 4 Royal Standee Cards with Logo
-function generateA4SheetDataUrl(pageNumber, logoImg) {
+async function generateA4SheetDataUrl(pageNumber, logoImg, hostUrl) {
   const startT = (pageNumber - 1) * 4 + 1;
   const tableIds = [
     `T-${startT}`,
@@ -299,6 +326,8 @@ function generateA4SheetDataUrl(pageNumber, logoImg) {
   const canvas = document.createElement('canvas');
   const width = 1654;
   const height = 2339;
+  canvas.width = width;
+  canvas.height = height;
   const ctx = canvas.getContext('2d');
 
   // Clean White Sheet Background
@@ -331,7 +360,8 @@ function generateA4SheetDataUrl(pageNumber, logoImg) {
   const startX = 50;
   const startY = 98;
 
-  tableIds.forEach((tId, idx) => {
+  for (let idx = 0; idx < tableIds.length; idx++) {
+    const tId = tableIds[idx];
     const col = idx % 2;
     const row = Math.floor(idx / 2);
     const cardX = startX + col * (cardW + gapX);
@@ -413,13 +443,24 @@ function generateA4SheetDataUrl(pageNumber, logoImg) {
 
     drawRoundRect(ctx, podX, podY, podSize, podSize, 24, '#ffffff', '#fbbf24', 5);
 
-    // Draw QR from pre-rendered source canvas
-    const qrSource = document.getElementById(`qr-canvas-source-${tId}`);
-    if (qrSource) {
-      const qrDrawSize = 400;
-      const qrDrawX = cardCenterX - qrDrawSize / 2;
-      const qrDrawY = podY + 30;
-      ctx.drawImage(qrSource, qrDrawX, qrDrawY, qrDrawSize, qrDrawSize);
+    // Direct QR generation for this exact table ID (100% reliable)
+    const qrDrawSize = 400;
+    const qrDrawX = cardCenterX - qrDrawSize / 2;
+    const qrDrawY = podY + 30;
+    try {
+      const qrTargetUrl = `${hostUrl}/?table=${tId}`;
+      const qrDataUrl = await QRCode.toDataURL(qrTargetUrl, {
+        errorCorrectionLevel: 'H',
+        margin: 1,
+        width: qrDrawSize,
+        color: { dark: '#000000', light: '#ffffff' },
+      });
+      const qrImg = await loadLogoImage(qrDataUrl);
+      if (qrImg) {
+        ctx.drawImage(qrImg, qrDrawX, qrDrawY, qrDrawSize, qrDrawSize);
+      }
+    } catch (err) {
+      console.error(`Failed to generate QR for ${tId}:`, err);
     }
 
     // Table Badge Pill
@@ -443,12 +484,12 @@ function generateA4SheetDataUrl(pageNumber, logoImg) {
     ctx.fillStyle = '#fbbf24';
     ctx.font = 'bold 17px "Plus Jakarta Sans", system-ui, sans-serif';
     ctx.fillText('📱 No App Required  •  ⚡ Instant Kitchen Bell', cardCenterX, pillY + 155);
-  });
+  }
 
   return canvas.toDataURL('image/png');
 }
 
-export default function QrCodeModal({ isOpen, onClose }) {
+export default function QrCodeModal({ isOpen, onClose, initialTable = 'T-1' }) {
   const [viewMode, setViewMode] = useState('a4_sheets');
   const [activeA4Page, setActiveA4Page] = useState(1);
   const [selectedTable, setSelectedTable] = useState('T-1');
@@ -456,15 +497,45 @@ export default function QrCodeModal({ isOpen, onClose }) {
   const [copied, setCopied] = useState(false);
   const [batchProgress, setBatchProgress] = useState('');
 
+  // Automatically sync table and active page whenever modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      const targetT = initialTable || 'T-1';
+      setSelectedTable(targetT);
+      const match = targetT.match(/\d+/);
+      if (match) {
+        const tableNum = parseInt(match[0], 10);
+        if (tableNum >= 1 && tableNum <= 12) {
+          const page = Math.ceil(tableNum / 4);
+          setActiveA4Page(page);
+        }
+      }
+    }
+  }, [isOpen, initialTable]);
+
   if (!isOpen) return null;
 
   const currentHost = window.location.origin;
   const qrUrl = `${currentHost}/?table=${selectedTable}`;
 
+  // Print Single Targeted A4 Page (e.g. Page 2: Tables 5-8 only)
+  const handlePrintSinglePage = (pageNum) => {
+    const pageClass = `print-page-${pageNum}`;
+    document.body.classList.remove('print-sheets', 'print-single', 'print-page-1', 'print-page-2', 'print-page-3');
+    document.body.classList.add(pageClass);
+    const cleanup = () => {
+      document.body.classList.remove(pageClass);
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+    window.print();
+    setTimeout(cleanup, 2000);
+  };
+
   // Print all 3 A4 Pages with 4 QRs each (Tables 1-12)
   const handlePrintSheets = () => {
+    document.body.classList.remove('print-single', 'print-page-1', 'print-page-2', 'print-page-3');
     document.body.classList.add('print-sheets');
-    document.body.classList.remove('print-single');
     const cleanup = () => {
       document.body.classList.remove('print-sheets');
       window.removeEventListener('afterprint', cleanup);
@@ -476,8 +547,8 @@ export default function QrCodeModal({ isOpen, onClose }) {
 
   // Print Single Standee Card
   const handlePrintSingle = () => {
+    document.body.classList.remove('print-sheets', 'print-page-1', 'print-page-2', 'print-page-3');
     document.body.classList.add('print-single');
-    document.body.classList.remove('print-sheets');
     const cleanup = () => {
       document.body.classList.remove('print-single');
       window.removeEventListener('afterprint', cleanup);
@@ -497,13 +568,8 @@ export default function QrCodeModal({ isOpen, onClose }) {
   const handleDownloadQrOnly = async () => {
     try {
       setIsDownloading(true);
-      const qrSource = document.getElementById(`qr-canvas-source-${selectedTable}`);
-      if (!qrSource) {
-        alert('QR code source canvas is initializing. Please wait a moment.');
-        return;
-      }
       const logoImg = await loadLogoImage('/bikaner-logo.jpg');
-      const dataUrl = generateQrCardDataUrl(selectedTable, qrSource, logoImg);
+      const dataUrl = await generateQrCardDataUrl(selectedTable, logoImg, currentHost);
       triggerDownload(dataUrl, `Bikaner_QR_${selectedTable}.png`);
     } catch (err) {
       console.error('QR download failed:', err);
@@ -517,13 +583,8 @@ export default function QrCodeModal({ isOpen, onClose }) {
   const handleDownloadFullStandee = async () => {
     try {
       setIsDownloading(true);
-      const qrSource = document.getElementById(`qr-canvas-source-${selectedTable}`);
-      if (!qrSource) {
-        alert('QR code source canvas is initializing. Please wait a moment.');
-        return;
-      }
       const logoImg = await loadLogoImage('/bikaner-logo.jpg');
-      const dataUrl = generateStandeeCardDataUrl(selectedTable, qrSource, logoImg);
+      const dataUrl = await generateStandeeCardDataUrl(selectedTable, logoImg, currentHost);
       triggerDownload(dataUrl, `Bikaner_Standee_${selectedTable}.png`);
     } catch (err) {
       console.error('Standee download failed:', err);
@@ -540,7 +601,7 @@ export default function QrCodeModal({ isOpen, onClose }) {
       const startT = (pageNum - 1) * 4 + 1;
       const endT = startT + 3;
       const logoImg = await loadLogoImage('/bikaner-logo.jpg');
-      const dataUrl = generateA4SheetDataUrl(pageNum, logoImg);
+      const dataUrl = await generateA4SheetDataUrl(pageNum, logoImg, currentHost);
       triggerDownload(
         dataUrl,
         `Bikaner_A4_Sheet_Page_${pageNum}_Tables_${startT}_to_${endT}.png`
@@ -563,12 +624,12 @@ export default function QrCodeModal({ isOpen, onClose }) {
         const startT = (p - 1) * 4 + 1;
         const endT = startT + 3;
         setBatchProgress(`Generating A4 Sheet Page ${p} of 3 (Tables ${startT}-${endT})...`);
-        const dataUrl = generateA4SheetDataUrl(p, logoImg);
+        const dataUrl = await generateA4SheetDataUrl(p, logoImg, currentHost);
         triggerDownload(
           dataUrl,
           `Bikaner_A4_Sheet_Page_${p}_Tables_${startT}_to_${endT}.png`
         );
-        await new Promise((r) => setTimeout(r, 400));
+        await new Promise((r) => setTimeout(r, 900));
       }
       setBatchProgress('All 3 A4 Sheets Downloaded! ✓');
       setTimeout(() => setBatchProgress(''), 3500);
@@ -589,12 +650,9 @@ export default function QrCodeModal({ isOpen, onClose }) {
       for (let i = 1; i <= 20; i++) {
         const tableId = `T-${i}`;
         setBatchProgress(`Downloading Table ${i} of 20...`);
-        const qrSource = document.getElementById(`qr-canvas-source-${tableId}`);
-        if (qrSource) {
-          const dataUrl = generateQrCardDataUrl(tableId, qrSource, logoImg);
-          triggerDownload(dataUrl, `Bikaner_QR_${tableId}.png`);
-        }
-        await new Promise((r) => setTimeout(r, 260));
+        const dataUrl = await generateQrCardDataUrl(tableId, logoImg, currentHost);
+        triggerDownload(dataUrl, `Bikaner_QR_${tableId}.png`);
+        await new Promise((r) => setTimeout(r, 300));
       }
       setBatchProgress('All 20 Tables Downloaded! ✓');
       setTimeout(() => setBatchProgress(''), 3500);
@@ -617,8 +675,21 @@ export default function QrCodeModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-      {/* Hidden pre-rendered high-res canvas elements for instant exports */}
-      <div style={{ display: 'none' }} aria-hidden="true">
+      {/* Offscreen pre-rendered high-res canvas elements for instant exports */}
+      <div
+        style={{
+          position: 'fixed',
+          left: '-99999px',
+          top: '-99999px',
+          width: '1px',
+          height: '1px',
+          overflow: 'hidden',
+          opacity: 0,
+          pointerEvents: 'none',
+          zIndex: -1,
+        }}
+        aria-hidden="true"
+      >
         {[...Array(20)].map((_, i) => {
           const t = `T-${i + 1}`;
           const url = `${currentHost}/?table=${t}`;
@@ -641,7 +712,7 @@ export default function QrCodeModal({ isOpen, onClose }) {
           const startT = (pageNum - 1) * 4 + 1;
           const pageTables = [startT, startT + 1, startT + 2, startT + 3];
           return (
-            <div key={pageNum} className="a4-sheet-page">
+            <div key={pageNum} id={`qr-a4-page-${pageNum}`} className={`a4-sheet-page a4-page-${pageNum}`}>
               {pageTables.map((num) => {
                 const tableId = `T-${num}`;
                 const url = `${currentHost}/?table=${tableId}`;
@@ -862,35 +933,51 @@ export default function QrCodeModal({ isOpen, onClose }) {
             </div>
 
             {/* A4 Sheet Action Buttons */}
-            <div className="space-y-2">
-              {/* Primary Print All 3 Pages */}
-              <button
-                onClick={handlePrintSheets}
-                className="w-full bg-red-700 hover:bg-red-800 active:scale-98 text-white text-xs font-bold py-3 px-3 rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-red-200"
-              >
-                <Printer className="w-4 h-4 text-amber-300 shrink-0" />
-                <span>🖨️ Print / Save as PDF (All 3 Pages with Logo)</span>
-              </button>
-
-              {/* Download Current Page & Download All 3 Pages */}
+            <div className="space-y-2.5">
+              {/* Primary Actions for the currently selected page (e.g. Page 2: Tables 5-8) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {/* Download Active Page PNG */}
                 <button
                   onClick={() => handleDownloadA4Page(activeA4Page)}
                   disabled={isDownloading}
-                  className="bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-200 disabled:opacity-50"
+                  className="bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-black py-3 px-3 rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-emerald-200 disabled:opacity-50 cursor-pointer"
                 >
                   <Download className="w-4 h-4 shrink-0" />
-                  <span>Download Page {activeA4Page} (A4 PNG with Logo)</span>
+                  <span>
+                    Download Page {activeA4Page} (Tables {currentA4Start} to {currentA4Start + 3}) PNG
+                  </span>
+                </button>
+
+                {/* Print / Save as PDF for Active Page ONLY */}
+                <button
+                  onClick={() => handlePrintSinglePage(activeA4Page)}
+                  className="bg-red-700 hover:bg-red-800 active:scale-98 text-white text-xs font-black py-3 px-3 rounded-xl transition flex items-center justify-center gap-2 shadow-md shadow-red-200 cursor-pointer"
+                >
+                  <Printer className="w-4 h-4 text-amber-300 shrink-0" />
+                  <span>
+                    Print / Save PDF (Page {activeA4Page}: Tables {currentA4Start}-{currentA4Start + 3})
+                  </span>
+                </button>
+              </div>
+
+              {/* Bulk Actions (All 3 Pages: Tables 1-12) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-stone-200">
+                <button
+                  onClick={handlePrintSheets}
+                  className="bg-stone-800 hover:bg-stone-900 active:scale-98 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                  <span>Print All 3 Pages (Tables 1-12)</span>
                 </button>
 
                 <button
                   onClick={handleDownloadAllA4Sheets}
                   disabled={isDownloading}
-                  className="bg-amber-600 hover:bg-amber-700 active:scale-98 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-md shadow-amber-200 disabled:opacity-50"
+                  className="bg-amber-600 hover:bg-amber-700 active:scale-98 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer"
                 >
-                  <Layers className="w-4 h-4 shrink-0" />
+                  <Layers className="w-3.5 h-3.5 shrink-0" />
                   <span>
-                    {batchProgress ? batchProgress : 'Download All 3 A4 Sheets (PNG with Logo)'}
+                    {batchProgress ? batchProgress : 'Download All 3 Pages (PNG)'}
                   </span>
                 </button>
               </div>

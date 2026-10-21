@@ -2777,7 +2777,7 @@ export default function AdminDashboard({
                         )}
 
                         <button
-                          onClick={openQrModal}
+                          onClick={() => openQrModal(tbl)}
                           className="mt-1 w-full bg-white hover:bg-slate-100 text-slate-800 text-xs font-black py-2 rounded-xl border border-slate-300 transition cursor-pointer shadow-2xs"
                         >
                           Print QR

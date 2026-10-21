@@ -3,7 +3,6 @@ import {
   UtensilsCrossed,
   ShoppingBag,
   Bell,
-  QrCode,
   Sparkles,
   MapPin,
   ChevronDown,
@@ -24,7 +23,6 @@ export default function Header({
   setIsCartOpen,
   pendingOrdersCount,
   isBellRinging,
-  openQrModal,
   adminUser,
   activeCustomerOrder,
   openOrderTracker,
@@ -49,13 +47,6 @@ export default function Header({
               <Phone className="w-3 h-3 text-amber-400" />
               9193870000
             </span>
-            <button
-              onClick={openQrModal}
-              className="flex items-center gap-1 bg-gradient-to-r from-amber-500/20 to-red-600/20 hover:from-amber-500/30 hover:to-red-600/30 text-amber-300 hover:text-white px-2 py-0.5 rounded-lg border border-amber-400/40 transition text-[10px] sm:text-[11px] font-bold"
-            >
-              <QrCode className="w-3 h-3 text-amber-400" />
-              <span>Table QR</span>
-            </button>
             {/* Subtle, tiny staff lock icon in the corner */}
             <button
               onClick={() => setActiveTab('admin')}

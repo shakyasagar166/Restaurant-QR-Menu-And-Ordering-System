@@ -85,7 +85,8 @@
   body * {
     visibility: hidden !important;
   }
-  body.print-sheets .qr-print-only-container {
+  body.print-sheets .qr-print-only-container,
+  body[class*="print-page-"] .qr-print-only-container {
     display: block !important;
     visibility: visible !important;
   }
@@ -132,12 +133,15 @@
     print-color-adjust: exact !important;
   }
 
-  /* 3-Page A4 Sheet Print (Tables 1-12, 4 QRs per page) */
+  /* 3-Page A4 Sheet Print (Tables 1-12, 4 QRs per page) & Single A4 Page Print */
   body.print-sheets #qr-multi-page-print,
-  body.print-sheets #qr-multi-page-print * {
+  body.print-sheets #qr-multi-page-print *,
+  body[class*="print-page-"] #qr-multi-page-print,
+  body[class*="print-page-"] #qr-multi-page-print * {
     visibility: visible !important;
   }
-  body.print-sheets #qr-multi-page-print {
+  body.print-sheets #qr-multi-page-print,
+  body[class*="print-page-"] #qr-multi-page-print {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
@@ -146,7 +150,8 @@
     padding: 0 !important;
     background: #ffffff !important;
   }
-  body.print-sheets .a4-sheet-page {
+  body.print-sheets .a4-sheet-page,
+  body[class*="print-page-"] .a4-sheet-page {
     width: 100% !important;
     height: 284mm !important;
     page-break-after: always !important;
@@ -165,7 +170,28 @@
     page-break-after: avoid !important;
     break-after: avoid !important;
   }
-  body.print-sheets .a4-standee-card-wrapper {
+
+  /* Single Page Isolation for Targeted A4 Print (Page 1, 2, or 3) */
+  body.print-page-1 .a4-page-2,
+  body.print-page-1 .a4-page-3,
+  body.print-page-2 .a4-page-1,
+  body.print-page-2 .a4-page-3,
+  body.print-page-3 .a4-page-1,
+  body.print-page-3 .a4-page-2 {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  body.print-page-1 .a4-page-1,
+  body.print-page-2 .a4-page-2,
+  body.print-page-3 .a4-page-3 {
+    display: grid !important;
+    visibility: visible !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  body.print-sheets .a4-standee-card-wrapper,
+  body[class*="print-page-"] .a4-standee-card-wrapper {
     border: 1.5px dashed #9ca3af !important;
     padding: 3mm !important;
     box-sizing: border-box !important;
@@ -177,7 +203,8 @@
     border-radius: 8px !important;
     overflow: hidden !important;
   }
-  body.print-sheets .a4-standee-card {
+  body.print-sheets .a4-standee-card,
+  body[class*="print-page-"] .a4-standee-card {
     width: 100% !important;
     height: 100% !important;
     background: linear-gradient(to bottom, #4a0404 0%, #1f0003 60%, #120002 100%) !important;
@@ -194,7 +221,8 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  body.print-sheets .a4-card-logo {
+  body.print-sheets .a4-card-logo,
+  body[class*="print-page-"] .a4-card-logo {
     width: 38px !important;
     height: 38px !important;
     border-radius: 9999px !important;
@@ -206,7 +234,8 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  body.print-sheets .a4-veg-badge {
+  body.print-sheets .a4-veg-badge,
+  body[class*="print-page-"] .a4-veg-badge {
     font-size: 8px !important;
     font-weight: 900 !important;
     letter-spacing: 0.1em !important;
@@ -216,7 +245,8 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  body.print-sheets .a4-brand-title {
+  body.print-sheets .a4-brand-title,
+  body[class*="print-page-"] .a4-brand-title {
     font-size: 16px !important;
     font-weight: 900 !important;
     color: #fbbf24 !important;
@@ -225,14 +255,16 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  body.print-sheets .a4-location {
+  body.print-sheets .a4-location,
+  body[class*="print-page-"] .a4-location {
     font-size: 8.5px !important;
     color: #fed7aa !important;
     margin: 1px 0 0 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  body.print-sheets .a4-qr-container {
+  body.print-sheets .a4-qr-container,
+  body[class*="print-page-"] .a4-qr-container {
     background: #ffffff !important;
     padding: 8px !important;
     border: 3px solid #fbbf24 !important;
@@ -242,7 +274,8 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  body.print-sheets .a4-table-pill {
+  body.print-sheets .a4-table-pill,
+  body[class*="print-page-"] .a4-table-pill {
     background: #f59e0b !important;
     color: #1c1917 !important;
     font-size: 14px !important;
@@ -254,7 +287,8 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  body.print-sheets .a4-instructions {
+  body.print-sheets .a4-instructions,
+  body[class*="print-page-"] .a4-instructions {
     font-size: 9.5px !important;
     font-weight: 700 !important;
     color: #ffffff !important;
