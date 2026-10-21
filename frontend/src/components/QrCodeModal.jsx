@@ -149,11 +149,6 @@ function generateQrCardDataUrl(tableId, qrSourceCanvas, logoImg) {
     ctx.drawImage(qrSourceCanvas, qrX, qrY, qrSize, qrSize);
   }
 
-  // Logo in center of QR code
-  if (logoImg) {
-    drawCircularLogo(ctx, logoImg, size / 2, qrY + qrSize / 2, 40);
-  }
-
   // Table Pill
   const tableLabel = tableId.replace('T-', 'TABLE ');
   const pillW = 340;
@@ -253,11 +248,6 @@ function generateStandeeCardDataUrl(tableId, qrSourceCanvas, logoImg) {
     const qrX = (width - qrSize) / 2;
     const qrY = podY + 50;
     ctx.drawImage(qrSourceCanvas, qrX, qrY, qrSize, qrSize);
-
-    // Center Logo in QR Code
-    if (logoImg) {
-      drawCircularLogo(ctx, logoImg, width / 2, podY + podH / 2, 54);
-    }
   }
 
   // Table Pill
@@ -430,11 +420,6 @@ function generateA4SheetDataUrl(pageNumber, logoImg) {
       const qrDrawX = cardCenterX - qrDrawSize / 2;
       const qrDrawY = podY + 30;
       ctx.drawImage(qrSource, qrDrawX, qrDrawY, qrDrawSize, qrDrawSize);
-
-      // Center Logo in QR Code
-      if (logoImg) {
-        drawCircularLogo(ctx, logoImg, cardCenterX, podY + podSize / 2, 34);
-      }
     }
 
     // Table Badge Pill
@@ -681,12 +666,6 @@ export default function QrCodeModal({ isOpen, onClose }) {
                           size={150}
                           level="H"
                           includeMargin={false}
-                          imageSettings={{
-                            src: '/bikaner-logo.jpg',
-                            height: 32,
-                            width: 32,
-                            excavate: true,
-                          }}
                         />
                       </div>
 
@@ -857,19 +836,13 @@ export default function QrCodeModal({ isOpen, onClose }) {
                           Aman International Mall • Roof Top
                         </p>
 
-                        {/* Crisp QR Code with Center Logo */}
+                        {/* Crisp QR Code */}
                         <div className="bg-white p-1 rounded-xl border-2 border-amber-400 inline-block shadow-xs my-0.5">
                           <QRCodeSVG
                             value={tUrl}
                             size={78}
                             level="H"
                             includeMargin={false}
-                            imageSettings={{
-                              src: '/bikaner-logo.jpg',
-                              height: 18,
-                              width: 18,
-                              excavate: true,
-                            }}
                           />
                         </div>
 
@@ -983,19 +956,13 @@ export default function QrCodeModal({ isOpen, onClose }) {
                 Aman International Mall • Roof Top Mainpuri
               </p>
 
-              {/* Crisp QR Code Container with Center Logo */}
+              {/* Crisp QR Code Container */}
               <div className="bg-white p-2 rounded-2xl inline-block shadow-md border-4 border-amber-400/40">
                 <QRCodeSVG
                   value={qrUrl}
                   size={140}
                   level="H"
                   includeMargin={false}
-                  imageSettings={{
-                    src: '/bikaner-logo.jpg',
-                    height: 32,
-                    width: 32,
-                    excavate: true,
-                  }}
                 />
               </div>
 

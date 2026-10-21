@@ -31,15 +31,7 @@ export default function App() {
   const [menuItems, setMenuItems] = useState(() => {
     try {
       const overrides = getLocalMenuOverrides();
-      const cached = localStorage.getItem('bikaner_menu_cache');
-      let base = BIKANER_MASTER_MENU;
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length >= BIKANER_MASTER_MENU.length) {
-          base = parsed;
-        }
-      }
-      return base.map((item) => {
+      return BIKANER_MASTER_MENU.map((item) => {
         const key = item.name.toLowerCase().trim();
         const o = overrides[key];
         return o ? { ...item, ...o, imageUrl: o.imageUrl || item.imageUrl } : item;
@@ -258,10 +250,18 @@ export default function App() {
 
         let item = { ...masterItem };
         if (bMatch) {
+          // Check if backend image is a real custom upload/override or just the old generic placeholder
+          const isStaleGeneric = bMatch.imageUrl && (
+            (bMatch.imageUrl.includes('photo-1589301760014-d929f3979dbc') && !key.includes('parantha')) ||
+            (bMatch.imageUrl.includes('photo-1601050690597-df0568f70950') && !key.includes('naan') && !key.includes('kulcha')) ||
+            (bMatch.imageUrl.includes('photo-1571091718767-18b5b1457add') && !key.includes('burger')) ||
+            (bMatch.imageUrl.includes('photo-1599488615731-7e5c2823ff28') && !key.includes('seekh') && !key.includes('platter'))
+          );
+
           item = {
             ...item,
             ...bMatch,
-            imageUrl: bMatch.imageUrl || item.imageUrl,
+            imageUrl: oMatch?.imageUrl || (!isStaleGeneric && bMatch.imageUrl ? bMatch.imageUrl : masterItem.imageUrl),
           };
         }
         if (oMatch) {

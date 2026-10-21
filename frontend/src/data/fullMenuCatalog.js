@@ -149,7 +149,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Curries & Dal',
     price: 385.0,
     description: 'Cottage cheese with crunchy bell peppers, onions and freshly pounded kadai spices',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600&auto=format&fit=crop&q=80',
     tag: 'Popular'
   },
   {
@@ -248,7 +248,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Curries & Dal',
     price: 290.0,
     description: 'Homestyle potatoes and green peas cooked in aromatic spiced cumin gravy',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&auto=format&fit=crop&q=80',
     tag: 'Homestyle'
   },
   {
@@ -257,7 +257,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Curries & Dal',
     price: 250.0,
     description: 'Fresh cauliflower florets and potatoes stir-fried with ginger and turmeric',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&auto=format&fit=crop&q=80',
     tag: 'Seasonal'
   },
   {
@@ -275,7 +275,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Curries & Dal',
     price: 250.0,
     description: 'Baby potatoes tempered with crunchy cumin seeds, hing and chopped green chillies',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&auto=format&fit=crop&q=80',
     tag: 'Simple'
   },
   {
@@ -284,7 +284,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Curries & Dal',
     price: 250.0,
     description: 'Potatoes and crisp green capsicum sautéed in mustard oil with dry spices',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&auto=format&fit=crop&q=80',
     tag: 'Classic'
   },
   {
@@ -329,7 +329,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Curries & Dal',
     price: 290.0,
     description: 'Stuffed baby potatoes slow-cooked on dum in spiced aromatic curd gravy',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&auto=format&fit=crop&q=80',
     tag: 'Special'
   },
   {
@@ -735,7 +735,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 220.0,
     description: 'Crispy golden fermented rice crepe served with steaming hot sambar and coconut chutneys',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'Classic'
   },
   {
@@ -744,7 +744,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 240.0,
     description: 'Crispy golden crepe stuffed with traditional spiced mustard potato bhaji',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'Bestseller'
   },
   {
@@ -753,7 +753,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 250.0,
     description: 'Hot crisp masala dosa loaded with generous melted mozzarella and cheddar cheese',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'Cheesy'
   },
   {
@@ -762,7 +762,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 275.0,
     description: 'Crispy dosa filled with aromatic spiced cottage cheese crumble and potato mash',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'Special'
   },
   {
@@ -771,7 +771,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 220.0,
     description: 'Lacy, ultra-crispy semolina crepe peppered with cumin seeds and black pepper',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'Crispy'
   },
   {
@@ -780,7 +780,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 230.0,
     description: 'Golden rawa crepe griddled with sweet sautéed onions, green chillies and curry leaves',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'Popular'
   },
   {
@@ -789,7 +789,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 275.0,
     description: 'Crisp rawa dosa with diced onions and a generous filling of spiced potato masala',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'Favorite'
   },
   {
@@ -798,7 +798,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 275.0,
     description: 'Crunchy semolina crepe layered with spiced grated paneer and herbs',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'Rich'
   },
   {
@@ -807,7 +807,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 250.0,
     description: 'Fusion masterpiece with fiery schezwan garlic chutney and molten cheese',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'Fusion'
   },
   {
@@ -816,7 +816,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 230.0,
     description: 'Spiced red garlic-lentil chutney spread inside crisp golden crepe with butter',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'Mysore Spl'
   },
   {
@@ -825,7 +825,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 280.0,
     description: 'Red chutney coated crispy dosa stuffed with aromatic potato bhaji and butter',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'Bestseller'
   },
   {
@@ -834,7 +834,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 385.0,
     description: 'Gigantic 4-foot grand golden crispy dosa served for the entire family with dips',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'Grand'
   },
   {
@@ -843,7 +843,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 210.0,
     description: 'Cooling tempered curd rice with mustard seeds, curry leaves, pomegranate & ginger',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?w=600&auto=format&fit=crop&q=80',
     tag: 'Cooling'
   },
   {
@@ -852,7 +852,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 175.0,
     description: 'Two steamed soft fluffy rice cakes served with piping hot sambar and fresh coconut dip',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1741376509187-0b683c764294?w=600&auto=format&fit=crop&q=80',
     tag: 'Healthy'
   },
   {
@@ -861,7 +861,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 250.0,
     description: 'Thick fermented rice pancake topped with chopped juicy tomatoes, onions and green chillies',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1694849789325-914b71ab4075?w=600&auto=format&fit=crop&q=80',
     tag: 'Fluffy'
   },
   {
@@ -870,7 +870,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'South Indian',
     price: 250.0,
     description: 'Thick savory uttapam loaded with diced capsicum, carrots, onions, tomatoes and podi masala',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1694849789325-914b71ab4075?w=600&auto=format&fit=crop&q=80',
     tag: 'Popular'
   },
 
@@ -881,7 +881,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 70.0,
     description: 'Crisp semolina puris filled with spiced potato-sprouts, tangy mint and sweet sonth pani',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1649140041688-0f75446e707e?w=600&auto=format&fit=crop&q=80',
     tag: 'Bestseller'
   },
   {
@@ -890,7 +890,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 130.0,
     description: 'Puris stuffed with mashed potatoes, sweetened curd, tamarind-mint chutneys & sev',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1649140041688-0f75446e707e?w=600&auto=format&fit=crop&q=80',
     tag: 'Special'
   },
   {
@@ -899,7 +899,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 175.0,
     description: 'Crispy flour crackers layered with boiled potatoes, chilled sweetened yogurt and chutneys',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1777732785406-f18022cbac1d?w=600&auto=format&fit=crop&q=80',
     tag: 'Classic'
   },
   {
@@ -908,7 +908,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 175.0,
     description: 'Melt-in-mouth urad dal dumplings soaked in creamy sweetened curd, cumin and pomegranate',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1777732785406-f18022cbac1d?w=600&auto=format&fit=crop&q=80',
     tag: 'Popular'
   },
   {
@@ -917,7 +917,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 175.0,
     description: 'Soft lentil bhallas and crunchy papdis served with spiced sweet curd and tangy chutneys',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1777732785406-f18022cbac1d?w=600&auto=format&fit=crop&q=80',
     tag: 'Favorite'
   },
   {
@@ -926,7 +926,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 120.0,
     description: 'Crispy puffed rice mixed with sev, onions, tomatoes, raw mango and zesty tamarind chutney',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1777732785406-f18022cbac1d?w=600&auto=format&fit=crop&q=80',
     tag: 'Light'
   },
   {
@@ -935,7 +935,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 120.0,
     description: 'Crisp flat puris topped with potatoes, garlic chutney, sweet sonth and loaded nylon sev',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1777732785406-f18022cbac1d?w=600&auto=format&fit=crop&q=80',
     tag: 'Mumbai Spl'
   },
   {
@@ -944,7 +944,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 120.0,
     description: 'Crushed golden samosas smothered with spicy Amritsari chana, curd, sonth and sev',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1732519970445-8f2d6998961f?w=600&auto=format&fit=crop&q=80',
     tag: 'Bestseller'
   },
   {
@@ -953,7 +953,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 130.0,
     description: 'Griddle-fried crisp potato patty served with sweet curd, sonth and spicy coriander chutney',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1777732785406-f18022cbac1d?w=600&auto=format&fit=crop&q=80',
     tag: 'Crisp'
   },
   {
@@ -962,7 +962,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 155.0,
     description: 'Hot crisp aloo tikki topped with spiced pindi chana, onion slices and tangy chutneys',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1777732785406-f18022cbac1d?w=600&auto=format&fit=crop&q=80',
     tag: 'Must Try'
   },
   {
@@ -971,7 +971,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 175.0,
     description: 'The king of Indian street chaats! Crisp giant kachori brimming with sprouts, bhallas & sev',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1777732785406-f18022cbac1d?w=600&auto=format&fit=crop&q=80',
     tag: 'Royal'
   },
   {
@@ -980,7 +980,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 15.0,
     description: 'Crisp pastry stuffed with roasted cumin spiced potatoes, cashews and green peas',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1732519970445-8f2d6998961f?w=600&auto=format&fit=crop&q=80',
     tag: 'Hot & Fresh'
   },
   {
@@ -989,7 +989,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 35.0,
     description: 'Flaky khasta kachori with spiced urad dal filling served with hot potato sabji & chutney',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1591465619339-60fce055bc82?w=600&auto=format&fit=crop&q=80',
     tag: 'Khasta'
   },
   {
@@ -998,7 +998,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 45.0,
     description: 'Authentic Jodhpur style giant flaky kachori stuffed with spicy caramelized onion mix',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1591465619339-60fce055bc82?w=600&auto=format&fit=crop&q=80',
     tag: 'Rajasthani'
   },
   {
@@ -1034,7 +1034,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 130.0,
     description: '2 big size puries served with spiced aloo sabji, raita, fresh salad & sweet dish',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1610192244261-3f33de3f55e4?w=600&auto=format&fit=crop&q=80',
     tag: 'Wholesome'
   },
   {
@@ -1070,7 +1070,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Chaat & Snacks',
     price: 60.0,
     description: 'Spongy steamed savory fermented gram flour cakes tempered with mustard seeds & chillies',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1714799263291-272975db795a?w=600&auto=format&fit=crop&q=80',
     tag: 'Gujarati'
   },
 
@@ -1108,7 +1108,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Thali & Platters',
     price: 285.0,
     description: 'Complete meal combo: Hot chole bhature served with a glass of rich sweet Punjabi lassi',
-    imageUrl: 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1780504863220-514ba37dcba0?w=600&auto=format&fit=crop&q=80',
     tag: 'Combo'
   },
   {
@@ -1180,7 +1180,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Thali & Platters',
     price: 370.0,
     description: '2pc idli, 1pc small uttapam, 1pc small dosa, sambar and coconut dips',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=600&auto=format&fit=crop&q=80',
     tag: 'South Combo'
   },
   {
@@ -1189,7 +1189,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Thali & Platters',
     price: 260.0,
     description: 'Golgappa, 2pcs papdi chat, dahi bhalla and bhelpuri served on a signature platter',
-    imageUrl: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1777732785406-f18022cbac1d?w=600&auto=format&fit=crop&q=80',
     tag: 'Chaat Feast'
   },
 
@@ -1624,7 +1624,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Desserts & Sweets',
     price: 35.0,
     description: 'Hot, melt-in-mouth mawa khoya gulab jamun soaked in fragrant rose water syrup',
-    imageUrl: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1666190092159-3171cf0fbb12?w=600&auto=format&fit=crop&q=80',
     tag: 'Hot Sweet'
   },
   {
@@ -1633,7 +1633,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Desserts & Sweets',
     price: 120.0,
     description: '1 pc warm khoya gulab jamun served with one rich scoop of vanilla ice cream',
-    imageUrl: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1666190092159-3171cf0fbb12?w=600&auto=format&fit=crop&q=80',
     tag: 'Bestseller'
   },
   {
@@ -1660,7 +1660,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Desserts & Sweets',
     price: 120.0,
     description: 'Crispy coiled jalebis fried in pure desi ghee and dipped in hot saffron syrup',
-    imageUrl: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1778448806503-f01d2971ccfe?w=600&auto=format&fit=crop&q=80',
     tag: 'Desi Ghee'
   },
   {
@@ -1678,7 +1678,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Desserts & Sweets',
     price: 120.0,
     description: 'Royal Rajasthani halwa made with yellow lentils, desi ghee, almonds and mawa',
-    imageUrl: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1579372786545-d24232daf58c?w=600&auto=format&fit=crop&q=80',
     tag: 'Royal'
   },
   {
@@ -1687,7 +1687,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Desserts & Sweets',
     price: 120.0,
     description: 'Grated red winter carrots slow simmered with whole milk, khoya and dry fruits',
-    imageUrl: 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1579372786545-d24232daf58c?w=600&auto=format&fit=crop&q=80',
     tag: 'Seasonal'
   },
   {
@@ -1741,7 +1741,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Desserts & Sweets',
     price: 90.0,
     description: 'Traditional thick churned Punjabi sweet curd lassi with malai topping',
-    imageUrl: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1692620609860-be6717812f71?w=600&auto=format&fit=crop&q=80',
     tag: 'Refreshing'
   },
   {
@@ -1750,7 +1750,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Desserts & Sweets',
     price: 110.0,
     description: 'Signature thick sweet lassi blended with rich slow-cooked rabdi and nuts',
-    imageUrl: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1692620609860-be6717812f71?w=600&auto=format&fit=crop&q=80',
     tag: 'Spl Lassi'
   },
   {
@@ -1797,7 +1797,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Curries & Dal',
     price: 150.0,
     description: 'Crispy gram flour boondi soaked in chilled seasoned curd with roasted cumin',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80',
     tag: 'Classic'
   },
   {
@@ -1806,7 +1806,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Curries & Dal',
     price: 150.0,
     description: 'Boondi raita tempered with fresh crispy curry leaves and mustard seeds in ghee',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80',
     tag: 'Tempered'
   },
   {
@@ -1815,7 +1815,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Curries & Dal',
     price: 165.0,
     description: 'Sweet and chilled creamy beaten yogurt mixed with juicy diced pineapple',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80',
     tag: 'Sweet Raita'
   },
   {
@@ -1824,7 +1824,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Curries & Dal',
     price: 150.0,
     description: 'Refreshing curd with finely chopped onions, tomatoes, cucumber and fresh herbs',
-    imageUrl: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80',
     tag: 'Fresh'
   },
   {
@@ -1833,7 +1833,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Curries & Dal',
     price: 35.0,
     description: 'Crunchy urad dal papad roasted over open tandoori charcoal flame',
-    imageUrl: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600&auto=format&fit=crop&q=80',
     tag: 'Crisp'
   },
   {
@@ -1842,7 +1842,7 @@ export const BIKANER_MASTER_MENU = [
     category: 'Curries & Dal',
     price: 65.0,
     description: 'Crisp roasted papad topped with spicy diced onions, tomatoes, green chillies & chaat masala',
-    imageUrl: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600&auto=format&fit=crop&q=80',
     tag: 'Tangy'
   }
 ];
