@@ -165,7 +165,7 @@
     page-break-after: avoid !important;
     break-after: avoid !important;
   }
-  body.print-sheets .a4-standee-card {
+  body.print-sheets .a4-standee-card-wrapper {
     border: 1.5px dashed #9ca3af !important;
     padding: 3mm !important;
     box-sizing: border-box !important;
@@ -177,29 +177,20 @@
     border-radius: 8px !important;
     overflow: hidden !important;
   }
-  body.print-sheets .a4-card-inner {
+  body.print-sheets .a4-standee-card {
     width: 100% !important;
     height: 100% !important;
-    border: 2px solid #b45309 !important;
-    border-radius: 12px !important;
+    background: linear-gradient(to bottom, #4a0404 0%, #1f0003 60%, #120002 100%) !important;
+    border: 3px solid #d97706 !important;
+    border-radius: 14px !important;
+    padding: 14px 10px !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    color: #ffffff !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: space-between !important;
-    padding: 10px !important;
-    box-sizing: border-box !important;
-    text-align: center !important;
-    background: #ffffff !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-  body.print-sheets .a4-card-header {
-    background: #7f1d1d !important;
-    color: #ffffff !important;
-    width: calc(100% + 20px) !important;
-    margin: -10px -10px 6px -10px !important;
-    padding: 8px 6px !important;
-    border-radius: 10px 10px 0 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -210,42 +201,53 @@
     color: #34d399 !important;
     text-transform: uppercase !important;
     margin-bottom: 2px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   body.print-sheets .a4-brand-title {
-    font-size: 15px !important;
+    font-size: 16px !important;
     font-weight: 900 !important;
-    color: #fef08a !important;
+    color: #fbbf24 !important;
     margin: 0 !important;
     font-family: 'Playfair Display', Georgia, serif !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   body.print-sheets .a4-location {
     font-size: 8.5px !important;
     color: #fed7aa !important;
     margin: 1px 0 0 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   body.print-sheets .a4-qr-container {
     background: #ffffff !important;
-    padding: 6px !important;
-    border: 1.5px solid #e5e7eb !important;
-    border-radius: 10px !important;
+    padding: 8px !important;
+    border: 3px solid #fbbf24 !important;
+    border-radius: 14px !important;
     display: inline-block !important;
-    margin: 3px 0 !important;
+    margin: 4px 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   body.print-sheets .a4-table-pill {
-    background: #b45309 !important;
-    color: #ffffff !important;
+    background: #f59e0b !important;
+    color: #1c1917 !important;
     font-size: 14px !important;
     font-weight: 900 !important;
-    padding: 4px 16px !important;
+    padding: 3px 18px !important;
     border-radius: 9999px !important;
-    margin: 3px 0 !important;
+    border: 2px solid #fef08a !important;
+    margin: 4px 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
   body.print-sheets .a4-instructions {
     font-size: 9.5px !important;
     font-weight: 700 !important;
-    color: #44403c !important;
+    color: #ffffff !important;
     margin-top: 1px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }

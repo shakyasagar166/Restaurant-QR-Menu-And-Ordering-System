@@ -268,8 +268,8 @@ function generateStandeeCardDataUrl(tableId, qrSourceCanvas, logoImg) {
   return canvas.toDataURL('image/png');
 }
 
-// Generate HD A4 Sheet Card containing 4 tables (1654x2339 HD PNG at exact A4 ratio)
-function generateA4SheetDataUrl(pageNumber) {
+// Generate HD A4 Sheet containing 4 Royal Standee Cards (Exact replica of single standee card in 2x2 grid)
+function generateA4SheetDataUrl(pageNumber, logoImg) {
   const startT = (pageNumber - 1) * 4 + 1;
   const tableIds = [
     `T-${startT}`,
@@ -283,7 +283,7 @@ function generateA4SheetDataUrl(pageNumber) {
   const height = 2339;
   const ctx = canvas.getContext('2d');
 
-  // Crisp White Sheet Background
+  // Clean White Sheet Background
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, 0, width, height);
 
@@ -294,7 +294,7 @@ function generateA4SheetDataUrl(pageNumber) {
   ctx.fillText(
     `BIKANER EXPRESS — TABLE QR STANDS (PAGE ${pageNumber} OF 3)`,
     width / 2,
-    48
+    46
   );
 
   ctx.fillStyle = '#57534e';
@@ -302,7 +302,7 @@ function generateA4SheetDataUrl(pageNumber) {
   ctx.fillText(
     `Tables ${startT} to ${startT + 3} • Cut along dotted lines for 4 individual table standees`,
     width / 2,
-    76
+    74
   );
 
   // Card Grid Layout (2 columns x 2 rows)
@@ -311,7 +311,7 @@ function generateA4SheetDataUrl(pageNumber) {
   const gapX = 84;
   const gapY = 40;
   const startX = 50;
-  const startY = 102;
+  const startY = 98;
 
   tableIds.forEach((tId, idx) => {
     const col = idx % 2;
@@ -333,108 +333,121 @@ function generateA4SheetDataUrl(pageNumber) {
     ctx.textAlign = 'right';
     ctx.fillText('✂ Cut line', cardX + cardW - 10, cardY + 16);
 
-    // 2. Main Standee Card Container (inset by 12px)
-    const innerX = cardX + 12;
+    // 2. Standee Card Container (Exact Royal Maroon Standee Replica)
+    const innerX = cardX + 10;
     const innerY = cardY + 22;
-    const innerW = cardW - 24;
-    const innerH = cardH - 34;
-
-    // Card Background & Gold Frame
-    drawRoundRect(ctx, innerX, innerY, innerW, innerH, 20, '#ffffff', '#d97706', 4);
-
-    ctx.strokeStyle = '#fef3c7';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(innerX + 6, innerY + 6, innerW - 12, innerH - 12);
-
-    // 3. Card Top Header (Maroon)
-    const headerH = 175;
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(innerX + 20, innerY);
-    ctx.lineTo(innerX + innerW - 20, innerY);
-    ctx.quadraticCurveTo(innerX + innerW, innerY, innerX + innerW, innerY + 20);
-    ctx.lineTo(innerX + innerW, innerY + headerH);
-    ctx.lineTo(innerX, innerY + headerH);
-    ctx.lineTo(innerX, innerY + 20);
-    ctx.quadraticCurveTo(innerX, innerY, innerX + 20, innerY);
-    ctx.closePath();
-    ctx.fillStyle = '#7f1d1d';
-    ctx.fill();
-    ctx.restore();
-
-    // Header Gold Divider Line
-    ctx.strokeStyle = '#fbbf24';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(innerX, innerY + headerH);
-    ctx.lineTo(innerX + innerW, innerY + headerH);
-    ctx.stroke();
-
-    // Header Texts
+    const innerW = cardW - 20;
+    const innerH = cardH - 32;
     const cardCenterX = innerX + innerW / 2;
+
+    // Royal Maroon Gradient Background
+    const cardGrad = ctx.createLinearGradient(innerX, innerY, innerX, innerY + innerH);
+    cardGrad.addColorStop(0, '#4a0404');
+    cardGrad.addColorStop(0.35, '#2b0005');
+    cardGrad.addColorStop(0.7, '#1f0003');
+    cardGrad.addColorStop(1, '#0e0002');
+    drawRoundRect(ctx, innerX, innerY, innerW, innerH, 24, cardGrad, '#d97706', 5);
+
+    // Inner subtle gold border
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(innerX + 8, innerY + 8, innerW - 16, innerH - 16);
+
+    // 4 Corner Gold Dots
+    const cardCorners = [
+      [innerX + 16, innerY + 16],
+      [innerX + innerW - 16, innerY + 16],
+      [innerX + 16, innerY + innerH - 16],
+      [innerX + innerW - 16, innerY + innerH - 16],
+    ];
+    ctx.fillStyle = '#fbbf24';
+    cardCorners.forEach(([cx, cy]) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Circular Logo (if available)
+    if (logoImg) {
+      const lSize = 80;
+      const lX = cardCenterX - lSize / 2;
+      const lY = innerY + 24;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cardCenterX, lY + lSize / 2, lSize / 2, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(logoImg, lX, lY, lSize, lSize);
+      ctx.restore();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cardCenterX, lY + lSize / 2, lSize / 2 + 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Texts (identical typography & colors)
+    const textStartY = logoImg ? innerY + 130 : innerY + 45;
     ctx.textAlign = 'center';
 
     ctx.fillStyle = '#34d399';
     ctx.font = 'bold 16px "Plus Jakarta Sans", system-ui, sans-serif';
-    ctx.fillText('• 100% PURE VEG RESTAURANT •', cardCenterX, innerY + 36);
+    ctx.fillText('• 100% PURE VEG RESTAURANT •', cardCenterX, textStartY);
 
-    ctx.fillStyle = '#fef08a';
-    ctx.font = '900 36px "Playfair Display", Georgia, serif';
-    ctx.fillText('BIKANER EXPRESS', cardCenterX, innerY + 82);
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = '900 40px "Playfair Display", Georgia, serif';
+    ctx.fillText('BIKANER EXPRESS', cardCenterX, textStartY + 42);
 
     ctx.fillStyle = '#fed7aa';
-    ctx.font = 'bold 15px "Plus Jakarta Sans", system-ui, sans-serif';
-    ctx.fillText('Aman International Mall • Roof Top Mainpuri', cardCenterX, innerY + 115);
+    ctx.font = 'bold 16px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.fillText('Aman International Mall • Roof Top Mainpuri', cardCenterX, textStartY + 70);
 
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '13px "Plus Jakarta Sans", system-ui, sans-serif';
-    ctx.fillText('Scan with Camera to View Menu & Order', cardCenterX, innerY + 148);
+    // White Pod for QR Code with Gold Border
+    const podSize = 460;
+    const podX = cardCenterX - podSize / 2;
+    const podY = textStartY + 95;
 
-    // 4. White Pod for QR Code
-    const qrPodSize = 510;
-    const qrPodX = cardCenterX - qrPodSize / 2;
-    const qrPodY = innerY + headerH + 28;
-
-    drawRoundRect(ctx, qrPodX, qrPodY, qrPodSize, qrPodSize, 18, '#fafaf9', '#e7e5e4', 2);
+    drawRoundRect(ctx, podX, podY, podSize, podSize, 24, '#ffffff', '#fbbf24', 5);
 
     // Draw QR from pre-rendered source canvas
     const qrSource = document.getElementById(`qr-canvas-source-${tId}`);
     if (qrSource) {
-      const qrDrawSize = 470;
+      const qrDrawSize = 400;
       const qrDrawX = cardCenterX - qrDrawSize / 2;
-      const qrDrawY = qrPodY + 20;
+      const qrDrawY = podY + 30;
       ctx.drawImage(qrSource, qrDrawX, qrDrawY, qrDrawSize, qrDrawSize);
     }
 
-    // 5. Table Badge Pill
+    // Table Badge Pill
     const pillW = 380;
-    const pillH = 75;
+    const pillH = 72;
     const pillX = cardCenterX - pillW / 2;
-    const pillY = qrPodY + qrPodSize + 32;
+    const pillY = podY + podSize + 30;
 
-    drawRoundRect(ctx, pillX, pillY, pillW, pillH, 38, '#b45309', '#f59e0b', 3);
+    drawRoundRect(ctx, pillX, pillY, pillW, pillH, 36, '#f59e0b', '#fef08a', 3);
 
     const tableNum = tId.replace('T-', '');
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '900 38px "Plus Jakarta Sans", system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`TABLE ${tableNum}`, cardCenterX, pillY + 52);
-
-    // 6. Card Footer
     ctx.fillStyle = '#1c1917';
-    ctx.font = 'bold 18px "Plus Jakarta Sans", system-ui, sans-serif';
-    ctx.fillText('Instant Kitchen Bell • Fresh Delicacies', cardCenterX, pillY + 115);
+    ctx.font = '900 38px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.fillText(`TABLE ${tableNum}`, cardCenterX, pillY + 50);
 
-    ctx.fillStyle = '#78716c';
-    ctx.font = '14px "Plus Jakarta Sans", system-ui, sans-serif';
-    ctx.fillText('No App Required • Touch Free Dining', cardCenterX, pillY + 140);
+    // Card Footer Call to Action
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 24px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.fillText('Scan with Camera to View Menu & Order', cardCenterX, pillY + 120);
+
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 17px "Plus Jakarta Sans", system-ui, sans-serif';
+    ctx.fillText('📱 No App Required  •  ⚡ Instant Kitchen Bell', cardCenterX, pillY + 155);
   });
 
   return canvas.toDataURL('image/png');
 }
 
 export default function QrCodeModal({ isOpen, onClose }) {
-  // Tabs: 'a4_sheets' (Tables 1-12 across 3 pages) OR 'single' (Tables 1-20 individual)
   const [viewMode, setViewMode] = useState('a4_sheets');
   const [activeA4Page, setActiveA4Page] = useState(1);
   const [selectedTable, setSelectedTable] = useState('T-1');
@@ -518,13 +531,14 @@ export default function QrCodeModal({ isOpen, onClose }) {
     }
   };
 
-  // Download 1 A4 Page (Containing 4 tables)
-  const handleDownloadA4Page = (pageNum) => {
+  // Download 1 A4 Page (Containing 4 royal standees)
+  const handleDownloadA4Page = async (pageNum) => {
     try {
       setIsDownloading(true);
       const startT = (pageNum - 1) * 4 + 1;
       const endT = startT + 3;
-      const dataUrl = generateA4SheetDataUrl(pageNum);
+      const logoImg = await loadLogoImage('/bikaner-logo.jpg');
+      const dataUrl = generateA4SheetDataUrl(pageNum, logoImg);
       triggerDownload(
         dataUrl,
         `Bikaner_A4_Sheet_Page_${pageNum}_Tables_${startT}_to_${endT}.png`
@@ -542,11 +556,12 @@ export default function QrCodeModal({ isOpen, onClose }) {
     if (isDownloading) return;
     setIsDownloading(true);
     try {
+      const logoImg = await loadLogoImage('/bikaner-logo.jpg');
       for (let p = 1; p <= 3; p++) {
         const startT = (p - 1) * 4 + 1;
         const endT = startT + 3;
         setBatchProgress(`Generating A4 Sheet Page ${p} of 3 (Tables ${startT}-${endT})...`);
-        const dataUrl = generateA4SheetDataUrl(p);
+        const dataUrl = generateA4SheetDataUrl(p, logoImg);
         triggerDownload(
           dataUrl,
           `Bikaner_A4_Sheet_Page_${p}_Tables_${startT}_to_${endT}.png`
@@ -628,9 +643,9 @@ export default function QrCodeModal({ isOpen, onClose }) {
                 const tableId = `T-${num}`;
                 const url = `${currentHost}/?table=${tableId}`;
                 return (
-                  <div key={tableId} className="a4-standee-card">
-                    <div className="a4-card-inner">
-                      <div className="a4-card-header">
+                  <div key={tableId} className="a4-standee-card-wrapper">
+                    <div className="a4-standee-card">
+                      <div>
                         <div className="a4-veg-badge">• 100% PURE VEG RESTAURANT •</div>
                         <h4 className="a4-brand-title">BIKANER EXPRESS</h4>
                         <p className="a4-location">Aman International Mall • Roof Top Mainpuri</p>
@@ -640,12 +655,13 @@ export default function QrCodeModal({ isOpen, onClose }) {
                         <QRCodeSVG value={url} size={150} level="H" includeMargin={false} />
                       </div>
 
-                      <div className="a4-table-pill">
-                        TABLE {num}
-                      </div>
-
-                      <div className="a4-instructions">
-                        Scan with camera to view menu & order!
+                      <div>
+                        <div className="a4-table-pill">
+                          TABLE {num}
+                        </div>
+                        <div className="a4-instructions">
+                          Scan with camera to view menu & order!
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -724,11 +740,11 @@ export default function QrCodeModal({ isOpen, onClose }) {
               <div className="flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                 <span>
-                  <strong>12 Tables in 3 A4 Pages:</strong> Har page par 4 QR codes cutting line ke sath hain.
+                  <strong>Exact Single Standee Design:</strong> Har page par 4 Royal Maroon Standees cutting line ke sath hain.
                 </span>
               </div>
               <span className="bg-amber-200 text-amber-950 px-2 py-0.5 rounded-md font-black text-[11px] shrink-0">
-                4 QR / Page
+                4 Standees / Page
               </span>
             </div>
 
@@ -759,19 +775,19 @@ export default function QrCodeModal({ isOpen, onClose }) {
               })}
             </div>
 
-            {/* Live 2x2 Interactive Preview of Selected A4 Page */}
-            <div className="bg-stone-50 border-2 border-stone-200 rounded-2xl p-3 mb-4 shadow-inner">
-              <div className="flex items-center justify-between text-[11px] font-bold text-stone-600 mb-2 px-1">
-                <span className="flex items-center gap-1 text-red-700">
+            {/* Live 2x2 Interactive Preview of Selected A4 Page (Exact Replica of Single Standee Card) */}
+            <div className="bg-stone-100 border-2 border-stone-300 rounded-2xl p-3 mb-4 shadow-inner">
+              <div className="flex items-center justify-between text-[11px] font-bold text-stone-700 mb-2 px-1">
+                <span className="flex items-center gap-1 text-red-800">
                   <Scissors className="w-3.5 h-3.5" />
                   <span>A4 Sheet Preview (Page {activeA4Page} of 3)</span>
                 </span>
                 <span className="text-stone-500">
-                  Cut into 4 Standees
+                  4 Royal Standees (✂ Cut & Place)
                 </span>
               </div>
 
-              {/* 2x2 Grid of 4 Table Cards */}
+              {/* 2x2 Grid of 4 Exact Replica Standee Cards */}
               <div className="grid grid-cols-2 gap-2.5">
                 {currentA4Tables.map((num) => {
                   const tId = `T-${num}`;
@@ -779,35 +795,41 @@ export default function QrCodeModal({ isOpen, onClose }) {
                   return (
                     <div
                       key={tId}
-                      className="border-2 border-dashed border-stone-300 rounded-xl p-1.5 bg-white relative shadow-xs"
+                      className="border-2 border-dashed border-stone-400/80 rounded-xl p-1 bg-white relative shadow-xs"
                     >
-                      <div className="border border-amber-300 rounded-lg p-2 text-center bg-white flex flex-col items-center">
-                        {/* Header */}
-                        <div className="bg-red-900 text-white w-full rounded-md py-1 px-1 mb-1.5">
-                          <div className="text-[7.5px] font-bold text-emerald-300 uppercase tracking-wider">
-                            • 100% PURE VEG •
-                          </div>
-                          <div className="text-[10px] font-black text-amber-300">
-                            BIKANER EXPRESS
-                          </div>
-                        </div>
+                      <div className="text-[8px] font-bold text-stone-400 text-right pr-1 pt-0.5">
+                        ✂ Cut line
+                      </div>
 
-                        {/* QR Code */}
-                        <div className="bg-white p-1 rounded-md border border-stone-200 inline-block my-0.5">
+                      {/* Exact Replica of Single Royal Maroon Standee */}
+                      <div className="bg-linear-to-b from-red-950 via-stone-900 to-amber-950 text-white rounded-xl p-2.5 text-center border-2 border-amber-500/40 shadow-sm flex flex-col items-center">
+                        <div className="text-[7.5px] font-black tracking-widest text-emerald-300 uppercase mb-0.5">
+                          • 100% PURE VEG RESTAURANT •
+                        </div>
+                        <h4 className="text-xs font-black text-amber-300 tracking-tight mb-0.5">
+                          BIKANER EXPRESS
+                        </h4>
+                        <p className="text-[8.5px] text-stone-300 mb-1.5 truncate w-full">
+                          Aman International Mall • Roof Top
+                        </p>
+
+                        {/* Crisp QR Code with Gold Border */}
+                        <div className="bg-white p-1.5 rounded-xl border-2 border-amber-400 inline-block shadow-xs my-0.5">
                           <QRCodeSVG
                             value={tUrl}
-                            size={72}
+                            size={82}
                             level="H"
                             includeMargin={false}
                           />
                         </div>
 
-                        {/* Table Badge */}
-                        <div className="bg-amber-500 text-stone-950 font-black text-[11px] px-2.5 py-0.5 rounded-full uppercase tracking-wider mt-1">
-                          TABLE {num}
-                        </div>
-                        <div className="text-[8px] text-stone-500 mt-0.5">
-                          Scan to Order
+                        <div className="mt-1.5 w-full">
+                          <span className="inline-block bg-amber-400 text-stone-950 font-black text-[11px] px-3 py-0.5 rounded-full uppercase tracking-wider mb-0.5 shadow-xs">
+                            TABLE {num}
+                          </span>
+                          <p className="text-[8.5px] text-stone-200 font-medium">
+                            Scan with phone to order!
+                          </p>
                         </div>
                       </div>
                     </div>
