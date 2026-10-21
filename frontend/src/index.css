@@ -71,11 +71,13 @@
   scrollbar-width: none;
 }
 
-/* 80mm Kitchen KOT & Thermal Bill Printing */
+/* Printing Support: 80mm Kitchen KOT & Table Standee */
 @media print {
   body * {
     visibility: hidden !important;
   }
+  
+  /* 80mm Kitchen KOT & Thermal Bill */
   #kot-receipt-print, #kot-receipt-print * {
     visibility: visible !important;
   }
@@ -92,5 +94,27 @@
     background: #fff !important;
     box-shadow: none !important;
     border: none !important;
+  }
+
+  /* Table QR Standee Print */
+  #qr-standee-print, #qr-standee-print * {
+    visibility: visible !important;
+  }
+  #qr-standee-print {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 110mm !important;
+    max-width: 92vw !important;
+    margin: 0 auto !important;
+    padding: 24px !important;
+    border-radius: 16px !important;
+    border: 3px solid #b45309 !important;
+    background: #450a0a !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
