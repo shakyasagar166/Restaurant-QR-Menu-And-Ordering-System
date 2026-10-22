@@ -658,7 +658,9 @@ export default function App() {
     }
   };
 
-  const cartTotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const cartSubtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const cartGst = Math.round(cartSubtotal * 0.05);
+  const cartTotal = cartSubtotal + cartGst;
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
   const pendingOrdersCount = orders.filter((o) => o.status === 'PENDING').length;
 
@@ -801,12 +803,12 @@ export default function App() {
                   </span>
                   <span className="text-[10px] text-stone-400 hidden xs:inline">• {cartCount} {cartCount === 1 ? 'Dish' : 'Dishes'}</span>
                 </div>
-                <div className="flex items-baseline gap-1 truncate">
+                <div className="flex items-baseline gap-1.5 truncate">
                   <span className="text-base sm:text-2xl font-black text-white tracking-tight font-sans">
                     {formatPrice(cartTotal)}
                   </span>
-                  <span className="text-[9px] text-amber-300/90 font-bold underline cursor-pointer hover:text-white">
-                    Tray ✏️
+                  <span className="text-[10px] text-amber-300 font-bold font-sans">
+                    (Incl. 5% GST)
                   </span>
                 </div>
               </div>

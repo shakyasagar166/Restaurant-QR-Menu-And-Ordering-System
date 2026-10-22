@@ -475,17 +475,30 @@ export default function CartDrawer({
         {/* Footer Billing & Ring Bell Action */}
         {cart.length > 0 && (
           <div className="p-4 sm:p-6 border-t border-amber-100 bg-stone-50 space-y-3 font-sans">
-            <div className="space-y-1.5 text-xs text-stone-600">
+            <div className="space-y-1.5 text-xs text-stone-600 bg-white p-3.5 rounded-2xl border border-stone-200 shadow-2xs">
               <div className="flex justify-between">
-                <span>Subtotal</span>
+                <span>Subtotal (Items Total):</span>
                 <span className="font-bold text-stone-900">{formatPrice(subtotal)}</span>
               </div>
-              <div className="flex justify-between">
-                <span>GST (5%)</span>
-                <span className="font-bold text-stone-900">{formatPrice(gst)}</span>
+              <div className="flex justify-between text-[11px] text-stone-500">
+                <span>CGST (2.5%):</span>
+                <span>₹{(subtotal * 0.025).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-base font-brand font-black text-stone-900 pt-2 border-t border-stone-200">
-                <span>Total Amount</span>
+              <div className="flex justify-between text-[11px] text-stone-500">
+                <span>SGST (2.5%):</span>
+                <span>₹{(subtotal * 0.025).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-stone-800 font-semibold pt-1 border-t border-stone-100">
+                <span>GST (5% Restaurant Tax):</span>
+                <span className="font-black text-stone-950">{formatPrice(gst)}</span>
+              </div>
+              <div className="flex justify-between items-baseline text-base font-brand font-black text-stone-900 pt-2 border-t border-stone-200">
+                <div>
+                  <span className="block">Total Amount</span>
+                  <span className="text-[10px] text-stone-500 font-sans font-medium block">
+                    (Includes 5% GST)
+                  </span>
+                </div>
                 <span className="text-red-700 text-xl font-sans font-black">
                   {formatPrice(grandTotal)}
                 </span>

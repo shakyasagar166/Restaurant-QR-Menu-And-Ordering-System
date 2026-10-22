@@ -98,10 +98,12 @@ public class OrderController {
             item.setOrder(order);
         }
 
-        // Calculate and enforce tamper-proof total amount
-        double computedTotal = order.getItems().stream()
-                .mapToDouble(i -> i.getPrice() * i.getQuantity())
+        // Calculate and enforce tamper-proof total amount with 5% Restaurant GST
+        double subtotal = order.getItems().stream()
+                .mapToDouble(i -> (i.getPrice() != null ? i.getPrice() : 0.0) * (i.getQuantity() != null ? i.getQuantity() : 1))
                 .sum();
+        double gst = Math.round(subtotal * 0.05);
+        double computedTotal = subtotal + gst;
         order.setTotalAmount(computedTotal);
 
         order.setStatus(OrderStatus.PENDING);

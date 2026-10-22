@@ -37,8 +37,19 @@ export default function LiveOrderTracker({ activeOrder, onClose, onClearOrder })
 
   const currentIndex = getStepIndex(activeOrder.status);
 
+  // 5% Restaurant GST & Subtotal Calculations
+  const itemsSubtotal = (activeOrder.items || []).reduce(
+    (sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1),
+    0
+  );
+  const subtotal = itemsSubtotal > 0 ? itemsSubtotal : (activeOrder.totalAmount ? Math.round(activeOrder.totalAmount / 1.05) : 0);
+  const gstAmount = Math.round(subtotal * 0.05);
+  const cgstAmount = (gstAmount / 2).toFixed(2);
+  const sgstAmount = (gstAmount / 2).toFixed(2);
+  const grandTotal = activeOrder.totalAmount || (subtotal + gstAmount);
+
   return (
-    <div className="fixed bottom-3 right-3 left-3 sm:left-auto sm:right-6 sm:w-96 z-40 bg-gradient-to-br from-stone-950 via-stone-900 to-red-950 text-white rounded-3xl shadow-2xl border-2 border-amber-500/40 p-4 sm:p-5 animate-in slide-in-from-bottom duration-300">
+    <div className="fixed bottom-3 right-3 left-3 sm:left-auto sm:right-6 sm:w-96 z-40 bg-gradient-to-br from-stone-950 via-stone-900 to-red-950 text-white rounded-3xl shadow-2xl border-2 border-amber-500/40 p-4 sm:p-5 animate-in slide-in-from-bottom duration-300 font-sans">
       <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 gap-2">
         <div className="flex items-center gap-2 truncate">
           <button
@@ -63,11 +74,19 @@ export default function LiveOrderTracker({ activeOrder, onClose, onClearOrder })
       </div>
 
       <div className="mb-4">
-        <div className="flex justify-between items-center text-xs mb-1">
-          <span className="font-mono text-stone-300 font-bold">Ticket #{activeOrder.id}</span>
-          <span className="font-brand font-black text-amber-400 text-sm">
-            {formatPrice(activeOrder.totalAmount)}
-          </span>
+        <div className="flex justify-between items-baseline text-xs mb-1">
+          <div>
+            <span className="font-mono text-stone-300 font-bold block">Ticket #{activeOrder.id}</span>
+            <span className="text-[10px] text-stone-400 font-mono">Table: {activeOrder.tableNumber}</span>
+          </div>
+          <div className="text-right">
+            <span className="font-brand font-black text-amber-400 text-base block">
+              {formatPrice(grandTotal)}
+            </span>
+            <span className="text-[10px] text-emerald-400 font-semibold font-sans block">
+              (Incl. 5% Restaurant GST)
+            </span>
+          </div>
         </div>
 
         {activeOrder.createdAt && (
@@ -94,6 +113,30 @@ export default function LiveOrderTracker({ activeOrder, onClose, onClearOrder })
               {idx < (activeOrder.items?.length || 0) - 1 ? ',' : ''}
             </span>
           ))}
+        </div>
+
+        {/* GST & Tax Breakdown Box */}
+        <div className="mt-2.5 bg-black/40 border border-amber-500/20 rounded-xl p-2.5 text-[11px] space-y-1 font-sans">
+          <div className="flex justify-between text-stone-300">
+            <span>Items Subtotal:</span>
+            <span className="font-mono font-bold text-stone-200">{formatPrice(subtotal)}</span>
+          </div>
+          <div className="flex justify-between text-stone-400 text-[10px]">
+            <span>CGST (2.5%):</span>
+            <span className="font-mono">₹{cgstAmount}</span>
+          </div>
+          <div className="flex justify-between text-stone-400 text-[10px]">
+            <span>SGST (2.5%):</span>
+            <span className="font-mono">₹{sgstAmount}</span>
+          </div>
+          <div className="flex justify-between text-amber-300/90 font-bold pt-1 border-t border-white/10">
+            <span>Total GST (5%):</span>
+            <span className="font-mono">{formatPrice(gstAmount)}</span>
+          </div>
+          <div className="flex justify-between text-xs font-black text-white pt-1 border-t border-white/10">
+            <span>Bill Total:</span>
+            <span className="text-amber-400 font-brand font-black text-sm">{formatPrice(grandTotal)}</span>
+          </div>
         </div>
 
         {/* Payment Method Badge */}

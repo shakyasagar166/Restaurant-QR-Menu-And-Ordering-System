@@ -111,8 +111,15 @@ export default function AdminDashboard({
   const [isAddDishOpen, setIsAddDishOpen] = useState(false);
   const [printingOrder, setPrintingOrder] = useState(null);
 
-  // GST & Bill Customization States (Admin can edit GST, discount, and details)
-  const [billGstEnabled, setBillGstEnabled] = useState(false);
+  // GST & Bill Customization States (5% Restaurant GST Enabled by default)
+  const [billGstEnabled, setBillGstEnabled] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bikaner_restaurant_gst_enabled');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
   const [billGstRate, setBillGstRate] = useState(5); // Default 5% restaurant GST (2.5% CGST + 2.5% SGST)
   const [billDiscount, setBillDiscount] = useState(0);
   const [billGstin, setBillGstin] = useState(() => {
@@ -134,10 +141,11 @@ export default function AdminDashboard({
   // Real-time bill calculations (Subtotal, Discount, CGST, SGST, Grand Total)
   const billComputed = useMemo(() => {
     if (!printingOrder) return { subtotal: 0, discount: 0, taxable: 0, rate: 0, cgst: 0, sgst: 0, totalGst: 0, grandTotal: 0 };
-    const subtotal = (printingOrder.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0) || printingOrder.totalAmount || 0;
+    const itemsSum = (printingOrder.items || []).reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const rate = Number(billGstRate) || 0;
+    const subtotal = itemsSum > 0 ? itemsSum : (printingOrder.totalAmount ? Math.round(printingOrder.totalAmount / (1 + (billGstEnabled ? (rate / 100) : 0))) : 0);
     const discount = Math.min(Number(billDiscount) || 0, subtotal);
     const taxable = Math.max(0, subtotal - discount);
-    const rate = Number(billGstRate) || 0;
     const totalGst = billGstEnabled ? (taxable * rate) / 100 : 0;
     const cgst = totalGst / 2;
     const sgst = totalGst / 2;
@@ -1316,9 +1324,14 @@ export default function AdminDashboard({
                               </div>
 
                               <div className="flex items-center justify-between">
-                                <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-300">
-                                  Total Bill Amount:
-                                </span>
+                                <div>
+                                  <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-300 block">
+                                    Total Bill Amount:
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 font-medium">
+                                    (Incl. 5% Restaurant GST)
+                                  </span>
+                                </div>
                                 <span className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight font-pos">
                                   {formatPrice(order.totalAmount)}
                                 </span>
@@ -1822,8 +1835,11 @@ export default function AdminDashboard({
                               </span>
                             </div>
                             <div className="text-right">
-                              <span className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight font-pos">
+                              <span className="text-3xl sm:text-4xl font-black text-emerald-400 tracking-tight font-pos block">
                                 {formatPrice(order.totalAmount)}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                (Incl. 5% GST)
                               </span>
                             </div>
                           </div>
@@ -3067,11 +3083,15 @@ export default function AdminDashboard({
                   <input
                     type="checkbox"
                     checked={billGstEnabled}
-                    onChange={(e) => setBillGstEnabled(e.target.checked)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setBillGstEnabled(checked);
+                      try { localStorage.setItem('bikaner_restaurant_gst_enabled', String(checked)); } catch {}
+                    }}
                     className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
                   />
                   <span className="text-xs font-bold text-amber-300">
-                    {billGstEnabled ? 'GST Applied (चालू)' : '+ Apply GST (लगाएं)'}
+                    {billGstEnabled ? '5% GST Applied (लागू है)' : '+ Apply 5% GST (लगाएं)'}
                   </span>
                 </label>
               </div>
@@ -3181,7 +3201,7 @@ export default function AdminDashboard({
                     </div>
                   )}
                   <div className="text-[10px] font-black text-emerald-800 uppercase tracking-widest mt-1 border-t border-dotted border-slate-300 pt-1">
-                    {billGstEnabled ? 'TAX INVOICE / GUEST BILL' : 'RETAIL BILL / CASH MEMO'}
+                    {billGstEnabled ? 'TAX INVOICE / GST BILL' : 'RETAIL BILL / CASH MEMO'}
                   </div>
                 </div>
 
@@ -3264,7 +3284,7 @@ export default function AdminDashboard({
                   {billGstEnabled && (
                     <>
                       <div className="flex justify-between text-slate-600 pt-1 border-t border-dotted border-slate-300">
-                        <span>Taxable Amount:</span>
+                        <span>Taxable Amount (Subtotal):</span>
                         <span>₹{billComputed.taxable.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-slate-700">
@@ -3275,6 +3295,10 @@ export default function AdminDashboard({
                         <span>SGST ({(billComputed.rate / 2).toFixed(1)}%):</span>
                         <span>₹{billComputed.sgst.toFixed(2)}</span>
                       </div>
+                      <div className="flex justify-between text-slate-900 font-bold border-b border-dotted border-slate-300 pb-1">
+                        <span>Total GST ({billComputed.rate}%):</span>
+                        <span>₹{billComputed.totalGst.toFixed(2)}</span>
+                      </div>
                     </>
                   )}
 
@@ -3282,6 +3306,11 @@ export default function AdminDashboard({
                     <span>NET AMOUNT PAYABLE:</span>
                     <span className="text-base font-black">₹{billComputed.grandTotal}</span>
                   </div>
+                  {billGstEnabled && (
+                    <div className="text-[10px] text-right text-slate-600 font-sans font-semibold mt-0.5">
+                      (Includes {billComputed.rate}% GST: CGST {(billComputed.rate / 2).toFixed(1)}% + SGST {(billComputed.rate / 2).toFixed(1)}%)
+                    </div>
+                  )}
                 </div>
 
                 {/* Thermal Slip Footer */}

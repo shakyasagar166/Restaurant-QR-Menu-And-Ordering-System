@@ -4,12 +4,13 @@
  */
 
 export function generateWhatsAppOrderMessage(order, options = {}) {
-  const { gstEnabled = false, gstRate = 5, discount = 0, gstin = '', fssai = '' } = options;
+  const { gstEnabled = true, gstRate = 5, discount = 0, gstin = '', fssai = '' } = options;
 
+  const itemsSum = (order.items || []).reduce((sum, item) => sum + item.price * item.quantity, 0);
   const subtotal =
-    (order.items || []).reduce((sum, item) => sum + item.price * item.quantity, 0) ||
-    order.totalAmount ||
-    0;
+    itemsSum > 0
+      ? itemsSum
+      : (order.totalAmount ? Math.round(order.totalAmount / (1 + (gstEnabled ? (Number(gstRate) || 5) / 100 : 0))) : 0);
 
   const validDiscount = Math.min(Number(discount) || 0, subtotal);
   const taxable = Math.max(0, subtotal - validDiscount);
@@ -32,7 +33,7 @@ export function generateWhatsAppOrderMessage(order, options = {}) {
     msg += `*GSTIN:* ${gstin.trim()}\n`;
   }
   msg += `------------------------------------\n`;
-  msg += `🧾 *${gstEnabled ? 'TAX INVOICE / GUEST BILL' : 'ORDER RECEIPT & BILL'}*\n`;
+  msg += `🧾 *${gstEnabled ? 'TAX INVOICE / GST BILL' : 'ORDER RECEIPT & BILL'}*\n`;
   msg += `*Order #:* ${order.id || 'NEW'}\n`;
   msg += `*Table:* ${order.tableNumber || 'Table 1'}\n`;
   msg += `*Guest:* ${order.customerName || 'Walk-in Guest'}\n`;
@@ -65,7 +66,7 @@ export function generateWhatsAppOrderMessage(order, options = {}) {
     msg += `*Total GST (${gstRate}%):* ₹${totalGst.toFixed(2)}\n`;
   }
 
-  msg += `*FINAL AMOUNT PAYABLE:* *₹${grandTotal}*\n`;
+  msg += `*FINAL AMOUNT PAYABLE:* *₹${grandTotal}* _(Incl. 5% GST)_\n`;
   msg += `*Payment Mode:* ${
     order.paymentMethod === 'ONLINE' || order.paymentStatus === 'PAID'
       ? 'ONLINE PAID ⚡'
